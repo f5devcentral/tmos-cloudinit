@@ -1,5 +1,5 @@
 parameters:
-  tmos_image: e23f52fd-31ac-497c-b8e3-ca628f27767a
+  tmos_image: 39e705a6-ecb6-47ed-a5e0-91c36263b0dc
   tmos_flavor: 3db1c6f8-ec58-4072-83fb-c0f01ae29607
   tmos_root_password: f5c0nfig
   tmos_admin_password: f5c0nfig
