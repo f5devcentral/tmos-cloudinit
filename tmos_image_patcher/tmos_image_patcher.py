@@ -299,7 +299,7 @@ def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
     for package_file in package_files:
         if not package_file.startswith('/.'):
             local = "%s%s" % (icontrollx_dir, package_file)
-            remote = "/var/lib/cloud/icontrollx_installs%s" % package_file
+            remote = "/lib/cloud/icontrollx_installs%s" % package_file
             LOG.debug('injecting %s to %s',
                       os.path.basename(local), remote)
             mkdir_path = os.path.dirname(remote)
