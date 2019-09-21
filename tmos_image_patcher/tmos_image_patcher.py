@@ -286,7 +286,7 @@ def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, dev):
 
 def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
     """Inject iControl LX install packages into TMOS disk image"""
-    LOG.debug('injecting files from %s in to /var/lib/cloud/icontrollx_installs' % icontrollx_dir)
+    LOG.debug('injecting files from %s into /var/lib/cloud/icontrollx_installs' % icontrollx_dir)
     gfs = guestfs.GuestFS(python_return_dict=True)
     gfs.add_drive_opts(disk_image)
     gfs.launch()
@@ -300,7 +300,7 @@ def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
         if not package_file.startswith('/.'):
             local = "%s%s" % (icontrollx_dir, package_file)
             remote = "/var/lib/cloud/icontrollx_installs%s" % package_file
-            LOG.debug('injecting %s to /var/lib/cloud/icontrollx_installs%s',
+            LOG.debug('injecting %s to %s',
                       os.path.basename(local), remote)
             mkdir_path = os.path.dirname(remote)
             gfs.mkdir_p(mkdir_path)
