@@ -264,6 +264,7 @@ def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, dev):
     python_system_path = '/lib/python2.6'
     if 'python2.7' in gfs.ls('/lib'):
         python_system_path = '/lib/python2.7'
+    LOG.debug('injecting files into /usr%s' % python_system_path)
     tmos_cc_path = "%s/image_patch_files/system_python_path" % tmos_cloudinit_dir
     tmos_cc_files = []
     for root, dirs, files in os.walk(tmos_cc_path):
@@ -285,6 +286,7 @@ def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, dev):
 
 def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
     """Inject iControl LX install packages into TMOS disk image"""
+    LOG.debug('injecting files into /shared/%s' % icontrollx_dir)
     gfs = guestfs.GuestFS(python_return_dict=True)
     gfs.add_drive_opts(disk_image)
     gfs.launch()
@@ -311,6 +313,7 @@ def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
 
 def inject_usr_files(disk_image, usr_dir, dev):
     """Patch /usr file system of a TMOS disk image"""
+    LOG.debug('injecting files into /usr')
     gfs = guestfs.GuestFS(python_return_dict=True)
     gfs.add_drive_opts(disk_image)
     gfs.launch()
@@ -333,6 +336,7 @@ def inject_usr_files(disk_image, usr_dir, dev):
 
 def inject_var_files(disk_image, var_dir, dev):
     """Patch /var file system of a TMOS disk image"""
+    LOG.debug('injecting files into /var')
     gfs = guestfs.GuestFS(python_return_dict=True)
     gfs.add_drive_opts(disk_image)
     gfs.launch()
@@ -355,6 +359,7 @@ def inject_var_files(disk_image, var_dir, dev):
 
 def inject_shared_files(disk_image, shared_dir, dev):
     """Patch /shared file system of a TMOS disk image"""
+    LOG.debug('injecting files into /shared')
     gfs = guestfs.GuestFS(python_return_dict=True)
     gfs.add_drive_opts(disk_image)
     gfs.launch()
@@ -377,6 +382,7 @@ def inject_shared_files(disk_image, shared_dir, dev):
 
 def inject_config_files(disk_image, config_dir, dev):
     """Patch /config file system of a TMOS disk image"""
+    LOG.debug('injecting files into /config')
     gfs = guestfs.GuestFS(python_return_dict=True)
     gfs.add_drive_opts(disk_image)
     gfs.launch()
