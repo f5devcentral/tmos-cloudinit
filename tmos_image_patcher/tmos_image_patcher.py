@@ -300,7 +300,7 @@ def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
         if not package_file.startswith('/.'):
             local = "%s%s" % (icontrollx_dir, package_file)
             remote = "/lib/cloud/icontrollx_installs%s" % package_file
-            LOG.debug('injecting %s to %s',
+            LOG.debug('injecting %s to /var%s',
                       os.path.basename(local), remote)
             mkdir_path = os.path.dirname(remote)
             gfs.mkdir_p(mkdir_path)
