@@ -210,7 +210,7 @@ def clean_ovf(ovf_file_path):
 
 def wait_for_gfs(gfs_handle):
     """System settle time for gfs"""
-    time.sleep(2)
+    time.sleep(5)
 
 
 def validate_tmos_device(disk_image):
@@ -235,6 +235,8 @@ def validate_tmos_device(disk_image):
             shared_dev = file_system
     if not is_tmos:
         LOG.warn('%s is not a TMOS image file.. skipping..', disk_image)
+    gfs.sync()
+    gfs.shutdown()
     gfs.close()
     wait_for_gfs(gfs)
     return (is_tmos, config_dev, usr_dev, var_dev, shared_dev)
@@ -275,6 +277,8 @@ def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, dev):
         mkdir_path = os.path.dirname(remote)
         gfs.mkdir_p(mkdir_path)
         gfs.upload(local, remote)
+    gfs.sync()
+    gfs.shutdown()
     gfs.close()
     wait_for_gfs(gfs)
 
@@ -299,6 +303,8 @@ def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
             mkdir_path = os.path.dirname(remote)
             gfs.mkdir_p(mkdir_path)
             gfs.upload(local, remote)
+    gfs.sync()
+    gfs.shutdown()
     gfs.close()
     wait_for_gfs(gfs)
 
@@ -319,6 +325,8 @@ def inject_usr_files(disk_image, usr_dir, dev):
         mkdir_path = os.path.dirname(usr_file)
         gfs.mkdir_p(mkdir_path)
         gfs.upload(local, usr_file)
+    gfs.sync()
+    gfs.shutdown()
     gfs.close()
     wait_for_gfs(gfs)
 
@@ -339,6 +347,8 @@ def inject_var_files(disk_image, var_dir, dev):
         mkdir_path = os.path.dirname(var_file)
         gfs.mkdir_p(mkdir_path)
         gfs.upload(local, var_file)
+    gfs.sync()
+    gfs.shutdown()
     gfs.close()
     wait_for_gfs(gfs)
 
@@ -359,6 +369,8 @@ def inject_shared_files(disk_image, shared_dir, dev):
         mkdir_path = os.path.dirname(shared_file)
         gfs.mkdir_p(mkdir_path)
         gfs.upload(local, shared_file)
+    gfs.sync()
+    gfs.shutdown()
     gfs.close()
     wait_for_gfs(gfs)
 
@@ -381,6 +393,8 @@ def inject_config_files(disk_image, config_dir, dev):
         mkdir_path = os.path.dirname(config_file)
         gfs.mkdir_p(mkdir_path)
         gfs.upload(local, config_file)
+    gfs.sync()
+    gfs.shutdown()
     gfs.close()
     wait_for_gfs(gfs)
 
