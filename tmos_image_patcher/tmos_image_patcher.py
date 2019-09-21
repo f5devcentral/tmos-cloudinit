@@ -71,12 +71,12 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
                     inject_usr_files(disk_image, tmos_usr_inject_dir, usr_dev)
                 if var_dev and tmos_var_inject_dir:
                     inject_var_files(disk_image, tmos_var_inject_dir, var_dev)
+                if var_dev and tmos_icontrollx_dir:
+                    inject_icontrollx_packages(
+                        disk_image, tmos_icontrollx_dir, var_dev)
                 if shared_dev and tmos_shared_inject_dir:
                     inject_shared_files(
                         disk_image, tmos_shared_inject_dir, shared_dev)
-                if shared_dev and tmos_icontrollx_dir:
-                    inject_icontrollx_packages(
-                        disk_image, tmos_icontrollx_dir, shared_dev)
                 if config_dev and tmos_config_inject_dir:
                     inject_config_files(
                         disk_image, tmos_config_inject_dir, config_dev)
@@ -299,8 +299,8 @@ def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
     for package_file in package_files:
         if not package_file.startswith('/.'):
             local = "%s%s" % (icontrollx_dir, package_file)
-            remote = "/shared/rpms/icontrollx_installs%s" % package_file
-            LOG.debug('injecting %s to /shared/rpms/icontrollx_installs%s',
+            remote = "/var/lib/cloud/icontrollx_installs%s" % package_file
+            LOG.debug('injecting %s to /var/lib/cloud/icontrollx_installs%s',
                       os.path.basename(local), remote)
             mkdir_path = os.path.dirname(remote)
             gfs.mkdir_p(mkdir_path)
