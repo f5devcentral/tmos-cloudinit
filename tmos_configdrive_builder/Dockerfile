@@ -14,7 +14,7 @@ RUN apt-get update && \
     git
 
 ## INJECT_PATCH_INSTRUCTION ##
-RUN git clone https://github.com/jgruber/tmos-cloudinit.git
+RUN git clone https://github.com/f5devcentral/tmos-cloudinit.git
 RUN pip install pycdlib
 
 ENV LIBGUESTFS_BACKEND=direct
