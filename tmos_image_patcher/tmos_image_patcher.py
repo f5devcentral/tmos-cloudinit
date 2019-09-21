@@ -297,8 +297,8 @@ def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
     for package_file in package_files:
         if not package_file.startswith('/.'):
             local = "%s%s" % (icontrollx_dir, package_file)
-            remote = "/rpms/icontrollx_installs%s" % package_file
-            LOG.debug('injecting %s to /rpms/icontrollx_installs%s',
+            remote = "/shared/rpms/icontrollx_installs%s" % package_file
+            LOG.debug('injecting %s to /shared/rpms/icontrollx_installs%s',
                       os.path.basename(local), remote)
             mkdir_path = os.path.dirname(remote)
             gfs.mkdir_p(mkdir_path)
