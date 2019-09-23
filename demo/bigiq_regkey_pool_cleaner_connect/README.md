@@ -83,7 +83,7 @@ $ source bigiq_regkey_pool_cleaner.sh.env; ./bigiq_regkey_pool_cleaner_neutron_p
 The repository comes with a Dockerfile to help you build a docker image of this application.
 
 ```
-docker build --rm -t bigiq_regkeypool_cleaner_connect:latest demo/openstack/bigiq_regkey_pool_cleaner_connect
+docker build --rm -t bigiq_regkeypool_cleaner_connect:latest demo/bigiq_regkey_pool_cleaner_connect
 ```
 
 To can simply run your container with a docker environment file.
