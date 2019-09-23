@@ -101,17 +101,17 @@ $ source bigiq_regkey_pool_cleaner.sh.env; ./bigiq_regkey_pool_cleaner_neutron_p
 The repository comes with a Dockerfile to help you build a docker image of this application.
 
 ```
-docker build --rm -t bigiq_regkeypool_cleaner:latest demo/openstack/bigiq_regkey_pool_cleaner_neutron_port
+docker build --rm -t bigiq_regkeypool_cleaner_neutron_port:latest demo/openstack/bigiq_regkey_pool_cleaner_neutron_port
 ```
 
 To can simply run your container with a docker environment file.
 
 ```
-docker run --rm -it --env-file ./demo/openstack/bigiq_regkey_pool_cleaner/bigiq_regkey_pool_cleaner.env bigiq_regkeypool_cleaner_neutron_port:latest
+docker run --rm -it --env-file ./demo/openstack/bigiq_regkey_pool_cleaner_neutron_port/bigiq_regkey_pool_cleaner.env bigiq_regkeypool_cleaner_neutron_port:latest
 ```
 
 To let the container run in the background as a service, simply daemonize the container.
 
 ```
-docker run -d --rm -it --env-file ./demo/openstack/bigiq_regkey_pool_cleaner/bigiq_regkey_pool_cleaner.env bigiq_regkeypool_cleaner_neutron_port:latest
+docker run -d --rm -it --env-file ./demo/openstack/bigiq_regkey_pool_cleaner_neutron_port/bigiq_regkey_pool_cleaner.env bigiq_regkeypool_cleaner_neutron_port:latest
 ```
