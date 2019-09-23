@@ -2,4 +2,4 @@
 echo "Removing ConfigDrive ISO"
 rm -rf ./configdrive/*
 echo "Destroying TMOS VE playbook tasks"
-ansible-playbook -e '{ "guest_configdrive_iso_file": "./configdrive/configdrive.iso", "state": "destroyed" }'  site.yml
+ansible-playbook -e '{ "state": "destroyed" }'  site.yml
