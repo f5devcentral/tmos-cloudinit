@@ -1,5 +1,5 @@
 
-# bigiq_regkey_pool_cleaner #
+# bigiq_regkey_pool_cleaner for Neutron Ports#
 
 ## Python Application To Remove Allocated License on Non Active OpenStack Ports ##
 
@@ -21,8 +21,8 @@ The log can be directed to a file.
 Control arguments for the python application script can be enumerated by using the `-h` (help) argument.
 
 ```
-$ ./bigiq_regkey_pool_cleaner.py -h
-usage: bigiq_regkey_pool_cleaner.py [-h]
+$ ./bigiq_regkey_pool_cleaner_neutron_port.py -h
+usage: bigiq_regkey_pool_cleaner_neutron_port.py [-h]
                                     [-l {DEBUG,INFO,WARN,ERROR,CRITICAL,FATAL}]
                                     [-d] [-p POLL_CYCLE] [-r REPORT_FILE]
                                     [--bigiqhost BIGIQHOST]
@@ -93,7 +93,7 @@ export OS_INTERFACE=public
 You run the script as a daemon with the exported values from the env file.
 
 ```
-$ source bigiq_regkey_pool_cleaner.sh.env; ./bigiq_regkey_pool_cleaner.py -d
+$ source bigiq_regkey_pool_cleaner.sh.env; ./bigiq_regkey_pool_cleaner_neutron_port.py -d
 2019-06-27 15:12:22,136 - bigiq_regkey_pool_cleaner - DEBUG - Running in daemon mode, polling every 300 seconds
 2019-06-27 15:12:22,136 - bigiq_regkey_pool_cleaner - DEBUG - Polling licenses in BIGIPVEREGKEYS pool
 ```
@@ -101,17 +101,17 @@ $ source bigiq_regkey_pool_cleaner.sh.env; ./bigiq_regkey_pool_cleaner.py -d
 The repository comes with a Dockerfile to help you build a docker image of this application.
 
 ```
-docker build --rm -t bigiq_regkeypool_cleaner:latest demo/openstack/bigiq_regkey_pool_cleaner
+docker build --rm -t bigiq_regkeypool_cleaner:latest demo/openstack/bigiq_regkey_pool_cleaner_neutron_port
 ```
 
 To can simply run your container with a docker environment file.
 
 ```
-docker run --rm -it --env-file ./demo/openstack/bigiq_regkey_pool_cleaner/bigiq_regkey_pool_cleaner.env bigiq_regkeypool_cleaner:latest
+docker run --rm -it --env-file ./demo/openstack/bigiq_regkey_pool_cleaner/bigiq_regkey_pool_cleaner.env bigiq_regkeypool_cleaner_neutron_port:latest
 ```
 
 To let the container run in the background as a service, simply daemonize the container.
 
 ```
-docker run -d --rm -it --env-file ./demo/openstack/bigiq_regkey_pool_cleaner/bigiq_regkey_pool_cleaner.env bigiq_regkeypool_cleaner:latest
+docker run -d --rm -it --env-file ./demo/openstack/bigiq_regkey_pool_cleaner/bigiq_regkey_pool_cleaner.env bigiq_regkeypool_cleaner_neutron_port:latest
 ```

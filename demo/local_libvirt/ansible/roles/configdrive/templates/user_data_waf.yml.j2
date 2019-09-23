@@ -1,0 +1,83 @@
+#cloud-config
+chpasswd:
+  expire: false
+  list: |
+    root:{{ guest_root_password }}
+    admin:{{ guest_admin_password }}
+ssh_authorized_keys:
+  - {{ guest_ssh_key }}
+tmos_dhcpv4_tmm:
+  enabled: true
+  icontrollx_trusted_sources: false
+  do_declaration:
+    schemaVersion: 1.0.0
+    class: Device
+    async: true
+    label: Cloudinit Onboarding
+    Common:
+      class: Tenant
+      provisioningLevels:
+        class: Provision
+        ltm: nominal
+        asm: nominal
+      poolLicense:
+        class: License
+        licenseType: licensePool
+        bigIqHost: {{ guest_bigiq_license_host }}
+        bigIqUsername: {{ guest_bigiq_license_user }}
+        bigIqPassword: {{ guest_bigiq_license_password }}
+        licensePool: {{ guest_bigiq_license_pool }}
+        reachable: true
+        bigIpUsername: admin
+        bigIpPassword: {{ guest_admin_password }}
+      dnsServers:
+        class: DNS
+        nameServers:
+          - 8.8.8.8
+        search:
+          - internal.local
+      ntpServers:
+        class: NTP
+        servers:
+          - 0.pool.ntp.org
+          - 1.pool.ntp.org
+          - 2.pool.ntp.org
+      dbvars:
+        class: DbVariables
+        ui.advisory.enabled: true
+        ui.advisory.color: orange
+        ui.advisory.text: This device is under centralized management.
+  as3_declaration:
+    class: ADC
+    schemaVersion: 3.0.0
+    label: ASM_VS1
+    remark: ASM_VS1
+    Sample_app_sec_01:
+      class: Tenant
+      HTTP_Service:
+        class: Application
+        template: http
+        serviceMain:
+          class: Service_HTTP
+          virtualAddresses:
+            - {{ guest_vip_ip }}
+          snat: auto
+          pool: Pool1
+          policyWAF:
+            use: WAFPolicy
+        Pool1:
+          class: Pool
+          monitors:
+            - http
+          members:
+            - servicePort: 80
+              serverAddresses:
+                - 34.230.136.58
+            - servicePort: 80
+              serverAddresses:
+                - 52.0.57.170
+        WAFPolicy:
+          class: WAF_Policy
+          url: "{{ guest_waf_policy_url }}"
+          ignoreChanges: true
+  phone_home_url: "{{ guest_phone_home_url }}"

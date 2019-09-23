@@ -1,0 +1,12 @@
+---
+guest_uuid: 83c4353b-1ad1-45dd-a393-52d94768b9d2
+guest_admin_password: f5c0nfig
+guest_root_password: f5c0nfig
+guest_ssh_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDojV4QqML+8b+R3IMVUH6AKiKT1YMyjNFEa7nJUM2B7XpkOpkmwoJkYrboCisFu2i+TaIu9UmdtpYf805YLDoabO7XCW1jcYYPsR8qDhPGFdgbl//JWM5Y4wfL/+0jYU8L48h+KoS8IlWPIMnpW7TjP5KHAiiAmH48d+mMR1QZnz6s/6cs54gq0P6/yXjnEA/bLEfx1GLQBGnezoxwh7IXhaNGC9UoFYX6c24K/kZHwrpy6VK6nUKIe6IluuEJcTnxNY2CTIgmMV7xNWLMgt8wjNChbp9ljVqAA1yXtCzo0eB2NnVDB/mJOgpj9RlaNP7RjPRaA3ZhcxLM+q9eNpki1x3UI6NONHuWBuj8cYf3lA9Kwoo3Ts+Q/W7Ft1gtPpJmwNPJu9IO5KOHjQicQkIthzbC8iks1y+BmlCyxYVh+Z5EVi3kctaLGt2Pql9lSyyqSXMsZwzOGXdqTz/mXdLa3/Y+dFGW0qwtXmdUgM84mYIgwyAVdmTK3bZ2qPBUTLjugCt5nJbunG3D7/LLsLwt87B/WHTI0qDBUP43wwbwdy5zinXkmNOpqDWmFjX0gmGyI/0V5Od8JF1GicrBglJbEVurf3zaLvADOD6zAlj1k1TjKHXBhH0O2M9pZ963LwFtCuLedGBEMSuxjYSqUEcgsHgHlDwvAQ+wjkRqzFiJsQ== test@example.com"
+guest_bigiq_license_host: bigiq.example.com
+guest_bigiq_license_user: admin
+guest_bigiq_license_password: admin
+guest_bigiq_license_pool: BIGIPVEREGKEYS
+guest_vip_ip: 192.168.245.118
+guest_waf_policy_url: "https://raw.githubusercontent.com/f5devcentral/f5-asm-policy-templates/master/owasp_ready_template/owasp-no-auto-tune-v1.1.xml"
+guest_phone_home_url: "https://webhook.site/62b7df15-04d4-4571-b436-31b876e6e7ce"

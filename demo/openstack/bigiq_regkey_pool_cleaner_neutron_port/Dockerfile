@@ -14,8 +14,8 @@ RUN apt-get update && \
 
 ## INJECT_PATCH_INSTRUCTION ##
 
-RUN git clone https://github.com/jgruber/tmos-cloudinit.git
+RUN git clone https://github.com/f5devcentral/tmos-cloudinit.git
 
 ENV USER 'root'
 
-ENTRYPOINT [ "/tmos-cloudinit/demo/openstack/bigiq_regkey_pool_cleaner/bigiq_regkey_pool_cleaner.py", "-d" ]
+ENTRYPOINT [ "/tmos-cloudinit/demo/openstack/bigiq_regkey_pool_cleaner_neutron_port/bigiq_regkey_pool_cleaner_neutron_port.py", "-d" ]

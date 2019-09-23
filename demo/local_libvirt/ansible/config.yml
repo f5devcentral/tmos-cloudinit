@@ -1,0 +1,80 @@
+---
+state: running
+# Per Instance Configuration
+assure_configdrive: true
+assure_guest: true
+# Can run ./utils/uuidgen.py to generate UUID
+guest_uuid: 83c4353b-1ad1-45dd-a393-52d94768b9d2
+# Must be sufficent ram, vcpus, and disk to 
+# handle your BIG-IP modules delcarations
+# see hypervisor matrix from support.f5.com
+guest_ram: 6144000
+guest_vcpus: 2
+guest_nic_count: 4
+guest_disk_image_size: 62
+# Can run ./utils/macgen.py to generate MAC addresses
+# Management network is assumed bridged for connectivity
+guest_management_network_mac: 02:16:3e:7a:c9:d4
+guest_management_bridge_interface: eth0
+# All other networks are assumed NAT virtual networks
+guest_ha_network_mac: 02:16:3e:08:40:01
+guest_internal_network_mac: 02:16:3e:56:5b:58
+guest_external_network_mac: 02:16:3e:41:8f:d8
+# Can be ltm or all
+guest_type: all
+guest_userdata_file: "declarations/user_data"
+guest_admin_password: f5c0nfig
+guest_root_password: f5c0nfig
+guest_ssh_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC9OJ+5GlA0AkOi7FNtRxabTvMGP20rAVnJSaV64GKqiu6EOhGm/wUyFrZ2vJxMwTp3KOeRqm7EmPTxIwh0zTlRoJhC+zqa+P6IAmLUq8oW99hzZ1nd3eAQ4nwPlfTDLbYTPOTB2ymc7hd5XRwXvnrl5P7KCI2RlItKDwufLYjO3gvWHNjqQIxPq8MwL7VYRcddfOqwJYbGPL+um9Kzhz4A/mgo++G65QnEsdcy6MV0Wp+l3rf9Z9TvrslMii45OTFkLtPzmqR0FSqTdC3kfP4jrepad2VLeeCml8KFYf6AYY8V5hhzFlI/SFdt0kaIpeULFEsMXKVYwcv6H2ZHS8Mp john.t.gruber@gmail.com"
+guest_bigiq_license_host: 172.13.1.108
+guest_bigiq_license_user: admin
+guest_bigiq_license_password: admin
+guest_bigiq_license_pool: BIGIPVEREGKEYS
+guest_vip_ip: 192.168.205.10
+guest_waf_policy_url: "https://raw.githubusercontent.com/f5devcentral/f5-asm-policy-templates/master/owasp_ready_template/owasp-no-auto-tune-v1.1.xml"
+guest_phone_home_url: "https://webhook.site/62b7df15-04d4-4571-b436-31b876e6e7ce"
+# Hypervisor Environemnt Paths
+tmos_version: 14.1.2-0.0.37
+tmos_ltm_image: "/TMOSImages/BIGIP-{{ tmos_version }}.LTM_1SLOT.qcow2/BIGIP-{{ tmos_version }}.qcow2"
+tmos_all_image: "/TMOSImages/BIGIP-{{ tmos_version }}.ALL_1SLOT.qcow2/BIGIP-{{ tmos_version }}.qcow2"
+tmos_domain_folder: "/Instances/{{ guest_uuid }}"
+tmos_configdrive_iso_folder: "{{ tmos_domain_folder }}/configdrive"
+tmos_disk_image_folder: "{{ tmos_domain_folder }}/disk"
+
+# Libvirt connection - Use the default docker host docker0 IP address and SSH (it is ansible)
+libvirt_connect_string: qemu+ssh://172.17.0.1/system
+#
+# Hypervisor Network setup
+#
+# The Management network is assume bridged to an interface on
+# hose (provider network) for connectivity to BIG-IQ licensing
+#
+# For the other networks, we can use Ansible to make sure you 
+# have your hypervisor host's networks setup appropriately 
+# for BIG-IP instance.
+#
+assure_libvirt_networks: true
+ha_network_uuid: 819b276a-2463-4929-aa1b-844099b7aad6
+ha_network_source: virbr4
+ha_network_mac: "52:54:00:be:09:07"
+ha_network_ipv4: 192.168.203.1
+ha_network_ipv4_netmask: 255.255.255.0
+ha_network_dhcpv4_start: 192.168.203.2
+ha_network_dhcpv4_end: 192.168.203.254
+ha_network_ipv4_prefix: 24
+internal_network_uuid: 5fb736ef-33b0-4d12-830a-d85c5a712fcd
+internal_network_source: virbr5
+internal_network_mac: "52:54:00:9b:b1:17"
+internal_network_ipv4: 192.168.204.1
+internal_network_ipv4_netmask: 255.255.255.0
+internal_network_dhcpv4_start: 192.168.204.2
+internal_network_dhcpv4_end: 192.168.204.254
+internal_network_ipv4_prefix: 24
+external_network_uuid: 93f33b8d-7811-489c-b9d5-815a057813e4
+external_network_source: virbr6
+external_network_mac: "52:54:00:0d:25:ee"
+external_network_ipv4: 192.168.205.100
+external_network_ipv4_netmask: 255.255.255.0
+external_network_dhcpv4_start: 192.168.205.2
+external_network_dhcpv4_end: 192.168.205.254
+external_network_ipv4_prefix: 24

@@ -1,0 +1,164 @@
+---
+# create instance
+- name: Disk Image Folder
+  when:
+    - assure_guest
+    - configdrive_copied
+    - state == "running"
+  tags: guest
+  file:
+    path: "{{ tmos_disk_image_folder }}" 
+    state: directory
+    recurse: yes
+  register: tmos_disk_image_directory
+- name: Check Existing VE Disk Image
+  when:
+    - assure_guest
+    - tmos_disk_image_directory
+    - state == "running"
+  stat:
+    path: "{{ tmos_disk_image_folder }}/{{ guest_uuid }}.qcow2"
+  register: ve_image_stat
+- name: Check TMOS LTM Disk Image
+  when: 
+    - assure_guest
+    - tmos_disk_image_directory
+    - guest_type == "ltm"
+    - state == "running"
+    - ve_image_stat.stat.exists == false
+  tags: guest
+  file:
+    path: "{{ tmos_ltm_image }}"
+  register: ltm_available
+- name: Copy TMOS LTM Disk Image
+  when: 
+    - assure_guest
+    - guest_type == "ltm"
+    - ltm_available
+    - state == "running"
+    - ve_image_stat.stat.exists == false
+  copy:
+    src: "{{ tmos_ltm_image }}"
+    dest: "{{ tmos_disk_image_folder }}/{{ guest_uuid }}.qcow2"
+    mode: '0644'
+  register: image_copied
+- name: Check TMOS ALL Disk Image
+  when: 
+    - assure_guest
+    - tmos_disk_image_directory
+    - guest_type == "all"
+    - state == "running"
+    - ve_image_stat.stat.exists == false
+  tags: guest
+  file:
+    path: "{{ tmos_all_image }}"
+  register: all_available
+- name: Copy TMOS ALL Disk Image
+  when:
+    - assure_guest
+    - guest_type == "all"
+    - all_available
+    - state == "running"
+    - ve_image_stat.stat.exists == false
+  copy:
+    src: "{{ tmos_all_image }}"
+    dest: "{{ tmos_disk_image_folder }}/{{ guest_uuid }}.qcow2"
+    force: no
+    mode: '0644'
+  register: image_copied
+- name: Resize TMOS Disk Image
+  when:
+    - assure_guest
+    - state == "running"
+    - image_copied
+  become: yes
+  command: "qemu-img resize {{ tmos_disk_image_folder }}/{{ guest_uuid }}.qcow2 +{{ guest_disk_image_size }}G"
+  register: disk_resized
+- name: Generate Domain 4NIC XML 
+  when:
+    - assure_guest
+    - state == "running"
+    - guest_nic_count == 4
+  tags: guest
+  template:
+    src: "domain_4_nic.xml.j2"
+    dest: "{{ tmos_domain_folder }}/{{ guest_uuid }}.xml"
+    mode: '0644'
+  register: domain_available
+- name: Generate Domain 3NIC XML 
+  when:
+    - assure_guest
+    - state == "running"
+    - guest_nic_count == 3
+  tags: guest
+  template:
+    src: "domain_3_nic.xml.j2"
+    dest: "{{ tmos_domain_folder }}/{{ guest_uuid }}.xml"
+    mode: '0644'
+  register: domain_available
+- name: Generate Domain 2NIC XML 
+  when:
+    - assure_guest
+    - state == "running"
+    - guest_nic_count == 2
+  tags: guest
+  template:
+    src: "domain_2_nic.xml.j2"
+    dest: "{{ tmos_domain_folder }}/{{ guest_uuid }}.xml"
+    mode: '0644'
+  register: domain_available
+- name: Generate Domain 1NIC XML 
+  when:
+    - assure_guest
+    - state == "running"
+    - guest_nic_count == 1
+  tags: guest
+  template:
+    src: "domain_1_nic.xml.j2"
+    dest: "{{ tmos_domain_folder }}/{{ guest_uuid }}.xml"
+    mode: '0644'
+  register: domain_available
+- name: TMOS Define Virtual Edition Instance
+  when: 
+    - assure_guest
+    - state == "running"
+    - configdrive_copied
+    - domain_available
+  tags: guest
+  virt:
+    uri: "{{ libvirt_connect_string }}"
+    command: define
+    name: "{{ guest_uuid }}"
+    xml: '{{ lookup("file", "{{ tmos_domain_folder }}/{{ guest_uuid }}.xml") }}'
+  register: domain_defined
+- name: TMOS Virtual Edition Instance
+  when: 
+    - assure_guest
+    - domain_defined
+  tags: guest
+  virt:
+    uri: "{{ libvirt_connect_string }}"
+    state: "{{ state }}"
+    name: "{{ guest_uuid }}"
+  register: ve_in_state
+- name: TMOS Virtual Edition Clean Up
+  when: 
+    - assure_guest
+    - ve_in_state
+    - state == 'destroyed'
+  tags: guest
+  virt:
+    uri: "{{ libvirt_connect_string }}"
+    command: undefine
+    name: "{{ guest_uuid }}"
+  register: ve_undefined
+- name: TMOS Virtual Edition Clean Up
+  when: 
+    - assure_guest
+    - ve_undefined
+    - state == 'destroyed'
+  tags: guest
+  file:
+    path: "{{ tmos_domain_folder }}"
+    state: absent
+  register: ve_deleted

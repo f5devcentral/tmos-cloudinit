@@ -1,0 +1,19 @@
+---
+guest_uuid: 83c4353b-1ad1-45dd-a393-52d94768b9d2
+guest_ram: 4194304
+guest_vcpus: 2
+guest_nic_count: 4
+guest_management_network_mac: 02:16:3e:7a:c9:d4
+guest_management_bridge_interface: eth0
+guest_ha_network_mac: 01:16:3e:08:40:01
+guest_internal_network_mac: 01:16:3e:56:5b:58
+guest_external_network_mac: 01:16:3e:41:8f:d8
+guest_type: ltm
+guest_disk_image_size: 12
+# guest_phone_home_url: 
+tmos_version: 14.1.2-0.0.37
+tmos_ltm_image: "/TMOSImages/BIGIP-{{ tmos_version }}.LTM_1SLOT.qcow2/BIGIP-{{ tmos_version }}.qcow2"
+tmos_all_image: "/TMOSImages/BIGIP-{{ tmos_version }}.ALL_1SLOT.qcow2/BIGIP-{{ tmos_version }}.qcow2"
+tmos_configdrive_iso_folder: /Instances/{{ guest_uuid }}/configdrives/
+tmos_disk_image_folder: /Instances/{{ guest_uuid }}/disks/
+tmos_domain_folder: /Instances/{{ guest_uuid }}/

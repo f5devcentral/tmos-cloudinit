@@ -1,0 +1,13 @@
+---
+
+- hosts: localhost
+  name: TMOS VE Instance
+  tasks:
+    - include_vars:
+        file: config.yml
+    - include_role:
+        name: networks
+    - include_role:
+        name: configdrive
+    - include_role:
+        name: domain

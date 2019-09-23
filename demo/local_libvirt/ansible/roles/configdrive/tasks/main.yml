@@ -1,0 +1,88 @@
+---
+# create instance
+- name: Create Temporary Directory for Declaration
+  when: 
+    - assure_configdrive
+    - state == "running"
+  tags: guest
+  tempfile:
+    state: directory
+    suffix: declarations
+  register: declarations_dir
+- name: Create user_data User Data file for LTM
+  when: 
+    - assure_configdrive
+    - guest_type == "ltm"
+    - state == "running"
+  tags: guest
+  template:
+    src: "user_data_ltm.yml.j2"
+    dest: "{{ declarations_dir.path }}/user_data"
+    mode: '0644'
+  register: userdata_available
+- name: Create user_data User Data file for WAF
+  when: 
+    - assure_configdrive
+    - guest_type == "all"
+    - state == "running"
+  tags: guest
+  template:
+    src: "user_data_waf.yml.j2"
+    dest: "{{ declarations_dir.path }}/user_data"
+    mode: '0644'
+  register: userdata_available
+- name: Create Temporary Directory for ConfigDrive ISO
+  when: 
+    - assure_configdrive
+    - state == "running"
+  tags: guest
+  tempfile:
+    state: directory
+    suffix: configdrives
+  register: configdrives_dir
+- name: Generate ConfigDrive ISO
+  when:
+    - assure_guest
+    - userdata_available
+    - state == "running"
+  tags: guest
+  command: "docker run --rm -v {{ declarations_dir.path }}:/declarations -v {{ configdrives_dir.path }}:/configdrives f5devcentral/tmos-configdrive-builder:latest"
+  register: configdrive_ISO_written
+- name: ConfigDrive Folder
+  when:
+    - assure_guest
+    - configdrive_ISO_written
+    - state == "running"
+  tags: guest
+  file:
+    path: "{{ tmos_configdrive_iso_folder }}" 
+    state: directory
+    recurse: yes
+  register: configdrive_directory
+- name: Copy ConfigDrive ISO
+  when:
+    - assure_guest
+    - configdrive_directory
+    - state == "running"
+  tags: guest
+  copy:
+    src: "{{ configdrives_dir.path }}/configdrive.iso"
+    dest: "{{ tmos_configdrive_iso_folder }}/{{ guest_uuid }}.iso"
+    mode: '0444'
+  register: configdrive_copied
+- name: Remove Declarations Temp Directory
+  when:
+    - assure_guest
+    - configdrive_copied
+    - state == "running"
+  file:
+    path: "{{ declarations_dir.path }}"
+    state: absent
+- name: Remove ConfigDrive Temp Directory
+  when:
+    - assure_guest
+    - configdrive_copied
+    - state == "running"
+  file:
+    path: "{{ configdrives_dir.path }}"
+    state: absent

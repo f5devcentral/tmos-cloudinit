@@ -1,0 +1,13 @@
+<network>
+  <name>internal</name>
+  <uuid>{{ internal_network_uuid }}</uuid>
+  <bridge name='{{ internal_network_source }}' stp='on' delay='0'/>
+  <mac address='{{ internal_network_mac }}'/>
+  <domain name='local'/>
+  <forward mode="route"/>
+  <ip address='{{ internal_network_ipv4 }}' netmask='{{ internal_network_ipv4_netmask }}'>
+    <dhcp>
+      <range start='{{ internal_network_dhcpv4_start }}' end='{{ internal_network_dhcpv4_end }}'/>
+    </dhcp>
+  </ip>
+</network>
