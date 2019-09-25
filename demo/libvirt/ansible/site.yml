@@ -1,6 +1,6 @@
 ---
 
-- hosts: localhost
+- hosts: all
   name: TMOS VE Instance
   tasks:
     - include_vars:

@@ -6,10 +6,13 @@
     - configdrive_copied
     - state == "running"
   tags: guest
+  become: yes
   file:
     path: "{{ tmos_disk_image_folder }}" 
     state: directory
     recurse: yes
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
   register: tmos_disk_image_directory
 - name: Check Existing VE Disk Image
   when:
@@ -19,7 +22,7 @@
   stat:
     path: "{{ tmos_disk_image_folder }}/{{ guest_uuid }}.qcow2"
   register: ve_image_stat
-- name: Check TMOS LTM Disk Image
+- name: Check Local TMOS LTM Disk Image
   when: 
     - assure_guest
     - tmos_disk_image_directory
@@ -27,8 +30,7 @@
     - state == "running"
     - ve_image_stat.stat.exists == false
   tags: guest
-  file:
-    path: "{{ tmos_ltm_image }}"
+  local_action: stat path="{{ tmos_ltm_image }}"
   register: ltm_available
 - name: Copy TMOS LTM Disk Image
   when: 
@@ -42,7 +44,7 @@
     dest: "{{ tmos_disk_image_folder }}/{{ guest_uuid }}.qcow2"
     mode: '0644'
   register: image_copied
-- name: Check TMOS ALL Disk Image
+- name: Check Local TMOS ALL Disk Image
   when: 
     - assure_guest
     - tmos_disk_image_directory
@@ -50,8 +52,7 @@
     - state == "running"
     - ve_image_stat.stat.exists == false
   tags: guest
-  file:
-    path: "{{ tmos_all_image }}"
+  local_action: stat path="{{ tmos_all_image }}"
   register: all_available
 - name: Copy TMOS ALL Disk Image
   when:
@@ -74,63 +75,70 @@
   become: yes
   command: "qemu-img resize {{ tmos_disk_image_folder }}/{{ guest_uuid }}.qcow2 +{{ guest_disk_image_size }}G"
   register: disk_resized
-- name: Generate Domain 4NIC XML 
+- name: Get Default Route Device Name
   when:
     - assure_guest
     - state == "running"
-    - guest_nic_count == 4
   tags: guest
-  template:
-    src: "domain_4_nic.xml.j2"
-    dest: "{{ tmos_domain_folder }}/{{ guest_uuid }}.xml"
-    mode: '0644'
-  register: domain_available
-- name: Generate Domain 3NIC XML 
-  when:
-    - assure_guest
-    - state == "running"
-    - guest_nic_count == 3
-  tags: guest
-  template:
-    src: "domain_3_nic.xml.j2"
-    dest: "{{ tmos_domain_folder }}/{{ guest_uuid }}.xml"
-    mode: '0644'
-  register: domain_available
-- name: Generate Domain 2NIC XML 
-  when:
-    - assure_guest
-    - state == "running"
-    - guest_nic_count == 2
-  tags: guest
-  template:
-    src: "domain_2_nic.xml.j2"
-    dest: "{{ tmos_domain_folder }}/{{ guest_uuid }}.xml"
-    mode: '0644'
-  register: domain_available
-- name: Generate Domain 1NIC XML 
-  when:
-    - assure_guest
-    - state == "running"
-    - guest_nic_count == 1
-  tags: guest
-  template:
-    src: "domain_1_nic.xml.j2"
-    dest: "{{ tmos_domain_folder }}/{{ guest_uuid }}.xml"
-    mode: '0644'
-  register: domain_available
-- name: TMOS Define Virtual Edition Instance
+  shell: "ip route list default | head -n 1 | cut -d ' ' -f5"
+  register: default_route_dev
+- name: TMOS Define 4NIC Virtual Edition Instance
   when: 
     - assure_guest
     - state == "running"
+    - guest_nic_count == 4
     - configdrive_copied
-    - domain_available
   tags: guest
   virt:
     uri: "{{ libvirt_connect_string }}"
     command: define
     name: "{{ guest_uuid }}"
-    xml: '{{ lookup("file", "{{ tmos_domain_folder }}/{{ guest_uuid }}.xml") }}'
+    xml: "{{ lookup('template', 'domain_4_nic.xml.j2') }}"
   register: domain_defined
+- name: TMOS Define 3NIC Virtual Edition Instance
+  when: 
+    - assure_guest
+    - state == "running"
+    - guest_nic_count == 3
+    - configdrive_copied
+  tags: guest
+  virt:
+    uri: "{{ libvirt_connect_string }}"
+    command: define
+    name: "{{ guest_uuid }}"
+    xml: "{{ lookup('template', 'domain_3_nic.xml.j2') }}"
+  register: domain_defined
+- name: TMOS Define 2NIC Virtual Edition Instance
+  when: 
+    - assure_guest
+    - state == "running"
+    - guest_nic_count == 2
+    - configdrive_copied
+  tags: guest
+  virt:
+    uri: "{{ libvirt_connect_string }}"
+    command: define
+    name: "{{ guest_uuid }}"
+    xml: "{{ lookup('template', 'domain_2_nic.xml.j2') }}"
+  register: domain_defined
+- name: TMOS Define 1NIC Virtual Edition Instance
+  when: 
+    - assure_guest
+    - state == "running"
+    - guest_nic_count == 1
+    - configdrive_copied
+  tags: guest
+  virt:
+    uri: "{{ libvirt_connect_string }}"
+    command: define
+    name: "{{ guest_uuid }}"
+    xml: "{{ lookup('template', 'domain_1_nic.xml.j2') }}"
+  register: domain_defined
+- name: Clean up Domain Template
+  when: 
+    - assure_guest
+    - domain_defined
+  local_action: "file path=./{{ guest_uuid }}.xml state=absent"
 - name: TMOS Virtual Edition Instance
   when: 
     - assure_guest
@@ -147,12 +155,13 @@
     - ve_in_state
     - state == 'destroyed'
   tags: guest
+  ignore_errors: yes
   virt:
     uri: "{{ libvirt_connect_string }}"
     command: undefine
     name: "{{ guest_uuid }}"
   register: ve_undefined
-- name: TMOS Virtual Edition Clean Up
+- name: TMOS Virtual Edition Folder Clean Up
   when: 
     - assure_guest
     - ve_undefined

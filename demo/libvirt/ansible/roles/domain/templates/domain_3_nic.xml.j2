@@ -61,9 +61,15 @@
     </controller>
     <interface type='direct'>
       <mac address='{{ guest_management_network_mac }}'/>
-      <source dev='{{ guest_management_bridge_interface }}' mode='bridge'/>
+      <source dev='{{ default_route_dev.stdout }}' mode='bridge'/>
       <model type='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <mac address='{{ guest_ha_network_mac }}'/>
+      <source network='ha'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
     </interface>
     <interface type='network'>
       <mac address='{{ guest_external_network_mac }}'/>

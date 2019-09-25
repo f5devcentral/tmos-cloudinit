@@ -54,9 +54,12 @@
     - configdrive_ISO_written
     - state == "running"
   tags: guest
+  become: yes
   file:
     path: "{{ tmos_configdrive_iso_folder }}" 
     state: directory
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
     recurse: yes
   register: configdrive_directory
 - name: Copy ConfigDrive ISO
@@ -66,6 +69,7 @@
     - state == "running"
   tags: guest
   copy:
+    remote_src: yes
     src: "{{ configdrives_dir.path }}/configdrive.iso"
     dest: "{{ tmos_configdrive_iso_folder }}/{{ guest_uuid }}.iso"
     mode: '0444'

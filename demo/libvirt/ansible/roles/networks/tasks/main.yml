@@ -1,7 +1,9 @@
 ---
 # tasks file for networks
 - name: Define HA Network
-  when: assure_libvirt_networks
+  when: 
+    - assure_libvirt_networks
+    - state == "running"
   tags: networks
   virt_net:
     uri: "{{ libvirt_connect_string }}"
@@ -13,6 +15,7 @@
 - name: Activate HA Network
   when: 
     - assure_libvirt_networks
+    - state == "running"
     - ha_network_defined
   tags: networks
   virt_net:
@@ -22,7 +25,9 @@
     name: ha
   register: ha_network_active
 - name: Define Internal Network
-  when: assure_libvirt_networks
+  when:
+    - assure_libvirt_networks
+    - state == "running"
   tags: networks
   virt_net:
     uri: "{{ libvirt_connect_string }}"
@@ -34,6 +39,7 @@
 - name: Activate Internal Network
   when: 
     - assure_libvirt_networks
+    - state == "running"
     - internal_network_defined
   tags: networks
   virt_net:
@@ -43,7 +49,9 @@
     name: internal
   register: internal_network_active
 - name: Define External Network
-  when: assure_libvirt_networks
+  when:
+    - assure_libvirt_networks
+    - state == "running"
   tags: networks
   virt_net:
     uri: "{{ libvirt_connect_string }}"
@@ -55,6 +63,7 @@
 - name: Activate External Network
   when: 
     - assure_libvirt_networks
+    - state == "running"
     - external_network_defined
   tags: networks
   virt_net:

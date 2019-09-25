@@ -5,6 +5,8 @@ assure_configdrive: true
 assure_guest: true
 # Can run ./utils/uuidgen.py to generate UUID
 guest_uuid: 83c4353b-1ad1-45dd-a393-52d94768b9d2
+# Can be ltm or all
+guest_type: all
 # Must be sufficent ram, vcpus, and disk to 
 # handle your BIG-IP modules delcarations
 # see hypervisor matrix from support.f5.com
@@ -13,36 +15,40 @@ guest_vcpus: 2
 guest_nic_count: 4
 guest_disk_image_size: 62
 # Can run ./utils/macgen.py to generate MAC addresses
-# Management network is assumed bridged for connectivity
+# Management network will bridge to the dev with 
+# the first listed default route. The default templates
+# user BIG-IQ license pool which require inboudn connectivity
 guest_management_network_mac: 02:16:3e:7a:c9:d4
-guest_management_bridge_interface: eth0
-# All other networks are assumed NAT virtual networks
+# The other interfacs are defined on routed NAT networks
 guest_ha_network_mac: 02:16:3e:08:40:01
 guest_internal_network_mac: 02:16:3e:56:5b:58
 guest_external_network_mac: 02:16:3e:41:8f:d8
-# Can be ltm or all
-guest_type: all
-guest_userdata_file: "declarations/user_data"
+# Authorization 
 guest_admin_password: f5c0nfig
 guest_root_password: f5c0nfig
-guest_ssh_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC9OJ+5GlA0AkOi7FNtRxabTvMGP20rAVnJSaV64GKqiu6EOhGm/wUyFrZ2vJxMwTp3KOeRqm7EmPTxIwh0zTlRoJhC+zqa+P6IAmLUq8oW99hzZ1nd3eAQ4nwPlfTDLbYTPOTB2ymc7hd5XRwXvnrl5P7KCI2RlItKDwufLYjO3gvWHNjqQIxPq8MwL7VYRcddfOqwJYbGPL+um9Kzhz4A/mgo++G65QnEsdcy6MV0Wp+l3rf9Z9TvrslMii45OTFkLtPzmqR0FSqTdC3kfP4jrepad2VLeeCml8KFYf6AYY8V5hhzFlI/SFdt0kaIpeULFEsMXKVYwcv6H2ZHS8Mp john.t.gruber@gmail.com"
+guest_ssk_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDojV4QqML+8b+R3IMVUH6AKiKT1YMyjNFEa7nJUM2B7XpkOpkmwoJkYrboCisFu2i+TaIu9UmdtpYf805YLDoabO7XCW1jcYYPsR8qDhPGFdgbl//JWM5Y4wfL/+0jYU8L48h+KoS8IlWPIMnpW7TjP5KHAiiAmH48d+mMR1QZnz6s/6cs54gq0P6/yXjnEA/bLEfx1GLQBGnezoxwh7IXhaNGC9UoFYX6c24K/kZHwrpy6VK6nUKIe6IluuEJcTnxNY2CTIgmMV7xNWLMgt8wjNChbp9ljVqAA1yXtCzo0eB2NnVDB/mJOgpj9RlaNP7RjPRaA3ZhcxLM+q9eNpki1x3UI6NONHuWBuj8cYf3lA9Kwoo3Ts+Q/W7Ft1gtPpJmwNPJu9IO5KOHjQicQkIthzbC8iks1y+BmlCyxYVh+Z5EVi3kctaLGt2Pql9lSyyqSXMsZwzOGXdqTz/mXdLa3/Y+dFGW0qwtXmdUgM84mYIgwyAVdmTK3bZ2qPBUTLjugCt5nJbunG3D7/LLsLwt87B/WHTI0qDBUP43wwbwdy5zinXkmNOpqDWmFjX0gmGyI/0V5Od8JF1GicrBglJbEVurf3zaLvADOD6zAlj1k1TjKHXBhH0O2M9pZ963LwFtCuLedGBEMSuxjYSqUEcgsHgHlDwvAQ+wjkRqzFiJsQ== test@example.com"
+# Licensing
 guest_bigiq_license_host: 172.13.1.108
 guest_bigiq_license_user: admin
 guest_bigiq_license_password: admin
 guest_bigiq_license_pool: BIGIPVEREGKEYS
+# AS3 policy
 guest_vip_ip: 192.168.205.10
 guest_waf_policy_url: "https://raw.githubusercontent.com/f5devcentral/f5-asm-policy-templates/master/owasp_ready_template/owasp-no-auto-tune-v1.1.xml"
-guest_phone_home_url: "https://webhook.site/62b7df15-04d4-4571-b436-31b876e6e7ce"
-# Hypervisor Environemnt Paths
+guest_phone_home_url: "https://webhook.site/92a65a6f-0cd8-4bea-ab83-79df26c565f4"
+# Local TMOS Images
 tmos_version: 14.1.2-0.0.37
 tmos_ltm_image: "/TMOSImages/BIGIP-{{ tmos_version }}.LTM_1SLOT.qcow2/BIGIP-{{ tmos_version }}.qcow2"
 tmos_all_image: "/TMOSImages/BIGIP-{{ tmos_version }}.ALL_1SLOT.qcow2/BIGIP-{{ tmos_version }}.qcow2"
+# Remote Libvirt Paths
 tmos_domain_folder: "/Instances/{{ guest_uuid }}"
 tmos_configdrive_iso_folder: "{{ tmos_domain_folder }}/configdrive"
 tmos_disk_image_folder: "{{ tmos_domain_folder }}/disk"
 
 # Libvirt connection - Use the default docker host docker0 IP address and SSH (it is ansible)
 libvirt_connect_string: qemu+ssh://172.17.0.1/system
+
+
 #
 # Hypervisor Network setup
 #

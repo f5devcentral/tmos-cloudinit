@@ -1,5 +1,3 @@
 #!/bin/bash
-echo "Removing ConfigDrive ISO"
-rm -rf ./configdrive/*
 echo "Destroying TMOS VE playbook tasks"
 ansible-playbook -e '{ "state": "destroyed" }'  site.yml
