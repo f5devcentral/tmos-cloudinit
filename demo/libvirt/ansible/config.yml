@@ -15,24 +15,7 @@ guest_vcpus: 2
 guest_nic_count: 4
 guest_disk_image_size: 62
 # Can run ./utils/macgen.py to generate MAC addresses
-# Management network will bridge to the dev with 
-# the first listed default route. The default templates
-# user BIG-IQ license pool which require inboudn connectivity
 guest_management_network_mac: 02:16:3e:7a:c9:d4
-#
-# By default if guest_management_network_dev is dynamic,
-# the host will polled for the device which hosts the first
-# default route entry. This typically means the management
-# interface will not be reachable by the hypervisor
-# host, but will be reachable from outside the hypervisor
-# host. If you want an alternative interface supply 
-# the interface name as the value of guest_management_network_dev
-# (i.e. eth0). The macvtap will still be used, but you can 
-# dictate the interface statically.
-#
-# guest_management_network_dev: dynamic
-#
-# The other interfacs are defined on routed NAT networks
 guest_ha_network_mac: 02:16:3e:08:40:01
 guest_internal_network_mac: 02:16:3e:56:5b:58
 guest_external_network_mac: 02:16:3e:41:8f:d8
@@ -48,6 +31,7 @@ guest_bigiq_license_pool: BIGIPVEREGKEYS
 # AS3 policy
 guest_vip_ip: 192.168.205.10
 guest_waf_policy_url: "https://raw.githubusercontent.com/f5devcentral/f5-asm-policy-templates/master/owasp_ready_template/owasp-no-auto-tune-v1.1.xml"
+# monitor at: https://webhook.site/#!/92a65a6f-0cd8-4bea-ab83-79df26c565f4
 guest_phone_home_url: "https://webhook.site/92a65a6f-0cd8-4bea-ab83-79df26c565f4"
 # Local TMOS Images
 tmos_version: 14.1.2-0.0.37

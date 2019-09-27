@@ -200,6 +200,19 @@
     command: undefine
     name: "{{ guest_uuid }}"
   register: ve_undefined
+- name: Revoking Unreachable Host License
+  when: 
+    - assure_guest
+    - ve_undefined
+    - state == 'destroyed'
+  tags: guest
+  ignore_errors: yes
+  f5_bigiq_revoke_license_by_mac:
+    bigiqhost: "{{ guest_bigiq_license_host }}"
+    bigiqusername: "{{ guest_bigiq_license_user }}"
+    bigiqpassword: "{{ guest_bigiq_license_password }}"
+    bigiqpool: "{{ guest_bigiq_license_pool }}"
+    devicemac: "{{ guest_management_network_mac }}"
 - name: TMOS Virtual Edition Folder Clean Up
   when: 
     - assure_guest
@@ -209,4 +222,4 @@
   file:
     path: "{{ tmos_domain_folder }}"
     state: absent
-  register: ve_deleted
+  register: 
