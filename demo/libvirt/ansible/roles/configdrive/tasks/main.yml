@@ -59,7 +59,6 @@
     - state == "running"
   tags: guest
   copy:
-    remote_src: yes
     src: "{{ configdrives_dir.path }}/configdrive.iso"
     dest: "{{ tmos_configdrive_iso_folder }}/{{ guest_uuid }}.iso"
     mode: '0444'

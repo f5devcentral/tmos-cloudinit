@@ -43,7 +43,7 @@ tmos_configdrive_iso_folder: "{{ tmos_domain_folder }}/configdrive"
 tmos_disk_image_folder: "{{ tmos_domain_folder }}/disk"
 
 # Libvirt connection - Use the default docker host docker0 IP address and SSH (it is ansible)
-libvirt_connect_string: qemu+ssh://172.17.0.1/system
+libvirt_connect_string: qemu+ssh://{{ inventory_hostname }}/system
 
 
 #
