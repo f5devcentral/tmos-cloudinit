@@ -19,6 +19,19 @@ guest_disk_image_size: 62
 # the first listed default route. The default templates
 # user BIG-IQ license pool which require inboudn connectivity
 guest_management_network_mac: 02:16:3e:7a:c9:d4
+#
+# By default if guest_management_network_dev is dynamic,
+# the host will polled for the device which hosts the first
+# default route entry. This typically means the management
+# interface will not be reachable by the hypervisor
+# host, but will be reachable from outside the hypervisor
+# host. If you want an alternative interface supply 
+# the interface name as the value of guest_management_network_dev
+# (i.e. eth0). The macvtap will still be used, but you can 
+# dictate the interface statically.
+#
+# guest_management_network_dev: dynamic
+#
 # The other interfacs are defined on routed NAT networks
 guest_ha_network_mac: 02:16:3e:08:40:01
 guest_internal_network_mac: 02:16:3e:56:5b:58
@@ -55,32 +68,48 @@ libvirt_connect_string: qemu+ssh://172.17.0.1/system
 # The Management network is assume bridged to an interface on
 # hose (provider network) for connectivity to BIG-IQ licensing
 #
-# For the other networks, we can use Ansible to make sure you 
-# have your hypervisor host's networks setup appropriately 
-# for BIG-IP instance.
+# For the other networks, you can set network_mode to 'routed' or 'bridged'
+# If you set 'bridged' then you must set an appropriate _dev name.
 #
 assure_libvirt_networks: true
+network_mode: routed
+management_network_uuid: 035b7ffc-aa1f-4f1a-9385-8989ca9ccd57
+management_network_source: virbr90
+management_network_forward_mode: nat
+management_network_mac: "52:54:00:51:9c:f0"
+management_network_ipv4: 192.168.245.1
+management_network_ipv4_netmask: 255.255.255.0
+management_network_dhcpv4_start: 192.168.245.10
+management_network_dhcpv4_end: 192.168.245.254
+management_network_ipv4_prefix: 24
+# management_dev = eth0
 ha_network_uuid: 819b276a-2463-4929-aa1b-844099b7aad6
-ha_network_source: virbr4
+ha_network_source: virbr91
+ha_network_forward_mode: route
 ha_network_mac: "52:54:00:be:09:07"
 ha_network_ipv4: 192.168.203.1
 ha_network_ipv4_netmask: 255.255.255.0
 ha_network_dhcpv4_start: 192.168.203.2
 ha_network_dhcpv4_end: 192.168.203.254
 ha_network_ipv4_prefix: 24
+# ha_dev = eth1
 internal_network_uuid: 5fb736ef-33b0-4d12-830a-d85c5a712fcd
-internal_network_source: virbr5
+internal_network_source: virbr92
+internal_network_forward_mode: nat
 internal_network_mac: "52:54:00:9b:b1:17"
 internal_network_ipv4: 192.168.204.1
 internal_network_ipv4_netmask: 255.255.255.0
 internal_network_dhcpv4_start: 192.168.204.2
 internal_network_dhcpv4_end: 192.168.204.254
 internal_network_ipv4_prefix: 24
+# internal_dev = eth2
 external_network_uuid: 93f33b8d-7811-489c-b9d5-815a057813e4
-external_network_source: virbr6
+external_network_source: virbr93
+external_network_forward_mode: nat
 external_network_mac: "52:54:00:0d:25:ee"
 external_network_ipv4: 192.168.205.100
 external_network_ipv4_netmask: 255.255.255.0
 external_network_dhcpv4_start: 192.168.205.2
 external_network_dhcpv4_end: 192.168.205.254
 external_network_ipv4_prefix: 24
+# external_dev = eth3

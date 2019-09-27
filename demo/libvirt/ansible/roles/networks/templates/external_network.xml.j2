@@ -4,7 +4,7 @@
   <bridge name='{{ external_network_source }}' stp='off' delay='0'/>
   <mac address='{{ external_network_mac }}'/>
   <domain name='local'/>
-  <forward mode="route"/>
+  <forward mode='{{ external_network_forward_mode }}'/>
   <ip address='{{ external_network_ipv4 }}' netmask='{{ external_network_ipv4_netmask }}'>
     <dhcp>
       <range start='{{ external_network_dhcpv4_start }}' end='{{ external_network_dhcpv4_end }}'/>

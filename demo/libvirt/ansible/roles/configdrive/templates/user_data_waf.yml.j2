@@ -27,9 +27,8 @@ tmos_dhcpv4_tmm:
         bigIqUsername: {{ guest_bigiq_license_user }}
         bigIqPassword: {{ guest_bigiq_license_password }}
         licensePool: {{ guest_bigiq_license_pool }}
-        reachable: true
-        bigIpUsername: admin
-        bigIpPassword: {{ guest_admin_password }}
+        reachable: false
+        hypervisor: kvm
       dnsServers:
         class: DNS
         nameServers:
@@ -52,7 +51,7 @@ tmos_dhcpv4_tmm:
     schemaVersion: 3.0.0
     label: ASM_VS1
     remark: ASM_VS1
-    Sample_app_sec_01:
+    waf_protected_app_01:
       class: Tenant
       HTTP_Service:
         class: Application

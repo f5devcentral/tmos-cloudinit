@@ -1,8 +1,48 @@
 ---
 # tasks file for networks
+- name: Define Management Network
+  when: 
+    - assure_libvirt_networks
+    - network_mode == "routed"
+    - state == "running"
+  tags: networks
+  virt_net:
+    uri: "{{ libvirt_connect_string }}"
+    autostart: yes
+    command: define
+    name: management
+    xml: '{{ lookup("template", "management_network.xml.j2") }}'
+  register: management_network_defined
+- name: Activate Management Network
+  when: 
+    - assure_libvirt_networks
+    - network_mode == "routed"
+    - state == "running"
+    - management_network_defined
+  tags: networks
+  virt_net:
+    uri: "{{ libvirt_connect_string }}"
+    command: start
+    state: active
+    name: management
+  register: management_network_active
+- name: Destroy Management Network
+  when: 
+    - assure_libvirt_networks
+    - network_mode == "routed"
+    - state == "destroyed"
+  tags: networks
+  virt_net:
+    uri: "{{ libvirt_connect_string }}"
+    command: stop
+    state: absent
+    name: management
+  ignore_errors: yes
+  register: ha_network_destroyed
 - name: Define HA Network
   when: 
     - assure_libvirt_networks
+    - network_mode == "routed"
     - state == "running"
   tags: networks
   virt_net:
@@ -15,6 +55,7 @@
 - name: Activate HA Network
   when: 
     - assure_libvirt_networks
+    - network_mode == "routed"
     - state == "running"
     - ha_network_defined
   tags: networks
@@ -24,9 +65,23 @@
     state: active
     name: ha
   register: ha_network_active
+- name: Destroy HA Network
+  when: 
+    - assure_libvirt_networks
+    - network_mode == "routed"
+    - state == "destroyed"
+  tags: networks
+  virt_net:
+    uri: "{{ libvirt_connect_string }}"
+    command: stop
+    state: absent
+    name: ha
+  ignore_errors: yes
+  register: ha_network_destroyed
 - name: Define Internal Network
   when:
     - assure_libvirt_networks
+    - network_mode == "routed"
     - state == "running"
   tags: networks
   virt_net:
@@ -39,6 +94,7 @@
 - name: Activate Internal Network
   when: 
     - assure_libvirt_networks
+    - network_mode == "routed"
     - state == "running"
     - internal_network_defined
   tags: networks
@@ -48,9 +104,24 @@
     state: active
     name: internal
   register: internal_network_active
+- name: Destroy Internal Network
+  when: 
+    - assure_libvirt_networks
+    - network_mode == "routed"
+    - state == "destroyed"
+  tags: networks
+  virt_net:
+    uri: "{{ libvirt_connect_string }}"
+    autostart: yes
+    command: stop
+    state: absent
+    name: internal
+  ignore_errors: yes
+  register: internal_network_destroyed
 - name: Define External Network
   when:
     - assure_libvirt_networks
+    - network_mode == "routed"
     - state == "running"
   tags: networks
   virt_net:
@@ -63,6 +134,7 @@
 - name: Activate External Network
   when: 
     - assure_libvirt_networks
+    - network_mode == "routed"
     - state == "running"
     - external_network_defined
   tags: networks
@@ -72,3 +144,17 @@
     state: active
     name: external
   register: external_network_active
+- name: Destroy External Network
+  when: 
+    - assure_libvirt_networks
+    - network_mode == "routed"
+    - state == "destroyed"
+  tags: networks
+  virt_net:
+    uri: "{{ libvirt_connect_string }}"
+    autostart: yes
+    command: stop
+    state: absent
+    name: external
+  ignore_errors: yes
+  register: external_network_destroyed

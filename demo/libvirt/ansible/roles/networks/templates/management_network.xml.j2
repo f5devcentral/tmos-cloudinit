@@ -1,0 +1,13 @@
+<network>
+  <name>management</name>
+  <uuid>{{ management_network_uuid }}</uuid>
+  <bridge name='{{ management_network_source }}' stp='off' delay='0'/>
+  <mac address='{{ management_network_mac }}'/>
+  <domain name='local'/>
+  <forward mode='{{ management_network_forward_mode }}'/>
+  <ip address='{{ management_network_ipv4 }}' netmask='{{ management_network_ipv4_netmask }}'>
+    <dhcp>
+      <range start='{{ management_network_dhcpv4_start }}' end='{{ management_network_dhcpv4_end }}'/>
+    </dhcp>
+  </ip>
+</network>

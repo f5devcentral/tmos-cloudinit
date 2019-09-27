@@ -59,9 +59,9 @@
     <controller type='virtio-serial' index='0'>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
     </controller>
-    <interface type='direct'>
+    <interface type='network'>
       <mac address='{{ guest_management_network_mac }}'/>
-      <source dev='{{ default_route_dev.stdout }}' mode='bridge'/>
+      <source network='management'/>
       <model type='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
     </interface>
@@ -70,12 +70,6 @@
       <source network='ha'/>
       <model type='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
-    </interface>
-    <interface type='network'>
-      <mac address='{{ guest_internal_network_mac }}'/>
-      <source network='internal'/>
-      <model type='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
     </interface>
     <interface type='network'>
       <mac address='{{ guest_external_network_mac }}'/>

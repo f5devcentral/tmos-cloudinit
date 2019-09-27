@@ -4,7 +4,7 @@
   <bridge name='{{ ha_network_source }}' stp='on' delay='0'/>
   <mac address='{{ ha_network_mac }}'/>
   <domain name='local'/>
-  <forward mode="route"/>
+  <forward mode='{{ ha_network_forward_mode }}'/>
   <ip address='{{ ha_network_ipv4 }}' netmask='{{ ha_network_ipv4_netmask }}'>
     <dhcp>
       <range start='{{ ha_network_dhcpv4_start }}' end='{{ ha_network_dhcpv4_end }}'/>

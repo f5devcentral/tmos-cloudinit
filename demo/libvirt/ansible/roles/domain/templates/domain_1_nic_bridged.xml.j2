@@ -59,17 +59,11 @@
     <controller type='virtio-serial' index='0'>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
     </controller>
-    <interface type='direct'>
+    <interface type='direct' mode='bridge'>
       <mac address='{{ guest_management_network_mac }}'/>
-      <source dev='{{ default_route_dev.stdout }}' mode='bridge'/>
+      <source dev='{{ management_dev }}' mode='bridge'/>
       <model type='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
-    </interface>
-    <interface type='network'>
-      <mac address='{{ guest_external_network_mac }}'/>
-      <source network='external'/>
-      <model type='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
     </interface>
     <serial type='pty'>
       <target type='isa-serial' port='0'>

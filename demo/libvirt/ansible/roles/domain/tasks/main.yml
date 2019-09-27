@@ -75,16 +75,10 @@
   become: yes
   command: "qemu-img resize {{ tmos_disk_image_folder }}/{{ guest_uuid }}.qcow2 +{{ guest_disk_image_size }}G"
   register: disk_resized
-- name: Get Default Route Device Name
-  when:
-    - assure_guest
-    - state == "running"
-  tags: guest
-  shell: "ip route list default | head -n 1 | cut -d ' ' -f5"
-  register: default_route_dev
 - name: TMOS Define 4NIC Virtual Edition Instance
   when: 
     - assure_guest
+    - network_mode == "routed"
     - state == "running"
     - guest_nic_count == 4
     - configdrive_copied
@@ -93,11 +87,26 @@
     uri: "{{ libvirt_connect_string }}"
     command: define
     name: "{{ guest_uuid }}"
-    xml: "{{ lookup('template', 'domain_4_nic.xml.j2') }}"
+    xml: "{{ lookup('template', 'domain_4_nic_routed.xml.j2') }}"
+  register: domain_defined
+- name: TMOS Define 4NIC Virtual Edition Instance
+  when: 
+    - assure_guest
+    - network_mode == "bridged"
+    - state == "running"
+    - guest_nic_count == 4
+    - configdrive_copied
+  tags: guest
+  virt:
+    uri: "{{ libvirt_connect_string }}"
+    command: define
+    name: "{{ guest_uuid }}"
+    xml: "{{ lookup('template', 'domain_4_nic_bridged.xml.j2') }}"
   register: domain_defined
 - name: TMOS Define 3NIC Virtual Edition Instance
   when: 
     - assure_guest
+    - network_mode == "routed"
     - state == "running"
     - guest_nic_count == 3
     - configdrive_copied
@@ -106,11 +115,26 @@
     uri: "{{ libvirt_connect_string }}"
     command: define
     name: "{{ guest_uuid }}"
-    xml: "{{ lookup('template', 'domain_3_nic.xml.j2') }}"
+    xml: "{{ lookup('template', 'domain_3_nic_routed.xml.j2') }}"
+  register: domain_defined
+- name: TMOS Define 3NIC Virtual Edition Instance
+  when: 
+    - assure_guest
+    - network_mode == "bridged"
+    - state == "running"
+    - guest_nic_count == 3
+    - configdrive_copied
+  tags: guest
+  virt:
+    uri: "{{ libvirt_connect_string }}"
+    command: define
+    name: "{{ guest_uuid }}"
+    xml: "{{ lookup('template', 'domain_3_nic_bridged.xml.j2') }}"
   register: domain_defined
 - name: TMOS Define 2NIC Virtual Edition Instance
   when: 
     - assure_guest
+    - network_mode == "routed"
     - state == "running"
     - guest_nic_count == 2
     - configdrive_copied
@@ -119,7 +143,21 @@
     uri: "{{ libvirt_connect_string }}"
     command: define
     name: "{{ guest_uuid }}"
-    xml: "{{ lookup('template', 'domain_2_nic.xml.j2') }}"
+    xml: "{{ lookup('template', 'domain_2_nic_routed.xml.j2') }}"
+  register: domain_defined
+- name: TMOS Define 2NIC Virtual Edition Instance
+  when: 
+    - assure_guest
+    - network_mode == "bridged"
+    - state == "running"
+    - guest_nic_count == 2
+    - configdrive_copied
+  tags: guest
+  virt:
+    uri: "{{ libvirt_connect_string }}"
+    command: define
+    name: "{{ guest_uuid }}"
+    xml: "{{ lookup('template', 'domain_2_nic_bridged.xml.j2') }}"
   register: domain_defined
 - name: TMOS Define 1NIC Virtual Edition Instance
   when: 
@@ -148,6 +186,7 @@
     uri: "{{ libvirt_connect_string }}"
     state: "{{ state }}"
     name: "{{ guest_uuid }}"
+  ignore_errors: yes
   register: ve_in_state
 - name: TMOS Virtual Edition Clean Up
   when: 

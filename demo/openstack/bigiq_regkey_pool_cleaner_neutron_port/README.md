@@ -113,5 +113,5 @@ docker run --rm -it --env-file ./demo/openstack/bigiq_regkey_pool_cleaner_neutro
 To let the container run in the background as a service, simply daemonize the container.
 
 ```
-docker run -d --rm -it --env-file ./demo/openstack/bigiq_regkey_pool_cleaner_neutron_port/bigiq_regkey_pool_cleaner.env bigiq_regkeypool_cleaner_neutron_port:latest
+docker run -d --rm --env-file ./demo/openstack/bigiq_regkey_pool_cleaner_neutron_port/bigiq_regkey_pool_cleaner.env bigiq_regkeypool_cleaner_neutron_port:latest
 ```
