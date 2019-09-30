@@ -13,7 +13,7 @@
     - guest_type == "ltm"
     - state == "running"
   tags: guest
-  local_action: template src=user_data_ltm.yml.j2 dest="{{ declarations_dir.path }}/user_data" mode='0644'
+  local_action: template src=user_data_adc.yml.j2 dest="{{ declarations_dir.path }}/user_data" mode='0644'
   register: userdata_available
 - name: Create user_data User Data file for WAF
   when: 

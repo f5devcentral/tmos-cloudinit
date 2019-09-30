@@ -45,5 +45,31 @@ tmos_dhcpv4_tmm:
         ui.advisory.enabled: true
         ui.advisory.color: orange
         ui.advisory.text: This device is under centralized management.
-  as3_enabled: false
+  as3_declaration:
+    class: ADC
+    schemaVersion: 3.0.0
+    label: ADC_VS1
+    remark: ADC_VS1
+    vs_app_01:
+      class: Tenant
+      HTTP_Service:
+        class: Application
+        template: http
+        serviceMain:
+          class: Service_HTTP
+          virtualAddresses:
+            - {{ guest_vip_ip }}
+          snat: auto
+          pool: Pool1
+        Pool1:
+          class: Pool
+          monitors:
+            - http
+          members:
+            {% for member in guest_pool_members %}  
+            - servicePort: {{ guest_pool_member_port }}
+              serverAddresses:
+                - {{ member }}
+            {% endfor %}
+  
   phone_home_url: "{{ guest_phone_home_url }}"

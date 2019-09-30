@@ -188,6 +188,14 @@
     name: "{{ guest_uuid }}"
   ignore_errors: yes
   register: ve_in_state
+- name: Show Virtual Server Address
+  when: 
+    - assure_guest
+    - ve_in_state
+    - state == 'running'
+  tags: guest
+  debug:
+    msg: "http://{{ guest_vip_ip }}"
 - name: TMOS Virtual Edition Clean Up
   when: 
     - assure_guest

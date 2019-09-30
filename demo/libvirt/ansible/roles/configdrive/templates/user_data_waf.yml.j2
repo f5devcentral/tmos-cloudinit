@@ -69,12 +69,12 @@ tmos_dhcpv4_tmm:
           monitors:
             - http
           members:
-            - servicePort: 80
+            {% for member in guest_pool_members %}  
+            - servicePort: {{ guest_pool_member_port }}
               serverAddresses:
-                - 157.245.230.31
-            - servicePort: 80
-              serverAddresses:
-                - 157.245.212.107
+                - {{ member }}
+            {% endfor %}
+
         WAFPolicy:
           class: WAF_Policy
           url: "{{ guest_waf_policy_url }}"
