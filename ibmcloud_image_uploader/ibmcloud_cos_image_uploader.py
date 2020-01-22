@@ -179,7 +179,7 @@ if __name__ == "__main__":
         err_message += "please set env TMOS_IMAGE_DIR to scan for patched TMOS images\n"
     if not COS_API_KEY:
         err = True
-        err_message += "please set env COS_API_KEY_ID for your IBM COS resource\n"
+        err_message += "please set env COS_API_KEY for your IBM COS resource\n"
     if not COS_RESOURCE_CRN:
         err = True
         err_message += "please set env COS_RESOURCE_CRN for your IBM COS resource\n"
