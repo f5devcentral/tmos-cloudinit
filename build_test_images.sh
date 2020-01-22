@@ -1,30 +1,32 @@
 #!/bin/bash
 source /data/F5Download/admin-openrc.sh
-iControlLXPackagesDir=/data/iControlLXNoBuilds
+iControlLXPackagesDir=/data/iControlLXLatestBuild
 imagesDir=/data/F5Download/BIGIP-TEST
-version=14.1.0.5-0.0.5
+version=14.1.2-0.0.37
 external_network_name=public
 management_network_name=management
 cluster_network_name=HA
 internal_network_name=internal
 vip_network_name=external
+ltm_1slot_image_name="BIGIP-${version}.LTM_1SLOT"
 ltm_1slot_flavor=LTM.1SLOT
+all_1slot_image_name="BIGIP-${version}.ALL_1SLOT"
 all_1slot_flavor=ALL.1SLOT
-phone_home_url_view='https://webhook.site/#!/5a5310ff-648d-4dfc-97e3-6bbe9d88d111/9c8aeb41-0440-47da-b94e-75b2052aa6a2/1'
-phone_home_url='https://webhook.site/5a5310ff-648d-4dfc-97e3-6bbe9d88d111'
+webhook_uuid=$(./generate_webhook_uuid.py)
+phone_home_url_view="https://webhook.site/#!/${webhook_uuid}"
+phone_home_url="https://webhook.site/${webhook_uuid}"
 openstack flavor list | grep LTM.1SLOT | cut -d' ' -f2
 
-echo "docker run --rm -it -v ${imagesDir}:/TMOSImages -v ${iControlLXPackagesDir}:/iControlLXPackages tmos_image_patcher:latest"
 docker run --rm -it -v "${imagesDir}":/TMOSImages -v "${iControlLXPackagesDir}":/iControlLXPackages tmos_image_patcher:latest
 
-openstack image delete OpenStack_BIGIP-${version}.ALL_1SLOT.qcow2
-openstack image create --container-format bare --disk-format qcow2 --file $imagesDir/BIGIP-${version}.ALL_1SLOT.qcow2/BIGIP-${version}.qcow2  OpenStack_BIGIP-${version}.ALL_1SLOT.qcow2
-openstack image delete OpenStack_BIGIP-${version}.LTM_1SLOT.qcow2
-openstack image create --container-format bare --disk-format qcow2 --file $imagesDir/BIGIP-${version}.LTM_1SLOT.qcow2/BIGIP-${version}.qcow2  OpenStack_BIGIP-${version}.LTM_1SLOT.qcow2
+openstack image delete $all_1slot_image_name
+openstack image delete $ltm_1slot_image_name
 
-allimage=$(openstack image list | grep OpenStack_BIGIP-${version}.ALL_1SLOT.qcow2 | cut -d' ' -f2)
+docker run --rm -it -v "${imagesDir}":/TMOSImages -e OS_USERNAME=$OS_USERNAME -e OS_PASSWORD=$OS_PASSWORD -e OS_AUTH_URL=$OS_AUTH_URL openstack_image_uploader:latest 
+
+allimage=$(openstack image list | grep ${all_1slot_image_name} | cut -d' ' -f2)
 echo "ALL image is: ${allimage}"
-ltmimage=$(openstack image list | grep OpenStack_BIGIP-${version}.LTM_1SLOT.qcow2 | cut -d' ' -f2)
+ltmimage=$(openstack image list | grep ${ltm_1slot_image_name} | cut -d' ' -f2)
 echo "LTM image is: ${ltmimage}"
 rtdir=$(pwd)
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -59,3 +61,5 @@ sed -i "/ monitor at/c\  # monitor at: ${phone_home_url_view}" *_env.yaml
 sed -i "/ phone_home_url/c\  phone_home_url: ${phone_home_url}" *_env.yaml
 
 cd ${rtdir}
+
+echo "follow webhook progress at: ${phone_home_url_view}"
