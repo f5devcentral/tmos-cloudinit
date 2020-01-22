@@ -98,7 +98,7 @@ def assure_bucket(bucket_name):
             if bucket.name == bucket_name:
                 return True
         LOG.debug('creating bucket %s', bucket_name)
-        cos.Bucket(bucket_name).create(
+        cos_res.Bucket(bucket_name).create(
             CreateBucketConfiguration={
                 "LocationConstraint": COS_IMAGE_LOCATION
             }

@@ -12,11 +12,11 @@ RUN apt-get update && \
 
 ## INJECT_PATCH_INSTRUCTION ##
 RUN git clone https://github.com/f5devcentral/tmos-cloudinit.git
-RUN pip install ibm-cos-sdk
+RUN pip install wheel bdist-wheel-name ibm-cos-sdk
 
 VOLUME ["/TMOSImages"]
 
 ENV TMOS_IMAGE_DIR '/TMOSImages'
 
-ENTRYPOINT [ "/tmos-cloudinit/ibm_cos_patcher/ibm_cos_image_patcher.py" ]
+ENTRYPOINT [ "/tmos-cloudinit/ibmcloud_image_uploader/ibmcloud_cos_image_uploader.py" ]
 
