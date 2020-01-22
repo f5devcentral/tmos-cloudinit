@@ -105,6 +105,8 @@ def assure_bucket(bucket_name):
         )
         return True
     except ClientError as ce:
+        if ce.message.contains('BucketAlreadyExists'):
+            return True
         LOG.error('client error assuring bucket %s: %s', bucket_name, ce)
         return False
     except Exception as ex:
