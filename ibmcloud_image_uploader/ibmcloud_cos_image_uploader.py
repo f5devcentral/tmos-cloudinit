@@ -103,6 +103,7 @@ def assure_bucket(bucket_name):
                 "LocationConstraint": COS_IMAGE_LOCATION
             }
         )
+        return True
     except ClientError as ce:
         LOG.error('client error assuring bucket %s: %s', bucket_name, ce)
         return False
