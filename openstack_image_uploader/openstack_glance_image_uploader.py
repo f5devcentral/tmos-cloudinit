@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 """
-This module contains the logic to scan for patched TMOS disk images 
+This module contains the logic to scan for patched TMOS disk images
 and then upload to OpenStack Glance Image Service
 """
 
@@ -65,6 +65,7 @@ def get_patched_images(tmos_image_dir):
 
 
 def get_glance_client():
+    """get OpenStack glance client"""
     loader = loading.get_plugin_loader('password')
     auth = loader.load_from_options(
         auth_url=OS_AUTH_URL,
@@ -78,24 +79,31 @@ def get_glance_client():
 
 
 def get_image_name(image_path):
+    """get image name formatted string"""
     return os.path.splitext(os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, ''))[0]
 
 
 def assure_glance_image(image_path):
     """check if patched image already exists"""
     image_name = get_image_name(image_path)
-    
+
     try:
         glance = get_glance_client()
 
         for image in glance.images.list():
             if image.name == image_name:
-                LOG.debug('found existing image %s with name %s', image.id, image_name);
+                LOG.debug('found existing image %s with name %s', image.id, image_name)
                 return True
         image = glance.images.create(name=image_name, container_format='bare', disk_format='qcow2', visibility=OS_IMAGE_VISIBILITY)
         LOG.debug('image created with id: %s for name %s', image.id, image_name)
         glance.images.upload(image.id, open(image_path, 'rb'))
         LOG.debug('upload complete image: %s', image_name)
+        md5sum_path = "%s.md5" % image_path
+        if os.path.exists(md5sum_path):
+            with open(md5sum_path, 'r') as md5sum_file:
+                md5sum = md5sum_file.readlines()
+                kwargs = {'owner_specified.shade.md5':md5sum}
+                glance.images.update(image.id, **kwargs)
         return True
     except Exception as ex:
         LOG.error('exception occurred assuring glance image for file %s: %s', image_path, ex)
@@ -103,11 +111,13 @@ def assure_glance_image(image_path):
 
 
 def upload_patched_images():
+    """upload discovered images to OpenStack glance"""
     for image_path in get_patched_images(TMOS_IMAGE_DIR):
         assure_glance_image(image_path)
 
 
 def initialize():
+    """initialize configuration from environment"""
     global TMOS_IMAGE_DIR, OS_PROJECT_DOMAIN_NAME, OS_USER_DOMAIN_NAME, OS_PROJECT_NAME, OS_IMAGE_VISIBILITY, OS_USERNAME, OS_PASSWORD, OS_AUTH_URL
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     OS_PROJECT_DOMAIN_NAME = os.getenv('OS_PROJECT_DOMAIN_NAME', 'default')
@@ -124,22 +134,22 @@ if __name__ == "__main__":
     LOG.debug('process start time: %s', datetime.datetime.fromtimestamp(
         START_TIME).strftime("%A, %B %d, %Y %I:%M:%S"))
     initialize()
-    err_message = ''
-    err = False
+    ERROR_MESSAGE = ''
+    ERRPR = False
     if not TMOS_IMAGE_DIR:
-        err = True
-        err_message += "please set env TMOS_IMAGE_DIR to scan for patched TMOS images\n"
+        ERRPR = True
+        ERROR_MESSAGE += "please set env TMOS_IMAGE_DIR to scan for patched TMOS images\n"
     if not OS_USERNAME:
-        err = True
-        err_message += "please set env OS_USERNAME to your OpenStack username\n"
+        ERRPR = True
+        ERROR_MESSAGE += "please set env OS_USERNAME to your OpenStack username\n"
     if not OS_PASSWORD:
-        err = True
-        err_message += "please set env OS_PASSWORD to your OpenStack password\n"
+        ERRPR = True
+        ERROR_MESSAGE += "please set env OS_PASSWORD to your OpenStack password\n"
     if not OS_AUTH_URL:
-        err = True
-        err_message += "please set env OS_AUTH_URL to your OpenStack Keystone endpoint URL\n"
-    if err:
-        LOG.error('\n\n%s\n', err_message)
+        ERRPR = True
+        ERROR_MESSAGE += "please set env OS_AUTH_URL to your OpenStack Keystone endpoint URL\n"
+    if ERRPR:
+        LOG.error('\n\n%s\n', ERROR_MESSAGE)
         sys.exit(1)
     upload_patched_images()
     STOP_TIME = time.time()
