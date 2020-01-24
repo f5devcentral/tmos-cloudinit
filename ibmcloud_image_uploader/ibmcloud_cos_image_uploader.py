@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 """
-This module contains the logic to scan for patched TMOS disk images 
+This module contains the logic to scan for patched TMOS disk images
 and then upload to IBM Cloud Object Storage
 """
 
@@ -47,6 +47,7 @@ LOGSTREAM = logging.StreamHandler(sys.stdout)
 LOGSTREAM.setFormatter(FORMATTER)
 LOG.addHandler(LOGSTREAM)
 
+
 def get_patched_images(tmos_image_dir):
     """get TMOS patched disk images"""
     return_image_files = []
@@ -56,7 +57,8 @@ def get_patched_images(tmos_image_dir):
         if os.path.isdir(patched_dir_path):
             for patched_image in os.listdir(patched_dir_path):
                 if os.path.splitext(patched_image)[1] in IMAGE_TYPES:
-                    image_filepath = "%s/%s" % (patched_dir_path, patched_image)
+                    image_filepath = "%s/%s" % (patched_dir_path,
+                                                patched_image)
                     return_image_files.append(image_filepath)
     return return_image_files
 
@@ -64,7 +66,6 @@ def get_patched_images(tmos_image_dir):
 def get_bucket_name(image_path):
     """Get bucket for this patched image"""
     return os.path.splitext(os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, ''))[0].replace('_', '-').lower()
- 
 
 
 def get_object_name(image_path):
@@ -73,21 +74,23 @@ def get_object_name(image_path):
 
 
 def get_cos_client():
+    """return IBM COS client object"""
     return ibm_boto3.client("s3",
-               ibm_api_key_id=COS_API_KEY,
-               ibm_service_instance_id=COS_RESOURCE_CRN,
-               ibm_auth_endpoint=COS_AUTH_ENDPOINT,
-               config=Config(signature_version="oauth"),
-               endpoint_url=COS_ENDPOINT)
+                            ibm_api_key_id=COS_API_KEY,
+                            ibm_service_instance_id=COS_RESOURCE_CRN,
+                            ibm_auth_endpoint=COS_AUTH_ENDPOINT,
+                            config=Config(signature_version="oauth"),
+                            endpoint_url=COS_ENDPOINT)
 
 
 def get_cos_resource():
+    """return IBM COS resource object"""
     return ibm_boto3.resource("s3",
-               ibm_api_key_id=COS_API_KEY,
-               ibm_service_instance_id=COS_RESOURCE_CRN,
-               ibm_auth_endpoint=COS_AUTH_ENDPOINT,
-               config=Config(signature_version="oauth"),
-               endpoint_url=COS_ENDPOINT)
+                              ibm_api_key_id=COS_API_KEY,
+                              ibm_service_instance_id=COS_RESOURCE_CRN,
+                              ibm_auth_endpoint=COS_AUTH_ENDPOINT,
+                              config=Config(signature_version="oauth"),
+                              endpoint_url=COS_ENDPOINT)
 
 
 def assure_bucket(bucket_name):
@@ -104,43 +107,50 @@ def assure_bucket(bucket_name):
             }
         )
         return True
-    except ClientError as ce:
-        LOG.error('client error assuring bucket %s: %s', bucket_name, ce)
+    except ClientError as client_error:
+        LOG.error('client error assuring bucket %s: %s',
+                  bucket_name, client_error)
         return False
     except Exception as ex:
         LOG.error('exception occurred assuring bucket %s: %s', bucket_name, ex)
         return False
 
 
-def assure_object(image_path, bucket_name, object_name):
+def assure_object(file_path, bucket_name, object_name):
     """check if patched image already exists"""
     cos_res = get_cos_resource()
     try:
         for obj in cos_res.Bucket(bucket_name).objects.all():
             if obj.key == object_name:
                 return True
-        LOG.debug('starting upload of image %s to %s/%s', image_path, bucket_name, object_name)
-        
+        LOG.debug('starting upload of image %s to %s/%s',
+                  file_path, bucket_name, object_name)
+
         part_size = 1024 * 1024 * 2
         file_threshold = 1024 * 1024 * 1024 * 10
-        
+
         transfer_config = ibm_boto3.s3.transfer.TransferConfig(
             multipart_threshold=file_threshold,
             multipart_chunksize=part_size
         )
 
         cos_client = get_cos_client()
-        transfer_mgr = ibm_boto3.s3.transfer.TransferManager(cos_client, config=transfer_config)
-        upload = transfer_mgr.upload(image_path, bucket_name, object_name)
+        transfer_mgr = ibm_boto3.s3.transfer.TransferManager(
+            cos_client, config=transfer_config)
+        upload = transfer_mgr.upload(file_path, bucket_name, object_name)
         upload.result()
 
         LOG.debug('upload complete for %s/%s', bucket_name, object_name)
 
+        return True
+
     except ClientError as ce:
-        LOG.error('client error assuring object %s/%s: %s', bucket_name, object_name, ce)
+        LOG.error('client error assuring object %s/%s: %s',
+                  bucket_name, object_name, ce)
         return False
     except Exception as ex:
-        LOG.error('exception occurred assuring object %s/%s: %s', bucket_name, object_name, ex)
+        LOG.error('exception occurred assuring object %s/%s: %s',
+                  bucket_name, object_name, ex)
         return False
 
 
@@ -148,24 +158,33 @@ def assure_cos_image(image_path):
     """assure patch image object"""
     bucket_name = get_bucket_name(image_path)
     object_name = get_object_name(image_path)
-    LOG.debug('checking IBM COS Object: %s/%s exists', bucket_name, object_name)
+    LOG.debug('checking IBM COS Object: %s/%s exists',
+              bucket_name, object_name)
     if assure_bucket(bucket_name):
         assure_object(image_path, bucket_name, object_name)
+    md5_path = "%s.md5" % image_path
+    if os.path.exists(md5_path):
+        md5_object_name = "%s.md5" % object_name
+        assure_object(md5_path, bucket_name, md5_object_name)
 
 
 def upload_patched_images():
+    """check for iamges and assure upload to IBM COS"""
     for image_path in get_patched_images(TMOS_IMAGE_DIR):
         assure_cos_image(image_path)
 
 
 def initialize():
+    """initialize configuration from environment variables"""
     global TMOS_IMAGE_DIR, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, COS_AUTH_ENDPOINT, COS_ENDPOINT
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
     COS_RESOURCE_CRN = os.getenv('COS_RESOURCE_CRN', None)
     COS_IMAGE_LOCATION = os.getenv('COS_IMAGE_LOCATION', 'us-standard')
-    COS_AUTH_ENDPOINT = os.getenv('COS_AUTH_ENDPOINT', 'https://iam.bluemix.net/oidc/token')
-    COS_ENDPOINT = os.getenv('COS_ENDPOINT', 'https://s3-api.us-geo.objectstorage.softlayer.net')
+    COS_AUTH_ENDPOINT = os.getenv(
+        'COS_AUTH_ENDPOINT', 'https://iam.bluemix.net/oidc/token')
+    COS_ENDPOINT = os.getenv(
+        'COS_ENDPOINT', 'https://s3-api.us-geo.objectstorage.softlayer.net')
 
 
 if __name__ == "__main__":
@@ -173,19 +192,19 @@ if __name__ == "__main__":
     LOG.debug('process start time: %s', datetime.datetime.fromtimestamp(
         START_TIME).strftime("%A, %B %d, %Y %I:%M:%S"))
     initialize()
-    err_message = ''
-    err = False
+    ERROR_MESSAGE = ''
+    ERROR = False
     if not TMOS_IMAGE_DIR:
-        err = True
-        err_message += "please set env TMOS_IMAGE_DIR to scan for patched TMOS images\n"
+        ERROR = True
+        ERROR_MESSAGE += "please set env TMOS_IMAGE_DIR to scan for patched TMOS images\n"
     if not COS_API_KEY:
-        err = True
-        err_message += "please set env COS_API_KEY for your IBM COS resource\n"
+        ERROR = True
+        ERROR_MESSAGE += "please set env COS_API_KEY for your IBM COS resource\n"
     if not COS_RESOURCE_CRN:
-        err = True
-        err_message += "please set env COS_RESOURCE_CRN for your IBM COS resource\n"
-    if err:
-        LOG.error('\n\n%s\n', err_message)
+        ERROR = True
+        ERROR_MESSAGE += "please set env COS_RESOURCE_CRN for your IBM COS resource\n"
+    if ERROR:
+        LOG.error('\n\n%s\n', ERROR_MESSAGE)
         sys.exit(1)
     upload_patched_images()
     STOP_TIME = time.time()
