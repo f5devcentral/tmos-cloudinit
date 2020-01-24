@@ -213,6 +213,7 @@ def clean_ovf(ovf_file_path):
 def generate_md5sum(disk_image):
     """Create MD5 sum file for the disk image"""
     md5_file_path = "%s.md5"
+    LOG.info('creating md5sum file for %s as %s', disk_image, md5_file_path)
     md5_hash = hashlib.md5()
     with open(disk_image, 'rb') as di:
         for block in iter(lambda: di.read(4096),b''):
