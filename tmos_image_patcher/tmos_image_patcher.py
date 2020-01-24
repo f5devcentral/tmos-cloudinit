@@ -26,6 +26,7 @@ import sys
 import tarfile
 import zipfile
 import datetime
+import hashlib
 import time
 import logging
 import subprocess
@@ -82,6 +83,7 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
                         disk_image, tmos_config_inject_dir, config_dev)
                 if os.path.splitext(disk_image)[1] == '.vmdk':
                     clean_up_vmdk(disk_image)
+                generate_md5sum(disk_image)
     else:
         print "ERROR: TMOS image directory %s does not exist." % tmos_image_dir
         print "Set environment variable TMOS_IMAGE_DIR or supply as the first argument to the script.\n"
@@ -206,6 +208,17 @@ def clean_ovf(ovf_file_path):
     original_ovf.close()
     new_ovf.close()
     os.remove(os.path.join(working_dir, "%s.backup" % file_name))
+
+
+def generate_md5sum(disk_image):
+    """Create MD5 sum file for the disk image"""
+    md5_file_path = "%s.md5"
+    md5_hash = hashlib.md5()
+    with open(disk_image, 'rb') as di:
+        for block in iter(lambda: di.read(4096),b''):
+            md5_hash.update(block)
+        with open(md5_file_path, 'w+') as md5sum:
+            md5sum.write(md5_hash.hexdigest())
 
 
 def wait_for_gfs(gfs_handle):
