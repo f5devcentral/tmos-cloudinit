@@ -102,7 +102,7 @@ def assure_glance_image(image_path):
         if os.path.exists(md5sum_path):
             with open(md5sum_path, 'r') as md5sum_file:
                 md5sum = md5sum_file.readlines()
-                kwargs = {'owner_specified.shade.md5':md5sum}
+                kwargs = {'owner_specified.shade.md5':str(md5sum)}
                 glance.images.update(image.id, **kwargs)
         return True
     except Exception as ex:
