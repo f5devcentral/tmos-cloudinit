@@ -93,7 +93,7 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
                     try:
                         sign_image(disk_image, private_pem_key_path)
                     except Exception as ex:
-                        LOG.error("could not sign %s with private key %s", disk_image, private_pem_key_path)
+                        LOG.error("could not sign %s with private key %s: %s", disk_image, private_pem_key_path, ex)
     else:
         LOG.error("TMOS image directory %s does not exist.", tmos_image_dir)
         LOG.error("Set environment variable TMOS_IMAGE_DIR or supply as the first argument to the script.")
