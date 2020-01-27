@@ -166,6 +166,10 @@ def assure_cos_image(image_path):
     if os.path.exists(md5_path):
         md5_object_name = "%s.md5" % object_name
         assure_object(md5_path, bucket_name, md5_object_name)
+    sig_path = "%s.384.sig" % image_path
+    if os.path.exists(sig_path):
+        sig_object_name = "%s.384.sig" % object_name
+        assure_object(sig_path, bucket_name, sig_object_name)
 
 
 def upload_patched_images():
