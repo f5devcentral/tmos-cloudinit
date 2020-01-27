@@ -13,6 +13,7 @@ RUN apt-get update && \
     python-ipython \
     python-openstackclient \
     python-guestfs \
+    python-crypto \
     python-jsonschema \
     python-yaml \
     python-pip \

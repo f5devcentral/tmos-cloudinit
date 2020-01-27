@@ -32,6 +32,11 @@ import logging
 import subprocess
 import guestfs
 
+from Crypto.Hash import SHA384
+from Crypto.Signature import PKCS1_v1_5
+from Crypto.PublicKey import RSA
+
+
 ARCHIVE_EXTS = {'.zip': 'zipfile', '.ova': 'tarfile'}
 IMAGE_TYPES = ['.qcow2', '.vhd', '.vmdk']
 
@@ -54,7 +59,7 @@ LOG.addHandler(LOGSTREAM)
 def patch_images(tmos_image_dir, tmos_cloudinit_dir,
                  tmos_usr_inject_dir, tmos_var_inject_dir,
                  tmos_config_inject_dir, tmos_shared_inject_dir,
-                 tmos_icontrollx_dir):
+                 tmos_icontrollx_dir, private_pem_key_path):
     """Patch TMOS classic disk image"""
     if tmos_image_dir and os.path.exists(tmos_image_dir):
         for disk_image in scan_for_images(tmos_image_dir):
@@ -84,9 +89,14 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
                 if os.path.splitext(disk_image)[1] == '.vmdk':
                     clean_up_vmdk(disk_image)
                 generate_md5sum(disk_image)
+                if private_pem_key_path:
+                    try:
+                        sign_image(disk_image, private_pem_key_path)
+                    except Exception as ex:
+                        LOG.error("could not sign %s with private key %s", disk_image, private_pem_key_path)
     else:
-        print "ERROR: TMOS image directory %s does not exist." % tmos_image_dir
-        print "Set environment variable TMOS_IMAGE_DIR or supply as the first argument to the script.\n"
+        LOG.error("TMOS image directory %s does not exist.", tmos_image_dir)
+        LOG.error("Set environment variable TMOS_IMAGE_DIR or supply as the first argument to the script.")
         sys.exit(1)
 
 
@@ -220,6 +230,23 @@ def generate_md5sum(disk_image):
             md5_hash.update(block)
         with open(md5_file_path, 'w+') as md5sum:
             md5sum.write(md5_hash.hexdigest())
+
+
+def sign_image(disk_image, private_key):
+    """Creating SHA384 signature digest for disk image"""
+    sig_file_path = "%s.384.sig"
+    LOG.info('signing image %s with private key %s', disk_image, private_key)
+    sha384_hash = SHA384.new()
+    with open(disk_image, 'rb') as di:
+        for block in iter(lambda: di.read(4096),b''):
+            sha384_hash.update(block)
+        pk = False
+        with open(private_key, 'r') as key_file:
+            pk = RSA.importKey(key_file.read())
+        signer = PKCS1_v1_5.new(pk)
+        digest = signer.sign(sha384_hash)
+        with open(sig_file_path, 'w+') as sha384sig:
+            sha384sig.write(digest)
 
 
 def wait_for_gfs(gfs_handle):
@@ -434,6 +461,7 @@ if __name__ == "__main__":
     TMOS_VAR_INJECT_DIR = os.getenv('TMOS_VAR_INJECT_DIR', None)
     TMOS_SHARED_INJECT_DIR = os.getenv('TMOS_SHARED_INJECT_DIR', None)
     TMOS_CONFIG_INJECT_DIR = os.getenv('TMOS_CONFIG_INJECT_DIR', None)
+    PRIVATE_PEM_KEY_PATH = os.getenv('PRIVATE_PEM_KEY_PATH', None)
     if len(sys.argv) > 1:
         TMOS_IMAGE_DIR = sys.argv[1]
     if len(sys.argv) > 2:
@@ -457,7 +485,7 @@ if __name__ == "__main__":
     patch_images(TMOS_IMAGE_DIR, TMOS_CLOUDINIT_DIR,
                  TMOS_USR_INJECT_DIR, TMOS_VAR_INJECT_DIR,
                  TMOS_CONFIG_INJECT_DIR, TMOS_SHARED_INJECT_DIR,
-                 TMOS_ICONTROLLX_DIR)
+                 TMOS_ICONTROLLX_DIR, PRIVATE_PEM_KEY_PATH)
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
     LOG.debug(
