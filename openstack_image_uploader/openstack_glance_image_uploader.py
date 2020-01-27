@@ -104,7 +104,7 @@ def assure_glance_image(image_path):
             with open(md5sum_path, 'r') as md5sum_file:
                 kwargs = {'owner_specified.shade.md5':str(md5sum_file.read())}
                 glance.images.update(image.id, **kwargs)
-        sig_path = "%s.base64.384.sig" % image_path
+        sig_path = "%s.384.sig" % image_path
         if os.path.exists(sig_path):
             with open(sig_path, 'r') as sig_file:
                 b64sig = base64.b64encode(sig_file.read())
