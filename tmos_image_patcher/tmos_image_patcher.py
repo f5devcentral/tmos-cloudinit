@@ -63,6 +63,7 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
     """Patch TMOS classic disk image"""
     if tmos_image_dir and os.path.exists(tmos_image_dir):
         for disk_image in scan_for_images(tmos_image_dir):
+            LOG.info('processing disk image: %s' % disk_image)
             (is_tmos, config_dev, usr_dev, var_dev, shared_dev) = \
                 validate_tmos_device(disk_image)
             if is_tmos:
@@ -275,7 +276,7 @@ def validate_tmos_device(disk_image):
         if 'share' in file_system:
             shared_dev = file_system
     if not is_tmos:
-        LOG.warn('%s is not a TMOS image file.. skipping..', disk_image)
+        LOG.warn('%s is not a TMOS image file.. skipping file injection..', disk_image)
     gfs.sync()
     gfs.shutdown()
     gfs.close()
@@ -292,7 +293,7 @@ def update_cloudinit_modules(tmos_cloudinit_dir):
         "git pull",
         stdout=subprocess.PIPE, shell=True
     ).communicate()[0].split('\n')
-    LOG.info('git returned: %s', gitout)
+    LOG.debug('git returned: %s', gitout)
     os.chdir(start_directory)
 
 
