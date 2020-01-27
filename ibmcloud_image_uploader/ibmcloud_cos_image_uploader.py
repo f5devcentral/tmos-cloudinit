@@ -70,7 +70,10 @@ def get_bucket_name(image_path):
 
 def get_object_name(image_path):
     """Get object name for this patched image"""
-    return os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, '')
+    if 'DATASTOR' in image_path:
+        return "%s_DATASTOR" % os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, '')
+    else:
+        return os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, '')
 
 
 def get_cos_client():

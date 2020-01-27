@@ -81,7 +81,10 @@ def get_glance_client():
 
 def get_image_name(image_path):
     """get image name formatted string"""
-    return os.path.splitext(os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, ''))[0]
+    if 'DATASTOR' in image_path:
+        return "%s_DATASTOR" % os.path.splitext(os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, ''))[0]
+    else:
+        return os.path.splitext(os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, ''))[0]
 
 
 def assure_glance_image(image_path):
