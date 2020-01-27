@@ -108,7 +108,7 @@ def assure_glance_image(image_path):
         if os.path.exists(sig_path):
             with open(sig_path, 'r') as sig_file:
                 b64sig = base64.b64encode(sig_file.read())
-                kwargs = {'owner_specified.shade.base64.sha384.sig':str(md5sum_file.read())}
+                kwargs = {'owner_specified.shade.base64.sha384.sig':str(b64sig)}
                 glance.images.update(image.id, **kwargs)
         return True
     except Exception as ex:
