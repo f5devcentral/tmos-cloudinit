@@ -88,12 +88,12 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
                         disk_image, tmos_config_inject_dir, config_dev)
                 if os.path.splitext(disk_image)[1] == '.vmdk':
                     clean_up_vmdk(disk_image)
-                generate_md5sum(disk_image)
-                if private_pem_key_path:
-                    try:
-                        sign_image(disk_image, private_pem_key_path)
-                    except Exception as ex:
-                        LOG.error("could not sign %s with private key %s: %s", disk_image, private_pem_key_path, ex)
+            generate_md5sum(disk_image)
+            if private_pem_key_path:
+                try:
+                    sign_image(disk_image, private_pem_key_path)
+                except Exception as ex:
+                    LOG.error("could not sign %s with private key %s: %s", disk_image, private_pem_key_path, ex)
     else:
         LOG.error("TMOS image directory %s does not exist.", tmos_image_dir)
         LOG.error("Set environment variable TMOS_IMAGE_DIR or supply as the first argument to the script.")
