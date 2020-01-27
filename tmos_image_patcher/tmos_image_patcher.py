@@ -234,7 +234,7 @@ def generate_md5sum(disk_image):
 
 def sign_image(disk_image, private_key):
     """Creating SHA384 signature digest for disk image"""
-    sig_file_path = "%s.384.sig"
+    sig_file_path = "%s.384.sig" % disk_image
     LOG.info('signing image %s with private key %s', disk_image, private_key)
     sha384_hash = SHA384.new()
     with open(disk_image, 'rb') as di:
