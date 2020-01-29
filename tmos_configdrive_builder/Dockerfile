@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:18.04
 LABEL maintainer="John Gruber <j.gruber@f5.com>"
 
 WORKDIR /
@@ -11,6 +11,7 @@ RUN apt-get update && \
     python-yaml \
     python-pip \
     python-setuptools \
+    python-wheel \
     git
 
 ## INJECT_PATCH_INSTRUCTION ##

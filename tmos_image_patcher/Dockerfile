@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:18.04
 LABEL maintainer="John Gruber <j.gruber@f5.com>"
 
 WORKDIR /
@@ -10,19 +10,14 @@ RUN apt-get update && \
     qemu-utils \
     linux-image-generic \
     virtualbox \
-    python-ipython \
-    python-openstackclient \
     python-guestfs \
     python-crypto \
     python-jsonschema \
     python-yaml \
-    python-pip \
-    python-setuptools \
     git
 
 ## INJECT_PATCH_INSTRUCTION ##
 RUN git clone https://github.com/f5devcentral/tmos-cloudinit.git
-RUN pip install pycdlib
 
 ENV LIBGUESTFS_BACKEND=direct
 
