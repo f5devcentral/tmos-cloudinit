@@ -1,18 +1,26 @@
 #!/bin/bash
-now=$(date +%s)
 
-sed -i "/## INJECT_PATCH_INSTRUCTION ##/c\RUN echo ${now}" tmos_image_patcher/Dockerfile
-docker build --rm -t tmos_image_patcher:latest tmos_image_patcher
-git checkout tmos_image_patcher/Dockerfile
+# If the DOCKER_REPO varaible is set, assure it ends in forward slash and insert into build
 
-sed -i "/## INJECT_PATCH_INSTRUCTION ##/c\RUN echo ${now}" tmos_configdrive_builder/Dockerfile
-docker build --rm -t tmos_configdrive_builder:latest tmos_configdrive_builder
-git checkout tmos_configdrive_builder/Dockerfile
+echo "building docker images"
+if ! [ -z "$DOCKER_REPO" ]
+then
+    [[ "${DOCKER_REPO}" != */ ]] && DOCKER_REPO="${DOCKER_REPO}/"
+else
+    DOCKER_REPO=''
+fi
 
-sed -i "/## INJECT_PATCH_INSTRUCTION ##/c\RUN echo ${now}" ibmcloud_image_uploader/Dockerfile
-docker build --rm -t ibmcloud_image_uploader:latest ibmcloud_image_uploader
-git checkout ibmcloud_image_uploader/Dockerfile
+CACHE_OPTION=''
+if ! [ -z "$USE_CACHED_IMAGES" ]
+then
+    CACHE_OPTION='--no-cache'
+fi
 
-sed -i "/## INJECT_PATCH_INSTRUCTION ##/c\RUN echo ${now}" openstack_image_uploader/Dockerfile
-docker build --rm -t openstack_image_uploader:latest openstack_image_uploader
-git checkout openstack_image_uploader/Dockerfile
+echo "building TMOS Image Patcher"
+docker build --rm ${CACHE_OPTION} -t ${DOCKER_REPO}tmos_image_patcher:latest tmos_image_patcher
+echo "building TMOS config drive builder"
+docker build --rm ${CACHE_OPTION} -t ${DOCKER_REPO}tmos_configdrive_builder:latest tmos_configdrive_builder
+echo "building IBM public cloud object storage uploader"
+docker build --rm ${CACHE_OPTION} -t ${DOCKER_REPO}ibmcloud_image_uploader:latest ibmcloud_image_uploader
+echo "building OpenStack glance image uploader"
+docker build --rm ${CACHE_OPTION} -t ${DOCKER_REPO}openstack_image_uploader:latest openstack_image_uploader
