@@ -112,36 +112,55 @@ $ docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -v /data/iControlLXLatestB
 
 Each TMOS image archive will be expanded into a folder containing the patched image. The folder will have the same name as the archive file without the extension. The patched image, in the expanded folder, will be in the same format as the original. You can utilize the patched images just as you would the originals.
 
+MD5 checksum files will be produced for each image.
+
 <pre>
 > $ tree /data/BIGIP-14.1
 /data/BIGIP-14.1
+├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-ide.ova
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-ide
 │   └── <b>BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-ide.ova</b>
-├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-ide.ova
+|   └── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-ide.ova.md5
+├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT.qcow2.zip
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT.qcow2
 │   └── <b>BIGIP-14.1.0.5-0.0.5.qcow2</b>
-├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT.qcow2.zip
+|   └── BIGIP-14.1.0.5-0.0.5.qcow2.md5
+├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-scsi.ova
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-scsi
 │   └── <b>BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-scsi.ova</b>
-├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-scsi.ova
+│   └── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-scsi.ova.md5
+├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT.vhd.zip
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT.vhd
 │   └── <b>BIGIP-14.1.0.5-0.0.5.vhd</b>
-├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT.vhd.zip
+│   └── BIGIP-14.1.0.5-0.0.5.vhd.md5
+├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-ide.ova
 ├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-ide
 │   └── <b>BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-ide.ova</b>
-├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-ide.ova
+│   └── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-ide.ova.md5
+├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.qcow2.zip
 ├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.qcow2
 │   └── <b>BIGIP-14.1.0.5-0.0.5.qcow2</b>
-├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.qcow2.zip
+│   └── BIGIP-14.1.0.5-0.0.5.qcow2.md5
+├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-scsi.ova
 ├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-scsi
 │   └── <b>BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-scsi.ova</b>
-├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-scsi.ova
+│   └── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-scsi.ova.md5
+├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.vhd.zip
 ├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.vhd
 │   └── <b>BIGIP-14.1.0.5-0.0.5.vhd</b>
-└── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.vhd.zip
+│   └── BIGIP-14.1.0.5-0.0.5.vhd.md5
 </pre>
 
-As an example, your patched image could then be uploaded for use in an OpenStack private cloud.
+
+A signed SHA384 digist file can optionally be generated for each patched image if you include a `/keys` volume mount to the directory containing your private signing key and an environment variable, `PRIVATE_PEM_KEY_FILE`, specifying the private key file.
+
+```
+docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -v /data/iControlLXLatestBuild:/iControlLXPackages -v /data/safe/keys:/keys -e PRIVATE_PEM_KEY_FILE=j.gruber_f5.rsa.private f5devcentral/tmos-image-patcher:latest
+```
+
+Once patched, your TMOS images can be uploaded for use in your infrastructure environment by using the native client tools.
+
+As an example, for an an OpenStack private cloud, the patched images can be uploaded with the `openstack` cli tool.
 
 ```
 $ openstack image create --disk-format qcow2 --container-format bare --file /data/BIGIP-14.1/BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.qcow2/BIGIP-14.1.0.5-0.0.5.qcow2 OpenStack_BIGIP-14.1.0.5-0.0.5.LTM_1SLOT
@@ -171,6 +190,30 @@ $ openstack image create --disk-format qcow2 --container-format bare --file /dat
 ```
 
 Once your patched images are deployed in your virtualized environment, you can use cloudinit userdata to handle initial device and service provisioning.
+
+## Patching Image Uploaders ##
+
+Various uplaoders will be added to this project as infrastructure environments demand them.
+
+All uploaders will take their required settings, such as login credentials and URL endpoints, via environment variables. The uploader containers take the same `TMOSImages` volume mount used to patch the images. All patched images found in the `TMOSImages` volume will be uploaded to the given environment.
+
+An OpenStack Uploader in included.
+
+### Building the OpenStack Uploader ###
+
+```
+docker build --rm -t openstack_image_uploader:latest openstack_image_uploader
+```
+
+### Uploading Patched Images to OpenStack ###
+
+Source your OpenStack RC file, putting the require environment variables into your shell environment. These environment variables are then presented as to the `openstack_image_uploader` container with Docker environment variables.
+
+```
+docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -e OS_USERNAME=$OS_USERNAME -e OS_PASSWORD=$OS_PASSWORD -e OS_AUTH_URL=$OS_AUTH_UTL openstack_image_uploader:latest
+```
+
+The OpenStack uploader will find md5, and optionally image signatures, and add them with the appropriate image shade metadata.
 
 ## Creating OpenStack Formatted Cloudinit ConfigDrive ISOs - Using a Docker Instance ##
 
