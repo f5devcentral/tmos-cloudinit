@@ -89,7 +89,7 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
                         disk_image, tmos_config_inject_dir, config_dev)
                 if os.path.splitext(disk_image)[1] == '.vmdk':
                     clean_up_vmdk(disk_image)
-                    disk_image = "%s.ova" % os.path.basename(os.path.dirname(disk_image))
+                    disk_image = "%s/%s.ova" % (os.path.dirname(disk_image), os.path.basename(os.path.dirname(disk_image)))
             generate_md5sum(disk_image)
             if private_pem_key_path:
                 try:
