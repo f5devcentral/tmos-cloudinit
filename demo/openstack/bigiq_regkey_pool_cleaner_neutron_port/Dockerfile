@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:18.04
 LABEL maintainer="John Gruber <j.gruber@f5.com>"
 
 WORKDIR /

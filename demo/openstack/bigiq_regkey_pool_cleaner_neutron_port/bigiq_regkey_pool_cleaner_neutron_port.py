@@ -317,6 +317,7 @@ def main(ctx):
                 LOG.info('Existing..')
                 sys.exit(1)
             except Exception as ex:
+                del ctx['bigiq']
                 LOG.error("Error reconciling licenses %s", ex)
                 time.sleep(ctx.poll_cycle)
     else:
