@@ -1,0 +1,126 @@
+---
+- name: create_tmos_mgmt_port
+  os_port:
+    state: present
+    name: "{{ server_name }}_management_port"
+    network: "{{ management_network }}"
+    security_groups:
+      - "{{ security_group }}"
+    allowed_address_pairs:
+      - ip_address: 0.0.0.0/0
+      - ip_address: ::/0
+  register: tmos_mgmt_port
+- name: get_tmos_mgmt_network_info
+  os_networks_facts:
+    name: "{{ management_network }}"
+  register: tmos_mgmt_network
+- name: get_tmos_mgmt_subnet_info
+  os_subnets_facts:
+    name: "{{ tmos_mgmt_port.port.fixed_ips.0.subnet_id }}"
+  register: tmos_mgmt_subnet
+- name: set_tmos_mgmt_facts
+  set_fact:
+    mgmt_mtu: "{{ tmos_mgmt_network.ansible_facts.openstack_networks.0.mtu }}"
+    mgmt_selfip: "{{ tmos_mgmt_port.port.fixed_ips.0.ip_address }}"
+    mgmt_mask: "{{ tmos_mgmt_subnet.ansible_facts.openstack_subnets.0.cidr.split('/')[1] }}"
+    mgmt_gateway: "{{ tmos_mgmt_subnet.ansible_facts.openstack_subnets.0.gateway_ip }}"
+    dns_server: "{{ tmos_mgmt_subnet.ansible_facts.openstack_subnets.0.dns_nameservers.0 }}"
+- name: create_tmos_cluster_port
+  os_port:
+    state: present
+    name: "{{ server_name }}_cluster_port "
+    network: "{{ cluster_network }}"
+    security_groups:
+      - "{{ security_group }}"
+    allowed_address_pairs:
+      - ip_address: 0.0.0.0/0
+      - ip_address: ::/0
+  register: tmos_cluster_port
+- name: get_tmos_cluster_network_info
+  os_networks_facts:
+    name: "{{ cluster_network }}"
+  register: tmos_cluster_network
+- name: get_tmos_cluster_subnet_info
+  os_subnets_facts:
+    name: "{{ tmos_cluster_port.port.fixed_ips.0.subnet_id }}"
+  register: tmos_cluster_subnet
+- name: set_tmos_cluster_facts
+  set_fact:
+    cluster_mtu: "{{ tmos_cluster_network.ansible_facts.openstack_networks.0.mtu }}"
+    cluster_selfip: "{{ tmos_cluster_port.port.fixed_ips.0.ip_address }}"
+    cluster_mask: "{{ tmos_cluster_subnet.ansible_facts.openstack_subnets.0.cidr.split('/')[1] }}"
+    cluster_gateway: "{{ tmos_cluster_subnet.ansible_facts.openstack_subnets.0.gateway_ip }}"
+- name: create_tmos_vip_port
+  os_port:
+    state: present
+    name: "{{ server_name }}_vip_port"
+    network: "{{ vip_network }}"
+    security_groups:
+      - "{{ security_group }}"
+    allowed_address_pairs:
+      - ip_address: 0.0.0.0/0
+      - ip_address: ::/0
+    fixed_ips:
+      - subnet_id: "{{ vip_subnet }}"
+      - subnet_id: "{{ vip_subnet }}"
+  register: tmos_vip_port
+- name: get_tmos_vip_network_info
+  os_networks_facts:
+    name: "{{ vip_network }}"
+  register: tmos_vip_network
+- name: get_tmos_vip_subnet_info
+  os_subnets_facts:
+    name: "{{ tmos_vip_port.port.fixed_ips.0.subnet_id }}"
+  register: tmos_vip_subnet
+- name: set_tmos_vip_facts
+  set_fact:
+    vip_mtu: "{{ tmos_vip_network.ansible_facts.openstack_networks.0.mtu }}"
+    vip_selfip: "{{ tmos_vip_port.port.fixed_ips.0.ip_address }}"
+    vip_mask: "{{ tmos_vip_subnet.ansible_facts.openstack_subnets.0.cidr.split('/')[1] }}"
+    vip_gateway: "{{ tmos_vip_subnet.ansible_facts.openstack_subnets.0.gateway_ip }}"
+    default_gateway: "{{ tmos_vip_subnet.ansible_facts.openstack_subnets.0.gateway_ip }}"
+- name: create_adc_instance
+  os_server:
+    state: present
+    name: "{{ server_name }}"
+    image: "{{ tmos_image }}"
+    flavor: "{{ tmos_flavor }}"
+    auto_ip: no
+    config_drive: yes
+    nics:
+      - port-id: "{{ tmos_mgmt_port.id }}"
+      - port-id: "{{ tmos_cluster_port.id }}"
+      - port-id: "{{ tmos_vip_port.id }}"
+    userdata: "{{ lookup('template', './user_data.yaml') }}"
+    wait: yes
+  register: adc_instance
+- name: create_tmos_mgmt_floating_ip
+  os_floating_ip:
+    state: present
+    reuse: yes
+    server: "{{ adc_instance.id }}"
+    network: "{{ external_network }}"
+    nat_destination: "{{ management_network }}"
+    fixed_address: "{{ tmos_mgmt_port.port.fixed_ips.0.ip_address }}"
+    wait: yes
+  register: tmos_mgmt_floating_ip
+- debug:
+    msg: "TMOS management private web UI: https://{{ tmos_mgmt_port.port.fixed_ips.0.ip_address }}"
+- debug:
+    msg: "TMOS management private console: ssh://root@{{ tmos_mgmt_port.port.fixed_ips.0.ip_address }}"
+- debug:
+    msg: "TMOS management public web UI: https://{{ tmos_mgmt_floating_ip.floating_ip.floating_ip_address }}"
+- debug:
+    msg: "TMOS management public console: ssh://root@{{ tmos_mgmt_floating_ip.floating_ip.floating_ip_address }}"
+- debug:
+    msg: "Declarative Onboarding private URL: https://{{ tmos_mgmt_port.port.fixed_ips.0.ip_address }}/mgmt/shared/declarative-onboarding"
+- debug:
+    msg: "App Services private URL: https://{{ tmos_mgmt_port.port.fixed_ips.0.ip_address }}/mgmt/shared/appsvcs/declare"
+- debug:
+    msg: "Declarative Onboarding public URL: https://{{ tmos_mgmt_floating_ip.floating_ip.floating_ip_address }}/mgmt/shared/declarative-onboarding"
+- debug:
+    msg: "App Services public URL: https://{{ tmos_mgmt_floating_ip.floating_ip.floating_ip_address }}/mgmt/shared/appsvcs/declare"
+- debug:
+    msg: "TMOS virtual service IP {{ tmos_vip_port.port.fixed_ips.0.ip_address }}"
+- debug:
+    msg: "Phone home URL: {{ phone_home_url }}"

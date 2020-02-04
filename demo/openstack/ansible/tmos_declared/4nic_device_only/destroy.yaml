@@ -1,0 +1,22 @@
+---
+- name: destroy_adc_instance_by_name
+  os_server:
+    state: absent
+    name: "{{ server_name }}"
+    wait: no
+- name: destroy_tmos_mgmt_port_by_name
+  os_port:
+    state: absent
+    name: "{{ server_name }}_management_port"
+- name: destroy_tmos_cluster_port_by_name
+  os_port:
+    state: absent
+    name: "{{ server_name }}_cluster_port "
+- name: destroy_tmos_internal_port_by_name
+  os_port:
+    state: absent
+    name: "{{ server_name }}_internal_port"
+- name: destroy_tmos_vip_port_by_name
+  os_port:
+    state: absent
+    name: "{{ server_name }}_vip_port"

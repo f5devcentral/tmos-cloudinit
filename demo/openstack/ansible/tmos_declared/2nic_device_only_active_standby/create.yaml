@@ -1,0 +1,196 @@
+---
+- name: get_tmos_mgmt_network_info
+  os_networks_facts:
+    name: "{{ management_network }}"
+  register: tmos_mgmt_network
+- name: get_tmos_vip_network_info
+  os_networks_facts:
+    name: "{{ vip_network }}"
+  register: tmos_vip_network
+
+- name: create_tmos_mgmt_port_primary
+  os_port:
+    state: present
+    name: "{{ server_name }}_management_port_primary"
+    network: "{{ management_network }}"
+    security_groups:
+      - "{{ security_group }}"
+    allowed_address_pairs:
+      - ip_address: 0.0.0.0/0
+      - ip_address: ::/0
+  register: tmos_mgmt_port_primary
+- name: get_tmos_mgmt_subnet_info_primary
+  os_subnets_facts:
+    name: "{{ tmos_mgmt_port_primary.port.fixed_ips.0.subnet_id }}"
+  register: tmos_mgmt_subnet_primary
+- name: set_tmos_mgmt_facts_primary
+  set_fact:
+    mgmt_mtu_primary: "{{ tmos_mgmt_network.ansible_facts.openstack_networks.0.mtu }}"
+    mgmt_selfip_primary: "{{ tmos_mgmt_port_primary.port.fixed_ips.0.ip_address }}"
+    mgmt_mask_primary: "{{ tmos_mgmt_subnet_primary.ansible_facts.openstack_subnets.0.cidr.split('/')[1] }}"
+    mgmt_gateway_primary: "{{ tmos_mgmt_subnet_primary.ansible_facts.openstack_subnets.0.gateway_ip }}"
+    dns_server: "{{ tmos_mgmt_subnet_primary.ansible_facts.openstack_subnets.0.dns_nameservers.0 }}"
+- name: create_tmos_vip_port_primary
+  os_port:
+    state: present
+    name: "{{ server_name }}_vip_port_primary"
+    network: "{{ vip_network }}"
+    security_groups:
+      - "{{ security_group }}"
+    allowed_address_pairs:
+      - ip_address: 0.0.0.0/0
+      - ip_address: ::/0
+    fixed_ips:
+      - subnet_id: "{{ vip_subnet }}"
+  register: tmos_vip_port_primary
+- name: get_tmos_vip_subnet_info_primary
+  os_subnets_facts:
+    name: "{{ tmos_vip_port_primary.port.fixed_ips.0.subnet_id }}"
+  register: tmos_vip_subnet_primary
+- name: set_tmos_vip_facts_primary
+  set_fact:
+    vip_mtu_primary: "{{ tmos_vip_network.ansible_facts.openstack_networks.0.mtu }}"
+    vip_selfip_primary: "{{ tmos_vip_port_primary.port.fixed_ips.0.ip_address }}"
+    vip_mask_primary: "{{ tmos_vip_subnet_primary.ansible_facts.openstack_subnets.0.cidr.split('/')[1] }}"
+    vip_gateway_primary: "{{ tmos_vip_subnet_primary.ansible_facts.openstack_subnets.0.gateway_ip }}"
+    default_gateway_primary: "{{ tmos_vip_subnet_primary.ansible_facts.openstack_subnets.0.gateway_ip }}"
+
+- name: create_tmos_mgmt_port_secondary
+  os_port:
+    state: present
+    name: "{{ server_name }}_management_port_secondary"
+    network: "{{ management_network }}"
+    security_groups:
+      - "{{ security_group }}"
+    allowed_address_pairs:
+      - ip_address: 0.0.0.0/0
+      - ip_address: ::/0
+  register: tmos_mgmt_port_secondary
+- name: get_tmos_mgmt_subnet_info_secondary
+  os_subnets_facts:
+    name: "{{ tmos_mgmt_port_secondary.port.fixed_ips.0.subnet_id }}"
+  register: tmos_mgmt_subnet_secondary
+- name: set_tmos_mgmt_facts_secondary
+  set_fact:
+    mgmt_mtu_secondary: "{{ tmos_mgmt_network.ansible_facts.openstack_networks.0.mtu }}"
+    mgmt_selfip_secondary: "{{ tmos_mgmt_port_secondary.port.fixed_ips.0.ip_address }}"
+    mgmt_mask_secondary: "{{ tmos_mgmt_subnet_secondary.ansible_facts.openstack_subnets.0.cidr.split('/')[1] }}"
+    mgmt_gateway_secondary: "{{ tmos_mgmt_subnet_secondary.ansible_facts.openstack_subnets.0.gateway_ip }}"
+- name: create_tmos_vip_port_secondary
+  os_port:
+    state: present
+    name: "{{ server_name }}_vip_port_secondary"
+    network: "{{ vip_network }}"
+    security_groups:
+      - "{{ security_group }}"
+    allowed_address_pairs:
+      - ip_address: 0.0.0.0/0
+      - ip_address: ::/0
+    fixed_ips:
+      - subnet_id: "{{ vip_subnet }}"
+      - subnet_id: "{{ vip_subnet }}"
+  register: tmos_vip_port_secondary
+- name: get_tmos_vip_subnet_info_secondary
+  os_subnets_facts:
+    name: "{{ tmos_vip_port_secondary.port.fixed_ips.0.subnet_id }}"
+  register: tmos_vip_subnet_secondary
+- name: set_tmos_vip_facts_secondary
+  set_fact:
+    vip_mtu_secondary: "{{ tmos_vip_network.ansible_facts.openstack_networks.0.mtu }}"
+    vip_selfip_secondary: "{{ tmos_vip_port_secondary.port.fixed_ips.0.ip_address }}"
+    vip_mask_secondary: "{{ tmos_vip_subnet_secondary.ansible_facts.openstack_subnets.0.cidr.split('/')[1] }}"
+    vip_gateway_secondary: "{{ tmos_vip_subnet_secondary.ansible_facts.openstack_subnets.0.gateway_ip }}"
+    default_gateway_secondary: "{{ tmos_vip_subnet_secondary.ansible_facts.openstack_subnets.0.gateway_ip }}"
+- name: set_secondary_cluster_ip
+  set_fact:
+    secondary_cluster_ip: "{{ tmos_vip_port_secondary.port.fixed_ips.0.ip_address }}"
+
+- name: create_adc_instance_secondary
+  os_server:
+    state: present
+    name: "{{ server_name }}_secondary"
+    image: "{{ tmos_image }}"
+    flavor: "{{ tmos_flavor }}"
+    auto_ip: no
+    config_drive: yes
+    nics:
+      - port-id: "{{ tmos_mgmt_port_secondary.id }}"
+      - port-id: "{{ tmos_vip_port_secondary.id }}"
+    userdata: "{{ lookup('template', './user_data_secondary.yaml') }}"
+    wait: yes
+  register: adc_instance_secondary
+- name: create_adc_instance_primary
+  os_server:
+    state: present
+    name: "{{ server_name }}_primary"
+    image: "{{ tmos_image }}"
+    flavor: "{{ tmos_flavor }}"
+    auto_ip: no
+    config_drive: yes
+    nics:
+      - port-id: "{{ tmos_mgmt_port_primary.id }}"
+      - port-id: "{{ tmos_vip_port_primary.id }}"
+    userdata: "{{ lookup('template', './user_data_primary.yaml') }}"
+    wait: yes
+  register: adc_instance_primary
+- name: create_tmos_mgmt_floating_ip
+  os_floating_ip:
+    state: present
+    reuse: yes
+    server: "{{ adc_instance_primary.id }}"
+    network: "{{ external_network }}"
+    nat_destination: "{{ management_network }}"
+    fixed_address: "{{ tmos_mgmt_port_primary.port.fixed_ips.0.ip_address }}"
+    wait: yes
+  register: tmos_mgmt_floating_ip_primary
+- name: create_tmos_mgmt_floating_ip
+  os_floating_ip:
+    state: present
+    reuse: yes
+    server: "{{ adc_instance_secondary.id }}"
+    network: "{{ external_network }}"
+    nat_destination: "{{ management_network }}"
+    fixed_address: "{{ tmos_mgmt_port_secondary.port.fixed_ips.0.ip_address }}"
+    wait: yes
+  register: tmos_mgmt_floating_ip_secondary
+
+- debug:
+    msg: "Primary instance TMOS management private web UI: https://{{ tmos_mgmt_port_primary.port.fixed_ips.0.ip_address }}"
+- debug:
+    msg: "Primary instance TMOS management private console: ssh://root@{{ tmos_mgmt_port_primary.port.fixed_ips.0.ip_address }}"
+- debug:
+    msg: "Primary instance TMOS management public web UI: https://{{ tmos_mgmt_floating_ip_primary.floating_ip.floating_ip_address }}"
+- debug:
+    msg: "Primary instance TMOS management public console: ssh://root@{{ tmos_mgmt_floating_ip_primary.floating_ip.floating_ip_address }}"
+- debug:
+    msg: "Primary instance Declarative Onboarding private URL: https://{{ tmos_mgmt_port_primary.port.fixed_ips.0.ip_address }}/mgmt/shared/declarative-onboarding"
+- debug:
+    msg: "Primary instance App Services private URL: https://{{ tmos_mgmt_port_primary.port.fixed_ips.0.ip_address }}/mgmt/shared/appsvcs/declare"
+- debug:
+    msg: "Primary instance Declarative Onboarding public URL: https://{{ tmos_mgmt_floating_ip_primary.floating_ip.floating_ip_address }}/mgmt/shared/declarative-onboarding"
+- debug:
+    msg: "Primary instance App Services public URL: https://{{ tmos_mgmt_floating_ip_primary.floating_ip.floating_ip_address }}/mgmt/shared/appsvcs/declare"
+- debug:
+    msg: "Primary instance TMOS virtual service IP {{ tmos_vip_port_primary.port.fixed_ips.0.ip_address }}"
+- debug:
+    msg: "Primary instance Phone home URL: {{ phone_home_url }}"
+- debug:
+    msg: "Secondary instance TMOS management private web UI: https://{{ tmos_mgmt_port_secondary.port.fixed_ips.0.ip_address }}"
+- debug:
+    msg: "Secondary instance TMOS management private console: ssh://root@{{ tmos_mgmt_port_secondary.port.fixed_ips.0.ip_address }}"
+- debug:
+    msg: "Secondary instance TMOS management public web UI: https://{{ tmos_mgmt_floating_ip_secondary.floating_ip.floating_ip_address }}"
+- debug:
+    msg: "Secondary instance TMOS management public console: ssh://root@{{ tmos_mgmt_floating_ip_secondary.floating_ip.floating_ip_address }}"
+- debug:
+    msg: "Secondary instance Declarative Onboarding private URL: https://{{ tmos_mgmt_port_secondary.port.fixed_ips.0.ip_address }}/mgmt/shared/declarative-onboarding"
+- debug:
+    msg: "Secondary instance App Services private URL: https://{{ tmos_mgmt_port_secondary.port.fixed_ips.0.ip_address }}/mgmt/shared/appsvcs/declare"
+- debug:
+    msg: "Secondary instance Declarative Onboarding public URL: https://{{ tmos_mgmt_floating_ip_secondary.floating_ip.floating_ip_address }}/mgmt/shared/declarative-onboarding"
+- debug:
+    msg: "Secondary instance App Services public URL: https://{{ tmos_mgmt_floating_ip_secondary.floating_ip.floating_ip_address }}/mgmt/shared/appsvcs/declare"
+- debug:
+    msg: "Secondary instance TMOS virtual service IP {{ tmos_vip_port_secondary.port.fixed_ips.0.ip_address }}"
+- debug:
+    msg: "Secondary instance Phone home URL: {{ phone_home_url }}"

@@ -1,0 +1,220 @@
+################################################################################
+#
+# F5 Heat Template to Orchestrate a 1 NIC TMOS ADC
+#
+#    Static Management Network
+# ------------------------------ 
+#           |
+#     eth0  |   
+#        ------- 
+#        | VE  | 
+#        |     | 
+#        ------- 
+#
+################################################################################
+heat_template_version: 2015-10-15
+
+description: F5 Heat Template to Orchestrate a 1 NIC TMOS ADC
+
+parameters:
+  tmos_image:
+    type: string
+    label: TMOS VE Disk Image
+    description: The image to be used on the TMOS VE instance.
+    constraints:
+      - custom_constraint: glance.image
+  tmos_flavor:
+    type: string
+    label: TMOS VE Flavor
+    description: Type of instance (flavor) to be used for the TMOS VE instance.
+    default: m1.bigip.ALL.1SLOT
+    constraints:
+      - custom_constraint: nova.flavor
+  tmos_root_authkey_name:
+    type: string
+    label: TMOS Root SSH Authkey name
+    description: The name of the OpenStack Authkey to ue for the root user
+    default: admin
+  tmos_root_password:
+    type: string
+    label: TMOS Root Password
+    description: Password to set for the built-in root user
+    default: f5c0nfig
+    hidden: true
+  tmos_admin_password:
+    type: string
+    label: TMOS Administrator Password
+    description: Password to set for the built-in admin user
+    default: f5c0nfig
+    hidden: true
+  do_url:
+    type: string
+    label: DO URL
+    description: f5-declarative-onboarding package URL
+  as3_url:
+    type: string
+    label: AS3 URL
+    description: f5-appsvcs-extension package URL
+  ip:
+    type: string
+    label: Management IP CIDR
+    description: The IP CIDR for the management interface
+  gw:
+    type: string
+    label: Management Gateway IP Address
+    description: The Gateway IP address for the management interface
+  mtu:
+    type: number
+    label: The management network MTU
+    description: The management network L2 MTU
+    default: 1400
+  hostname:
+    type: string
+    label: Host FQDN
+    description: The FQDN to assign
+  nameservers:
+    type: comma_delimited_list
+    label: DNS Server IPs (comma delimited)
+    description: The DNS Server IPs to assign
+  searchdomain:
+    type: string
+    label: DNS default search domain
+    description: The DNS search domain to assign
+  ntpservers:
+    type: comma_delimited_list
+    label: NTP Server Names of IPs (comma delimited)
+    description: The NTP Servers to assign
+  phone_home_url:
+    type: string
+    label: Phone Home URL
+    description: URL for the phone home when onboarding finishes
+    default: https://webhook.site/
+  external_network:
+    type: string
+    label: External Access Network
+    description: The network to assign Floating IPs for management access
+    default: None
+    constraints:
+      - custom_constraint: neutron.network
+  management_network:
+    type: string
+    label: Management Network
+    description: OAM Network
+    default: None
+    constraints:
+      - custom_constraint: neutron.network
+  heat_timeout:
+    type: number
+    label: Heat Stack Timeout
+    description: The Heat stack timeout in seconds
+    default: 1800
+
+parameter_groups:
+- parameters:
+  - tmos_image
+  - tmos_flavor
+- parameters:
+  - tmos_root_authkey_name
+  - tmos_root_password
+  - tmos_admin_password
+- parameters:
+  - do_url
+  - as3_url
+- parameters:
+  - ip
+  - gw
+  - mtu
+  - hostname
+  - nameservers
+  - searchdomain
+  - ntpservers
+- parameters:
+  - phone_home_url
+- parameters:
+  - external_network
+  - management_network
+- parameters:
+  - heat_timeout
+
+resources:
+  tmos_mgmt_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_param: management_network }
+      security_groups:
+        - default
+      allowed_address_pairs:
+        - ip_address: 0.0.0.0/0
+        - ip_address: ::/0
+  tmos_mgmt_floating_ip:
+    type: OS::Neutron::FloatingIP
+    depends_on: tmos_mgmt_port
+    properties:
+      floating_network: { get_param: external_network }
+      port_id: { get_resource: tmos_mgmt_port }
+  wait_handle:
+    type: OS::Heat::WaitConditionHandle
+  wait_condition:
+    type: OS::Heat::WaitCondition
+    properties:
+      handle: { get_resource: wait_handle }
+      timeout: { get_param: heat_timeout }
+  adc_instance:
+    type: OS::Nova::Server
+    depends_on: [tmos_mgmt_port]
+    properties:
+      image: { get_param: tmos_image }
+      flavor: { get_param: tmos_flavor }
+      config_drive: true
+      key_name: { get_param: tmos_root_authkey_name }
+      networks:
+        - port: { get_resource: tmos_mgmt_port }
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          params:
+            $root_password: { get_param: tmos_root_password }
+            $admin_password: { get_param: tmos_admin_password }
+            $do_url: { get_param: do_url }
+            $as3_url: { get_param: as3_url }
+            $mgmt_cidr: { get_param: ip }
+            $mgmt_gw: { get_param: gw }
+            $mgmt_mtu: { get_param: mtu }
+            $hostname: { get_param: hostname }
+            $nameservers: { list_join: [ ",", { get_param: nameservers } ] }
+            $searchdomain: { get_param: searchdomain }
+            $ntpservers: { list_join: [ ",", { get_param: ntpservers } ] }
+            $phone_home_url: { get_param: phone_home_url }
+            $wc_notify: { get_attr: ['wait_handle', 'curl_cli'] }
+          template: { get_file: 'user_data.yaml' }
+outputs:
+  tmos_management_xui_private:
+    description: TMOS management service IP address
+    value: { list_join: ['', ['https://', { get_attr: [ tmos_mgmt_port, fixed_ips, 0, ip_address ] } ]] }
+  tmos_management_cli_private:
+    description: TMOS management service IP address
+    value: { list_join: ['', ['ssh://root@', { get_attr: [ tmos_mgmt_port, fixed_ips, 0, ip_address ] } ]] }
+  tmos_management_xui_public:
+    description: Floating IP access the TMOS management services
+    value: { list_join: ['', ['https://', { get_attr: [ tmos_mgmt_floating_ip, floating_ip_address ] } ]] }
+  tmos_management_cli_public:
+    description: TMOS management service IP address
+    value: { list_join: ['', ['ssh://root@', { get_attr: [ tmos_mgmt_floating_ip, floating_ip_address ] } ]] }
+  f5_declarative_onboarding_private:
+    description: Device Level Declarative REST API
+    value: { list_join: ['', ['https://', { get_attr: [ tmos_mgmt_port, fixed_ips, 0, ip_address ] }, ':8443/mgmt/shared/declarative-onboarding' ]] }
+  f5_appsvcs_extension_private:
+    description: Service Level Declarative REST API
+    value: { list_join: ['', ['https://', { get_attr: [ tmos_mgmt_port, fixed_ips, 0, ip_address ] }, ':8443/mgmt/shared/appsvcs/declare' ]] }
+  f5_declarative_onboarding_public:
+    description: Device Level Declarative REST API
+    value: { list_join: ['', ['https://', { get_attr: [ tmos_mgmt_floating_ip, floating_ip_address ] }, ':8443/mgmt/shared/declarative-onboarding' ]] }
+  f5_appsvcs_extension_public:
+    description: Service Level Declarative REST API
+    value: { list_join: ['', ['https://', { get_attr: [ tmos_mgmt_floating_ip, floating_ip_address ] }, ':8443/mgmt/shared/appsvcs/declare' ]] }
+  tmos_phone_home_url:
+    description: Phone Home URL
+    value: { get_param: phone_home_url }
+  heat_phone_home_cli:
+    description: Heat Wait Condition CLI
+    value: { get_attr: ['wait_handle', 'curl_cli'] }

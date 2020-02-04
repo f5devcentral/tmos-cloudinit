@@ -1,0 +1,20 @@
+---
+tmos_image: {{tmos_all_image_uuid}}
+tmos_flavor: {{tmos_all_flavor_uuid}}
+tmos_root_authkey_name: {{tmos_root_authkey_name}}
+tmos_root_password: {{tmos_root_password}}
+tmos_admin_password: {{tmos_admin_password}}
+license_host: {{license_host}}
+license_username: {{license_username}}
+license_password: {{license_username}}
+license_pool: {{license_pool}}
+do_url: {{do_url}}
+as3_url: {{as3_url}}
+waf_policy_url: {{waf_policy_url}}
+phone_home_url: {{phone_home_url}}
+external_network: {{external_network_uuid}}
+management_network: {{management_network_uuid}}
+vip_network: {{vip_network_uuid}}
+vip_subnet: {{vip_subnet_uuid}}
+security_group: {{security_group_uuid}}
+server_name: waf2nic

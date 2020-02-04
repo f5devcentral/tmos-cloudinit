@@ -1,3 +1,7 @@
 .vscode
 dist
 build
+*/env.yaml
+*/config.yaml
+*/main.retry
+*/*.pyc

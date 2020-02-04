@@ -1,0 +1,101 @@
+#cloud-config
+chpasswd:
+  expire: false
+  list: |
+    root:{{ tmos_root_password }}
+    admin:{{ tmos_admin_password }}
+tmos_configdrive_openstack:
+  enabled: true
+  rd_enabled: false
+  configsync_interface: 1.1
+  default_route_interface: 1.2
+  inject_routes: true
+  icontrollx_trusted_sources: false
+  icontrollx_package_urls:
+    - {{ do_url }}
+    - {{ as3_url }}
+  do_enabled: true
+  do_declaration:
+    schemaVersion: 1.0.0
+    class: Device
+    async: true
+    label: Cloudinit Onboarding
+    Common:
+      class: Tenant
+      hostname: secondary-waf-instance.local
+      provisioningLevels:
+        class: Provision
+        ltm: nominal
+        asm: nominal
+      poolLicense:
+        class: License
+        licenseType: licensePool
+        bigIqHost: {{ license_host }}
+        bigIqUsername: {{ license_username }}
+        bigIqPassword: {{ license_password }}
+        licensePool: {{ license_pool }}
+        reachable: true
+        bigIpUsername: admin
+        bigIpPassword: {{ tmos_admin_password }}
+      dbvars:
+        class: DbVariables
+        ui.advisory.enabled: true
+        ui.advisory.color: orange
+        ui.advisory.text: This device is under centralized management.
+      activeStandbyGroup:
+        class: DeviceGroup
+        type: sync-failover
+        owner: secondary-waf-instance.local
+        members:
+          - primary-waf-instance.local
+          - secondary-waf-instance.local
+        autoSync: false
+        networkFailover: true
+        saveOnAutoSync: false
+        fullLoadOnSync: false
+        asmSync: false
+      trust:
+        class: DeviceTrust
+        localUsername: admin
+        localPassword: {{ tmos_admin_password }}
+        remoteHost: {{ secondary_cluster_ip }}
+        remoteUsername: admin
+        remotePassword: {{ tmos_admin_password }}
+  as3_enabled: true
+  as3_declaration:
+    class: ADC
+    schemaVersion: 3.0.0
+    label: ASM_VS1
+    remark: ASM_VS1
+    Sample_app_sec_01:
+      class: Tenant
+      HTTP_Service:
+        class: Application
+        template: http
+        serviceMain:
+          class: Service_HTTP
+          virtualAddresses:
+            - {{ waf_vip }}
+          snat: auto
+          pool: Pool1
+          policyWAF:
+            use: WAFPolicy
+        Pool1:
+          class: Pool
+          monitors:
+            - http
+          members:
+            - servicePort: 80
+              serverAddresses:
+                - 157.245.230.31
+            - servicePort: 80
+              serverAddresses:
+                - 157.245.212.107
+        WAFPolicy:
+          class: WAF_Policy
+          url: "{{ waf_policy_url }}"
+          ignoreChanges: true
+  phone_home_url: "{{ phone_home_url }}"
+  post_onboard_enabled: false
+bootcmd:
+  - "printf \"platform=Z100\\nfamily=0xC000000\\nhost=Z100\\nsystype=0x71\\n\">/PLATFORM"

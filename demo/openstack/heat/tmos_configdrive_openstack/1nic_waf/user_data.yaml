@@ -1,0 +1,82 @@
+#cloud-config
+chpasswd:
+  expire: false
+  list: |
+    root:$root_password
+    admin:$admin_password
+tmos_configdrive_openstack:
+  enabled: true
+  rd_enabled: false
+  configsync_interface: 1.0
+  default_route_interface: 1.0
+  inject_routes: true
+  icontrollx_trusted_sources: false
+  icontrollx_package_urls:
+    - $do_url
+    - $as3_url
+  do_enabled: true
+  do_declaration:
+    schemaVersion: 1.0.0
+    class: Device
+    async: true
+    label: Cloudinit Onboarding
+    Common:
+      class: Tenant
+      provisioningLevels:
+        class: Provision
+        ltm: nominal
+        asm: nominal
+      poolLicense:
+        class: License
+        licenseType: licensePool
+        bigIqHost: $license_host
+        bigIqUsername: $license_username
+        bigIqPassword: $license_password
+        licensePool: $license_pool
+        reachable: true
+        bigIpUsername: admin
+        bigIpPassword: $admin_password
+      dbvars:
+        class: DbVariables
+        ui.advisory.enabled: true
+        ui.advisory.color: orange
+        ui.advisory.text: This device is under centralized management.
+  as3_enabled: true
+  as3_declaration:
+    class: ADC
+    schemaVersion: 3.0.0
+    label: ASM_VS1
+    remark: ASM_VS1
+    Sample_app_sec_01:
+      class: Tenant
+      HTTP_Service:
+        class: Application
+        template: http
+        serviceMain:
+          class: Service_HTTP
+          virtualAddresses:
+            - $waf_vip
+          snat: auto
+          pool: Pool1
+          policyWAF:
+            use: WAFPolicy
+        Pool1:
+          class: Pool
+          monitors:
+            - http
+          members:
+            - servicePort: 80
+              serverAddresses:
+                - 157.245.230.31
+            - servicePort: 80
+              serverAddresses:
+                - 157.245.212.107
+        WAFPolicy:
+          class: WAF_Policy
+          url: "$waf_policy_url"
+          ignoreChanges: true
+  phone_home_url: "$phone_home_url"
+  phone_home_cli: "$wc_notify"
+  post_onboard_enabled: false
+bootcmd:
+  - "printf \"platform=Z100\\nfamily=0xC000000\\nhost=Z100\\nsystype=0x71\\n\">/PLATFORM"

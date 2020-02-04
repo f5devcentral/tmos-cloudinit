@@ -1,0 +1,12 @@
+{
+    "globals": {
+        "tmos_root_password": "f5c0nfig",
+        "tmos_admin_password": "f5c0nfig",
+        "do_url": "https://github.com/F5Networks/f5-declarative-onboarding/releases/download/v1.10.0/f5-declarative-onboarding-1.10.0-2.noarch.rpm",
+        "as3_url": "https://github.com/F5Networks/f5-appsvcs-extension/releases/download/v3.17.0/f5-appsvcs-3.17.0-3.noarch.rpm",
+        "waf_policy_url": "https://raw.githubusercontent.com/f5devcentral/f5-asm-policy-templates/master/owasp_ready_template/owasp-no-auto-tune-v1.1.xml"
+    },
+    "openstack": {
+        "heat_timeout": 1800
+    }
+}
