@@ -292,7 +292,7 @@ def main(ctx):
                   ctx.poll_cycle)
         while True:
             # Get a new session every pool cycle
-            _get_bigiq_session(ctx, reuse=False)
+            _get_bigiq_session(ctx, reuse=True)
             # resolve the Pool ID from pool name
             try:
                 ctx.bigiq_pool_id = _get_pool_id(ctx)
@@ -317,7 +317,7 @@ def main(ctx):
                 LOG.info('Existing..')
                 sys.exit(1)
             except Exception as ex:
-                del ctx['bigiq']
+                del ctx.bigiq
                 LOG.error("Error reconciling licenses %s", ex)
                 time.sleep(ctx.poll_cycle)
     else:
