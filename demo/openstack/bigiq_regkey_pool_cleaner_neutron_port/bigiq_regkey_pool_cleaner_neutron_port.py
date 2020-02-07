@@ -48,7 +48,8 @@ LOG.addHandler(LOGSTREAM)
 
 def _get_bigiq_session(ctx, reuse=True):
     ''' Creates a Requests Session to the BIG-IQ host configured '''
-    if reuse and hasattr(ctx, 'bigiq'):
+    if reuse and hasattr(ctx, 'bigiq') and ctx.bigiq:
+        LOG.debug('reusing BIG-IQ session')
         return ctx.bigiq
     if requests.__version__ < '2.9.1':
         requests.packages.urllib3.disable_warnings()  # pylint: disable=no-member
@@ -70,12 +71,14 @@ def _get_bigiq_session(ctx, reuse=True):
     bigiq.headers.update(
         {'X-F5-Auth-Token': response_json['token']['token']})
     bigiq.base_url = 'https://%s/mgmt/cm/device/licensing/pool' % ctx.bigiqhost
+    LOG.debug('initiated new BIG-IQ session')
     ctx.bigiq = bigiq
     return bigiq
 
 
 def _get_openstack_session(ctx, reuse=True):
-    if reuse and hasattr(ctx, 'openstack'):
+    if reuse and hasattr(ctx, 'openstack') and ctx.openstack:
+        LOG.debug('reusing OpenStack session')
         return ctx.openstack
     if requests.__version__ < '2.9.1':
         requests.packages.urllib3.disable_warnings()  # pylint: disable=no-member
@@ -132,7 +135,7 @@ def _get_pool_id(ctx):
     :returns: Pool ID string
     '''
     LOG.debug('finding pool %s', ctx.licensepool)
-    bigiq_session = _get_bigiq_session(ctx)
+    bigiq_session = _get_bigiq_session(ctx, reuse=True)
     pools_url = '%s/regkey/licenses?$select=id,kind,name' % \
         bigiq_session.base_url
     # Now need to check both name and uuid for match. Can't filter.
@@ -300,7 +303,12 @@ def main(ctx):
                 LOG.info('Existing..')
                 sys.exit(1)
             except Exception as ex:
-                LOG.error("Pool %s not found - %s", ctx.licensepool, ex)
+                if 'Unauthorized' in str(ex):
+                    LOG.error('BIG-IQ session expited')
+                    ctx.bigiq = None
+                    ctx.bigiq_pool_id = _get_pool_id(ctx)   
+                else:
+                    LOG.error("Pool %s not found - %s", ctx.licensepool, ex)
                 time.sleep(ctx.poll_cycle)
                 continue
             try:
@@ -317,8 +325,12 @@ def main(ctx):
                 LOG.info('Existing..')
                 sys.exit(1)
             except Exception as ex:
-                del ctx.bigiq
-                LOG.error("Error reconciling licenses %s", ex)
+                if 'Unauthorized' in str(ex):
+                    LOG.error('BIG-IQ session expited')
+                else:
+                    LOG.error("Error reconciling licenses %s", ex)
+                ctx.bigiq = None
+                ctx.openstack = None
                 time.sleep(ctx.poll_cycle)
     else:
         # resolve the Pool ID from pool name
