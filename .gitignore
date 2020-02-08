@@ -5,3 +5,6 @@ build
 */config.yaml
 */main.retry
 */*.pyc
+*/variables.tf
+*/terraform.*
+*/.terraform

@@ -102,7 +102,7 @@ def save_locals(answers=None):
 
 def get_auth_session(auth_url, username, password,
                      project_name, user_domain_name,
-                     project_domain_name):
+                     project_domain_id):
     """get OpenStack client session"""
     loader = loading.get_plugin_loader('password')
     auth = loader.load_from_options(
@@ -111,7 +111,7 @@ def get_auth_session(auth_url, username, password,
         password=password,
         project_name=project_name,
         user_domain_id=user_domain_name,
-        project_domain_id=project_domain_name)
+        project_domain_id=project_domain_id)
     return session.Session(auth=auth)
 
 
@@ -224,8 +224,10 @@ def get_neutron_security_groups(sess):
     """get OpenStack security groups"""
     neutron = get_neutron_client(sess)
     security_groups_dict = {}
+    project_id = sess.get_project_id()
     for sg in neutron.list_security_groups()['security_groups']:
-        security_groups_dict[sg['name']] = sg
+        if sg['project_id'] == project_id:
+            security_groups_dict[sg['name']] = sg
     sg_keys = security_groups_dict.keys()
     sg_keys.sort()
     security_groups = []
@@ -241,6 +243,21 @@ def create_webhook_site_token_url():
     return 'https://webhook.site/%s' % resp.json()['uuid']
 
 
+def os_session_from_env():
+    os_auth_url = os.getenv('OS_AUTH_URL', None)
+    os_username = os.getenv('OS_USERNAME', None)
+    os_password = os.getenv('OS_PASSWORD', None)
+    os_user_domain_name = os.getenv('OS_USER_DOMAIN_NAME', 'default')
+    os_project_domain_id = os.getenv('OS_PROJET_DOMAIN_ID', 'default')
+    os_project_name = os.getenv('OS_PROJECT_NAME', 'admin')
+    if not os_auth_url:
+        print('\nplease source your OpenStack RC file before starting the demo.\n')
+        sys.exit(1)
+    return get_auth_session(os_auth_url, os_username, os_password,
+                            os_project_name, os_user_domain_name, 
+                            os_project_domain_id)
+
+
 def populate():
     """initialize OpenStack demo environment"""
     # load demo defaults into environment
@@ -251,14 +268,15 @@ def populate():
     os_auth_url = os.getenv('OS_AUTH_URL', None)
     os_username = os.getenv('OS_USERNAME', None)
     os_password = os.getenv('OS_PASSWORD', None)
-    os_project_domain_name = os.getenv('OS_PROJECT_DOMAIN_NAME', 'default')
     os_user_domain_name = os.getenv('OS_USER_DOMAIN_NAME', 'default')
+    os_project_domain_id = os.getenv('OS_PROJET_DOMAIN_ID', 'default')
     os_project_name = os.getenv('OS_PROJECT_NAME', 'admin')
     if not os_auth_url:
         print('\nplease source your OpenStack RC file before starting the demo.\n')
         sys.exit(1)
     sess = get_auth_session(os_auth_url, os_username, os_password,
-                            os_project_name, os_user_domain_name, os_project_domain_name)
+                            os_project_name, os_user_domain_name, 
+                            os_project_domain_id)
 
     # template resource values, attempt to get them from env first
     tmos_ltm_image_name = os.getenv('tmos_ltm_image_name', None)
@@ -272,8 +290,7 @@ def populate():
     tmos_root_password = os.getenv('tmos_root_password', None)
     tmos_admin_password = os.getenv('tmos_admin_password', None)
     tmos_root_authkey_name = os.getenv('tmos_root_authkey_name', None)
-    tmos_root_authorized_ssh_key = os.getenv(
-        'tmos_root_authorized_ssh_key', None)
+    tmos_root_authorized_ssh_key = os.getenv('tmos_root_authorized_ssh_key', None)
     license_host = os.getenv('license_host', None)
     license_username = os.getenv('license_username', None)
     license_password = os.getenv('license_password', None)
@@ -300,7 +317,7 @@ def populate():
     vip_subnet_name = os.getenv('vip_subnet_name', None)
     vip_subnet_uuid = os.getenv('vip_subnet_uuid', None)
     security_group_name = os.getenv('security_group_name', None)
-    security_group = os.getenv('security_group', None)
+    security_group_uuid = os.getenv('security_group_uuid', None)
     heat_timeout = os.getenv('heat_timeout', 1800)
 
     # resource discovery from environment
@@ -319,7 +336,7 @@ def populate():
     authkeys = get_nova_authkeys(sess)
     for authkey in authkeys:
         if authkey.id == tmos_root_authkey_name:
-            tmos_root_authorized_ssh_key = authkey.public_key
+            tmos_root_authorized_ssh_key = authkey.public_key.rstrip()
     networks = get_neutron_networks(sess)
     external_networks = []
     for network in networks:
@@ -516,10 +533,10 @@ def populate():
                       (networks[net_indx-1]['name'], networks[net_indx-1]['id']))
                 vip_subnet_name = networks[net_indx-1]['name']
                 vip_subnet_uuid = networks[net_indx-1]['id']
-    while not security_group:
+    while not security_group_uuid:
         if len(security_groups) == 1:
             security_group_name = security_groups[0]['name']
-            security_group = security_groups[0]['id']
+            security_group_uuid = security_groups[0]['id']
         else:
             print(
                 '\nwhich security group should be used for the TMOS ports:\n')
@@ -531,11 +548,11 @@ def populate():
                 print('\nusing security group: %s (%s)' %
                       (security_groups[sg_indx-1]['name'], security_groups[sg_indx-1]['id']))
                 security_group_name = security_groups[sg_indx-1]['name']
-                security_group = security_groups[sg_indx-1]['id']
+                security_group_uuid = security_groups[sg_indx-1]['id']
     while not tmos_root_authkey_name:
         if len(authkeys) == 1:
             tmos_root_authkey_name = authkeys[0].id
-            tmos_root_authorized_ssh_key = authkeys[0].public_key
+            tmos_root_authorized_ssh_key = authkeys[0].public_key.rstrip()
         else:
             print('\nwhich auth key should be injected for the TMOS root user:\n')
             for index, key in enumerate(authkeys):
@@ -545,7 +562,7 @@ def populate():
             if len(authkeys) >= int(authkey_indx):
                 print('\nusing key: %s' % authkeys[authkey_indx-1].id)
                 tmos_root_authkey_name = authkeys[authkey_indx-1].id
-                tmos_root_authorized_ssh_key = authkeys[authkey_indx-1].public_key
+                tmos_root_authorized_ssh_key = authkeys[authkey_indx-1].public_key.rstrip()
     while not tmos_root_password:
         tmos_root_password = 'f5c0nfig'
     while not tmos_admin_password:
@@ -579,7 +596,7 @@ def populate():
         'globals': {
             'tmos_root_password': tmos_root_password,
             'tmos_admin_password': tmos_admin_password,
-            'tmos_root_authorized_ssh_key': tmos_root_authorized_ssh_key,
+            'tmos_root_authorized_ssh_key': tmos_root_authorized_ssh_key.rstrip(),
             'license_host': license_host,
             'license_username': license_username,
             'license_password': license_password,
@@ -603,18 +620,25 @@ def populate():
             'management_network_name': management_network_name,
             'management_network_uuid': management_network_uuid,
             'management_network_mtu': management_network_mtu,
+            'management_security_group_name': security_group_name,
+            'management_security_group_uuid': security_group_uuid,
             'cluster_network_name': cluster_network_name,
             'cluster_network_uuid': cluster_network_uuid,
             'cluster_network_mtu': cluster_network_mtu,
+            'cluster_security_group_name': security_group_name,
+            'cluster_security_group_uuid': security_group_uuid,
             'internal_network_name': internal_network_name,
             'internal_network_uuid': internal_network_uuid,
             'internal_network_mtu': internal_network_mtu,
+            'internal_security_group_name': security_group_name,
+            'internal_security_group_uuid': security_group_uuid,
             'vip_network_name': vip_network_name,
             'vip_network_uuid': vip_network_uuid,
             'vip_network_mtu': vip_network_mtu,
+            'vip_network_security_group_name': security_group_name,
+            'vip_network_security_group_uuid': security_group_uuid,
             'vip_subnet_name': vip_subnet_name,
             'vip_subnet_uuid': vip_subnet_uuid,
-            'security_group': security_group,
             'heat_timeout': heat_timeout
         }
     })
@@ -631,7 +655,7 @@ def populate():
         'tmos_root_password': tmos_root_password,
         'tmos_admin_password': tmos_admin_password,
         'tmos_root_authkey_name': tmos_root_authkey_name,
-        'tmos_root_authorized_ssh_key': tmos_root_authorized_ssh_key,
+        'tmos_root_authorized_ssh_key': tmos_root_authorized_ssh_key.rstrip(),
         'license_host': license_host,
         'license_username': license_username,
         'license_password': license_password,
@@ -645,18 +669,25 @@ def populate():
         'management_network_name': management_network_name,
         'management_network_uuid': management_network_uuid,
         'management_network_mtu': management_network_mtu,
+        'management_network_security_group_name': security_group_name,
+        'management_network_security_group_uuid': security_group_uuid,
         'cluster_network_name': cluster_network_name,
         'cluster_network_uuid': cluster_network_uuid,
         'cluster_network_mtu': cluster_network_mtu,
+        'cluster_network_security_group_name': security_group_name,
+        'cluster_network_security_group_uuid': security_group_uuid,
         'internal_network_name': internal_network_name,
         'internal_network_uuid': internal_network_uuid,
         'internal_network_mtu': internal_network_mtu,
+        'internal_network_security_group_name': security_group_name,
+        'internal_network_security_group_uuid': security_group_uuid,
         'vip_network_name': vip_network_name,
         'vip_network_uuid': vip_network_uuid,
         'vip_network_mtu': vip_network_mtu,
+        'vip_network_security_group_name': security_group_name,
+        'vip_network_security_group_uuid': security_group_uuid,
         'vip_subnet_name': vip_subnet_name,
         'vip_subnet_uuid': vip_subnet_uuid,
-        'security_group': security_group,
         'heat_timeout': heat_timeout
     }
 
@@ -687,7 +718,18 @@ def populate():
             with open(env_path, 'w+') as e_f:
                 e_f.write(pystache.render(t_f.read(), answers))
     # write out terraform config files
-
-
+    terraform_tld = "%s/openstack/terraform" % os.path.dirname(
+        os.path.realpath(__file__))
+    templates = []
+    for root, dirs, files in os.walk(terraform_tld):
+        for f_n in files:
+            if f_n.endswith('.mst'):
+                templates.append(os.path.join(root, f_n))
+    for template in templates:
+        var_path = "%s.tf" % os.path.splitext(template)[0]
+        with open(template, 'r') as t_f:
+            with open(var_path, 'w+') as v_f:
+                v_f.write(pystache.render(t_f.read(), answers))
+ 
 if __name__ == "__main__":
     populate()
