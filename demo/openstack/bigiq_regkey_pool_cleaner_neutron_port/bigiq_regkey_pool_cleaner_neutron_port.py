@@ -218,8 +218,7 @@ def _report(license_members, members_to_revoke):
                     "OFF,%s,%s,%s" % (
                         fmt_ts,
                         member['macAddress'],
-                        '%s:%d' % (member['deviceAddress'],
-                                   member['httpsPort'])
+                        member['deviceAddress']
                     )
                 )
         if preserve_member:
@@ -227,8 +226,7 @@ def _report(license_members, members_to_revoke):
                 "ON,%s,%s,%s" % (
                     fmt_ts,
                     member['macAddress'],
-                    '%s:%d' % (member['deviceAddress'],
-                               member['httpsPort'])
+                    member['deviceAddress']
                 )
             )
     return return_records
