@@ -4,6 +4,8 @@ chpasswd:
   list: |
     root:{{ tmos_root_password }}
     admin:{{ tmos_admin_password }}
+ssh_authorized_keys:
+  - {{ tmos_root_authorized_ssh_key }}
 tmos_static_mgmt:
   enabled: true
   icontrollx_trusted_sources: false

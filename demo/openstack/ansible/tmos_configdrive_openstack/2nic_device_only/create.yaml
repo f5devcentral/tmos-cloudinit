@@ -5,7 +5,7 @@
     name: "{{ server_name }}_management_port"
     network: "{{ management_network }}"
     security_groups:
-      - "{{ security_group }}"
+      - "{{ management_network_security_group }}"
     allowed_address_pairs:
       - ip_address: 0.0.0.0/0
       - ip_address: ::/0
@@ -16,7 +16,7 @@
     name: "{{ server_name }}_vip_port"
     network: "{{ vip_network }}"
     security_groups:
-      - "{{ security_group }}"
+      - "{{ vip_network_security_group }}"
     allowed_address_pairs:
       - ip_address: 0.0.0.0/0
       - ip_address: ::/0

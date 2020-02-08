@@ -95,6 +95,11 @@ parameters:
     default: None
     constraints:
       - custom_constraint: neutron.network
+  management_network_security_group:
+    type: string
+    label: Management Network Security Group
+    description: OAM Network Security Group
+    default: default
   management_mtu:
     type: number
     label: Management Network MTU
@@ -109,6 +114,11 @@ parameters:
     default: None
     constraints:
       - custom_constraint: neutron.network
+  vip_network_security_group:
+    type: string
+    label: Virtual Servers Network Security Group
+    description: Virtual Servers Network for Client Traffic Security Group
+    default: default
   vip_mtu:
     type: number
     label: Virtual Servers Network MTU
@@ -148,8 +158,10 @@ parameter_groups:
 - parameters:
   - external_network
   - management_network
+  - management_network_security_group
   - management_mtu
   - vip_network
+  - vip_network_security_group
   - vip_mtu
   - vip_subnet
 - parameters:
@@ -161,7 +173,7 @@ resources:
     properties:
       network: { get_param: management_network }
       security_groups:
-        - default
+        - { get_param: management_network_security_group }
       allowed_address_pairs:
         - ip_address: 0.0.0.0/0
         - ip_address: ::/0
@@ -176,7 +188,7 @@ resources:
     properties:
       network: { get_param: vip_network }
       security_groups:
-        - default
+        - { get_param: vip_network_security_group }
       allowed_address_pairs:
         - ip_address: 0.0.0.0/0
         - ip_address: ::/0

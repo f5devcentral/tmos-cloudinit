@@ -100,6 +100,11 @@ parameters:
     default: None
     constraints:
       - custom_constraint: neutron.network
+  management_network_security_group:
+    type: string
+    label: Management Network Security Group
+    description: OAM Network Security Group
+    default: default
   vip_network:
     type: string
     label: Virtual Servers Network
@@ -107,6 +112,11 @@ parameters:
     default: None
     constraints:
       - custom_constraint: neutron.network
+  vip_network_security_group:
+    type: string
+    label: Virtual Servers Network Security Group
+    description: Virtual Servers Network for Client Traffic Security Group
+    default: default
   vip_subnet:
     type: string
     label: Virtual Servers Subnet
@@ -141,7 +151,9 @@ parameter_groups:
 - parameters:
   - external_network
   - management_network
+  - management_network_security_group
   - vip_network
+  - vip_network_security_group
   - vip_subnet
 - parameters:
   - heat_timeout
@@ -152,7 +164,7 @@ resources:
     properties:
       network: { get_param: management_network }
       security_groups:
-        - default
+        - { get_param: management_network_security_group }
       allowed_address_pairs:
         - ip_address: 0.0.0.0/0
         - ip_address: ::/0
@@ -167,7 +179,7 @@ resources:
     properties:
       network: { get_param: vip_network }
       security_groups:
-        - default
+        - { get_param: vip_network_security_group }
       allowed_address_pairs:
         - ip_address: 0.0.0.0/0
         - ip_address: ::/0

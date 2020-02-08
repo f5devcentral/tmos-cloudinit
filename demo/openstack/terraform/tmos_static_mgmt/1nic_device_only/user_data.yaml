@@ -1,0 +1,29 @@
+#cloud-config
+chpasswd:
+  expire: false
+  list: |
+    root:${tmos_root_password}
+    admin:${tmos_admin_password}
+ssh_authorized_keys:
+  - ${tmos_root_authorized_ssh_key}
+tmos_static_mgmt:
+  enabled: true
+  icontrollx_trusted_sources: false
+  icontrollx_package_urls:
+    - ${do_url}
+    - ${as3_url}
+  ip: "${mgmt_selfip}/${mgmt_mask}"
+  gw: ${mgmt_gateway}
+  mtu: ${mgmt_mtu}
+  hostname: ${hostname}
+  nameservers:
+    - ${dns_server}
+  searchdomain: ${search_domain}
+  ntpservers:
+    - 0.pool.ntp.org
+    - 1.pool.ntp.org
+    - 2.pool.ntp.org
+  phone_home_url: "${phone_home_url}"
+  post_onboard_enabled: false
+bootcmd:
+  - "printf \"platform=Z100\\nfamily=0xC000000\\nhost=Z100\\nsystype=0x71\\n\">/PLATFORM"

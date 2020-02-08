@@ -49,7 +49,7 @@ parameters:
   internal_network: 8b1cf4ca-012d-4164-ae7d-68e2670caf7a <- internal servers network 
   vip_network: 5eaa04e7-efe1-47e9-a6a4-dad7e5465f32 <- client access network
   vip_subnet: 55ff861a-1dbf-45b4-b7b8-31006f1f9f20 <- subnet to get a fixed IP for your virtual service address
-  heat_timeout: 1800
+  heat_timeout: {{heat_timeout}}
 ```
 
 This environment can be used with the following templates:

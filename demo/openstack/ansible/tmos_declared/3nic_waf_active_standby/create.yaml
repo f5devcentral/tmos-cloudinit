@@ -18,7 +18,7 @@
     name: "{{ server_name }}_management_port_primary"
     network: "{{ management_network }}"
     security_groups:
-      - "{{ security_group }}"
+      - "{{ management_network_security_group }}"
     allowed_address_pairs:
       - ip_address: 0.0.0.0/0
       - ip_address: ::/0
@@ -40,7 +40,7 @@
     name: "{{ server_name }}_cluster_port_primary"
     network: "{{ cluster_network }}"
     security_groups:
-      - "{{ security_group }}"
+      - "{{ cluster_network_security_group }}"
     allowed_address_pairs:
       - ip_address: 0.0.0.0/0
       - ip_address: ::/0
@@ -61,7 +61,7 @@
     name: "{{ server_name }}_vip_port_primary"
     network: "{{ vip_network }}"
     security_groups:
-      - "{{ security_group }}"
+      - "{{ vip_network_security_group }}"
     allowed_address_pairs:
       - ip_address: 0.0.0.0/0
       - ip_address: ::/0
@@ -86,7 +86,7 @@
     name: "{{ server_name }}_management_port_secondary"
     network: "{{ management_network }}"
     security_groups:
-      - "{{ security_group }}"
+      - "{{ management_network_security_group }}"
     allowed_address_pairs:
       - ip_address: 0.0.0.0/0
       - ip_address: ::/0
@@ -107,7 +107,7 @@
     name: "{{ server_name }}_cluster_port_secondary"
     network: "{{ cluster_network }}"
     security_groups:
-      - "{{ security_group }}"
+      - "{{ cluster_network_security_group }}"
     allowed_address_pairs:
       - ip_address: 0.0.0.0/0
       - ip_address: ::/0
@@ -125,13 +125,17 @@
 - name: set_secondary_cluster_ip
   set_fact:
     secondary_cluster_ip: "{{ tmos_cluster_port_secondary.port.fixed_ips.0.ip_address }}"
+    search_domain: "{{ tmos_mgmt_port_primary.port.dns_assignment.0.fqdn | replace (tmos_mgmt_port_primary.port.dns_assignment.0.hostname, '') | regex_replace('^\\.|\\.$','') }}"
+    hostname_primary: "{{ server_name }}-primary.{{ tmos_mgmt_port_primary.port.dns_assignment.0.fqdn | replace (tmos_mgmt_port_primary.port.dns_assignment.0.hostname, '') | regex_replace('^\\.|\\.$','') }}"
+    hostname_secondary: "{{ server_name }}-secondary.{{ tmos_mgmt_port_secondary.port.dns_assignment.0.fqdn | replace (tmos_mgmt_port_secondary.port.dns_assignment.0.hostname, '') | regex_replace('^\\.|\\.$','') }}"
+
 - name: create_tmos_vip_port_secondary
   os_port:
     state: present
     name: "{{ server_name }}_vip_port_secondary"
     network: "{{ vip_network }}"
     security_groups:
-      - "{{ security_group }}"
+      - "{{ vip_network_security_group }}"
     allowed_address_pairs:
       - ip_address: 0.0.0.0/0
       - ip_address: ::/0
@@ -152,11 +156,11 @@
     default_gateway_secondary: "{{ tmos_vip_subnet_secondary.ansible_facts.openstack_subnets.0.gateway_ip }}"
 - set_fact:
     waf_vip: "{{ tmos_vip_port_secondary.port.fixed_ips.0.ip_address }}"
-
+ 
 - name: create_adc_instance_secondary
   os_server:
     state: present
-    name: "{{ server_name }}_secondary"
+    name: "{{ server_name }}-secondary"
     image: "{{ tmos_image }}"
     flavor: "{{ tmos_flavor }}"
     auto_ip: no
@@ -171,7 +175,7 @@
 - name: create_adc_instance_primary
   os_server:
     state: present
-    name: "{{ server_name }}_primary"
+    name: "{{ server_name }}-primary"
     image: "{{ tmos_image }}"
     flavor: "{{ tmos_flavor }}"
     auto_ip: no

@@ -19,7 +19,7 @@ tmos_declared:
     label: Cloudinit Onboarding
     Common:
       class: Tenant
-      hostname: primary-adc-instance.local
+      hostname: {{ hostname_primary }}
       provisioningLevels:
         class: Provision
         ltm: nominal
@@ -38,7 +38,7 @@ tmos_declared:
         nameServers:
           - {{ dns_server }}
         search:
-          - example.openstack.com
+          - {{ search_domain }}
       ntpServers:
         class: NTP
         servers:
@@ -100,10 +100,10 @@ tmos_declared:
       activeStandbyGroup:
         class: DeviceGroup
         type: sync-failover
-        owner: secondary-adc-instance.local
+        owner: {{ hostname_secondary }}
         members:
-          - primary-adc-instance.local
-          - secondary-adc-instance.local
+          - {{ hostname_primary }}
+          - {{ hostname_secondary }}
         autoSync: false
         networkFailover: true
         saveOnAutoSync: false

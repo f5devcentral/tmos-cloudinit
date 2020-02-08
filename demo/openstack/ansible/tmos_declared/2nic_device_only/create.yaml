@@ -5,7 +5,7 @@
     name: "{{ server_name }}_management_port"
     network: "{{ management_network }}"
     security_groups:
-      - "{{ security_group }}"
+      - "{{ management_network_security_group }}"
     allowed_address_pairs:
       - ip_address: 0.0.0.0/0
       - ip_address: ::/0
@@ -25,13 +25,15 @@
     mgmt_mask: "{{ tmos_mgmt_subnet.ansible_facts.openstack_subnets.0.cidr.split('/')[1] }}"
     mgmt_gateway: "{{ tmos_mgmt_subnet.ansible_facts.openstack_subnets.0.gateway_ip }}"
     dns_server: "{{ tmos_mgmt_subnet.ansible_facts.openstack_subnets.0.dns_nameservers.0 }}"
+    search_domain: "{{ tmos_mgmt_port.port.dns_assignment.0.fqdn | replace (tmos_mgmt_port.port.dns_assignment.0.hostname, '') | regex_replace('^\\.|\\.$','') }}"
+    hostname: "{{ server_name }}.{{ tmos_mgmt_port.port.dns_assignment.0.fqdn | replace (tmos_mgmt_port.port.dns_assignment.0.hostname, '') | regex_replace('^\\.|\\.$','') }}"
 - name: create_tmos_vip_port
   os_port:
     state: present
     name: "{{ server_name }}_vip_port"
     network: "{{ vip_network }}"
     security_groups:
-      - "{{ security_group }}"
+      - "{{ vip_network_security_group }}"
     allowed_address_pairs:
       - ip_address: 0.0.0.0/0
       - ip_address: ::/0

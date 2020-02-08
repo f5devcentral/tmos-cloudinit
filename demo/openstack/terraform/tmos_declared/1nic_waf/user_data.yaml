@@ -1,0 +1,114 @@
+#cloud-config
+chpasswd:
+  expire: false
+  list: |
+    root:${tmos_root_password}
+    admin:${tmos_admin_password}
+ssh_authorized_keys:
+  - ${tmos_root_authorized_ssh_key}
+tmos_static_mgmt:
+  enabled: true
+  ip: "${vip_selfip}/${vip_mask}"
+  mtu: ${vip_mtu}
+  gw: ${vip_gateway}
+  post_onboard_enabled: true
+  post_onboard_commands:
+    - tmsh modify sys dns name-servers replace-all-with { ${dns_server} }
+    - tmsh modify sys dns search replace-all-with { ${domain} }
+    - tmsh modify sys ntp timezone UTC
+    - tmsh modify sys ntp servers replace-all-with { 0.pool.ntp.org 1.pool.ntp.org }
+    - tmsh save sys config
+tmos_declared:
+  enabled: true
+  icontrollx_trusted_sources: false
+  icontrollx_package_urls:
+    - ${do_url}
+    - ${as3_url}
+  do_declaration:
+    schemaVersion: 1.0.0
+    class: Device
+    async: true
+    label: Cloudinit Onboarding
+    Common:
+      class: Tenant
+      hostname: ${hostname}
+      provisioningLevels:
+        class: Provision
+        ltm: nominal
+        asm: nominal
+      poolLicense:
+        class: License
+        licenseType: licensePool
+        bigIqHost: ${license_host}
+        bigIqUsername: ${license_username}
+        bigIqPassword: ${license_password}
+        licensePool: ${license_pool}
+        reachable: true
+        bigIpUsername: admin
+        bigIpPassword: ${tmos_admin_password}
+      internal:
+        class: VLAN
+        mtu: ${vip_mtu}
+        tag: 4094
+        interfaces:
+          - name: '1.0'
+            tagged: false
+      self_1nic:
+        class: SelfIp
+        address: "${vip_selfip}/${vip_mask}"
+        vlan: internal
+        allowService: default
+        trafficGroup: traffic-group-local-only
+      configsync:
+        class: ConfigSync
+        configsyncIp: /Common/self_1nic/address
+      failoverAddress:
+        class: FailoverUnicast
+        address: /Common/self_1nic/address
+      default:
+        class: Route
+        gw: ${vip_gateway}
+        network: default
+        mtu: ${vip_mtu}
+      dbvars:
+        class: DbVariables
+        ui.advisory.enabled: true
+        ui.advisory.color: orange
+        ui.advisory.text: This device is under centralized management.
+  as3_enabled: true
+  as3_declaration:
+    class: ADC
+    schemaVersion: 3.0.0
+    label: ASM_VS1
+    remark: ASM_VS1
+    Sample_app_sec_01:
+      class: Tenant
+      HTTP_Service:
+        class: Application
+        template: http
+        serviceMain:
+          class: Service_HTTP
+          virtualAddresses:
+            - ${vip_selfip}
+          snat: auto
+          pool: Pool1
+          policyWAF:
+            use: WAFPolicy
+        Pool1:
+          class: Pool
+          monitors:
+            - http
+          members:
+            - servicePort: 80
+              serverAddresses:
+                - 157.245.230.31
+            - servicePort: 80
+              serverAddresses:
+                - 157.245.212.107
+        WAFPolicy:
+          class: WAF_Policy
+          url: "${waf_policy_url}"
+          ignoreChanges: true
+  phone_home_url: "${phone_home_url}"
+bootcmd:
+  - "printf \"platform=Z100\\nfamily=0xC000000\\nhost=Z100\\nsystype=0x71\\n\">/PLATFORM"

@@ -19,6 +19,7 @@ tmos_declared:
     label: Cloudinit Onboarding
     Common:
       class: Tenant
+      hostname: {{ hostname }}
       provisioningLevels:
         class: Provision
         ltm: nominal
@@ -37,7 +38,7 @@ tmos_declared:
         nameServers:
           - {{ dns_server }}
         search:
-          - example.openstack.com
+          - {{ search_domain }}
       ntpServers:
         class: NTP
         servers:

@@ -22,7 +22,7 @@ tmos_configdrive_openstack:
     label: Cloudinit Onboarding
     Common:
       class: Tenant
-      hostname: primary-waf-instance.local
+      hostname: {{ hostname_primary }}
       provisioningLevels:
         class: Provision
         ltm: nominal
@@ -45,10 +45,10 @@ tmos_configdrive_openstack:
       activeStandbyGroup:
         class: DeviceGroup
         type: sync-failover
-        owner: secondary-waf-instance.local
+        owner: {{ hostname_secondary }}
         members:
-          - primary-waf-instance.local
-          - secondary-waf-instance.local
+          - {{ hostname_primary }}
+          - {{ hostname_secondary }}
         autoSync: false
         networkFailover: true
         saveOnAutoSync: false

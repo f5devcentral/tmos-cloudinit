@@ -5,7 +5,7 @@
     name: "{{ server_name }}_vip_port"
     network: "{{ vip_network }}"
     security_groups:
-      - "{{ security_group }}"
+      - "{{ vip_network_security_group }}"
     allowed_address_pairs:
       - ip_address: 0.0.0.0/0
       - ip_address: ::/0
@@ -31,6 +31,8 @@
     vip_gateway: "{{ tmos_vip_subnet.ansible_facts.openstack_subnets.0.gateway_ip }}"
     dns_server: "{{ tmos_vip_subnet.ansible_facts.openstack_subnets.0.dns_nameservers.0 }}"
     default_gateway: "{{ tmos_vip_subnet.ansible_facts.openstack_subnets.0.gateway_ip }}"
+    search_domain: "{{ tmos_vip_port.port.dns_assignment.0.fqdn | replace (tmos_vip_port.port.dns_assignment.0.hostname, '') | regex_replace('^\\.|\\.$','') }}"
+    hostname: "{{ server_name }}.{{ tmos_vip_port.port.dns_assignment.0.fqdn | replace (tmos_vip_port.port.dns_assignment.0.hostname, '') | regex_replace('^\\.|\\.$','') }}"
 - name: create_adc_instance
   os_server:
     state: present
