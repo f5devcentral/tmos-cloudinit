@@ -215,9 +215,7 @@ def _report(license_members, members_to_revoke):
             if member['id'] == revoke['id']:
                 preserve_member = False
                 return_records.append(
-                    "OFF,%s,%s,%s,%s,%s" % (
-                        member['deviceMachineId'],
-                        member['lastGoodHealthCheckDateTime'],
+                    "OFF,%s,%s,%s" % (
                         fmt_ts,
                         member['macAddress'],
                         '%s:%d' % (member['deviceAddress'],
@@ -226,12 +224,11 @@ def _report(license_members, members_to_revoke):
                 )
         if preserve_member:
             return_records.append(
-                "ON,%s,%s,%s,%s,%s" % (
-                    member['deviceMachineId'],
-                    member['lastGoodHealthCheckDateTime'],
+                "ON,%s,%s,%s" % (
                     fmt_ts,
                     member['macAddress'],
-                    '%s:%d' % (member['deviceAddress'], member['httpsPort'])
+                    '%s:%d' % (member['deviceAddress'],
+                               member['httpsPort'])
                 )
             )
     return return_records

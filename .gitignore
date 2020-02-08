@@ -1,10 +1,12 @@
 .vscode
 dist
 build
-*/env.yaml
-*/config.yaml
-*/main.retry
-*/*.pyc
-*/variables.tf
+env.yaml
+config.yaml
+main.retry
+*.pyc
+variables.tf
+local_defaults.json
 */terraform.*
 */.terraform
+*/.venv
