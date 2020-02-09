@@ -189,7 +189,7 @@
     var: neutron_url
 - name: query_for_existing_sevice_floating_ip
   uri:
-    url: "{{ neutron_url }}/v2.0/floatingips?fixed_ip_address={{ waf_vip }}&floating_network_id={{ external_network }}"
+    url: "{{ neutron_url }}/v2.0/floatingips?project_id={{ tmos_vip_port_secondary.port.project_id }}&fixed_ip_address={{ waf_vip }}&floating_network_id={{ external_network }}"
     headers:
       X-Auth-Token: "{{ auth_token }}"
       Content-Type: application/json
@@ -207,7 +207,7 @@
   when: existing_service_fip.json.floatingips | length > 0 
 - name: get_all_floatingips_on_net
   uri:
-    url: "{{ neutron_url }}/v2.0/floatingips?floating_network_id={{ external_network }}"
+    url: "{{ neutron_url }}/v2.0/floatingips?project_id={{ tmos_vip_port_secondary.port.project_id }}&floating_network_id={{ external_network }}"
     headers:
       X-Auth-Token: "{{ auth_token }}"
       Content-Type: application/json

@@ -13,7 +13,7 @@ as3_url: {{as3_url}}
 phone_home_url: {{phone_home_url}}
 external_network: {{external_network_uuid}}
 management_network: {{management_network_uuid}}
-management_network_security_group {{management_network_security_group_uuid}}
+management_network_security_group: {{management_network_security_group_uuid}}
 cluster_network: {{cluster_network_uuid}}
 cluster_network_security_group: {{cluster_network_security_group_uuid}}
 internal_network: {{internal_network_uuid}}

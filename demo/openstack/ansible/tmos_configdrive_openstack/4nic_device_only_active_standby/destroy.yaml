@@ -2,12 +2,12 @@
 - name: destroy_adc_instance_by_name_primary
   os_server:
     state: absent
-    name: "{{ server_name }}_primary"
+    name: "{{ server_name }}-primary"
     wait: no
 - name: destroy_adc_instance_by_name_secondary
   os_server:
     state: absent
-    name: "{{ server_name }}_secondary"
+    name: "{{ server_name }}-secondary"
     wait: no
 - name: destroy_tmos_mgmt_port_by_name_primary
   os_port:

@@ -14,7 +14,7 @@ waf_policy_url: {{waf_policy_url}}
 phone_home_url: {{phone_home_url}}
 external_network: {{external_network_uuid}}
 management_network: {{management_network_uuid}}
-management_network_security_group {{management_network_security_group_uuid}}
+management_network_security_group: {{management_network_security_group_uuid}}
 vip_network: {{vip_network_uuid}}
 vip_network_security_group: {{vip_network_security_group_uuid}}
 vip_subnet: {{vip_subnet_uuid}}

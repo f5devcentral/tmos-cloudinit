@@ -22,7 +22,7 @@ tmos_configdrive_openstack:
     label: Cloudinit Onboarding
     Common:
       class: Tenant
-      hostname: {{ hostname_primary }}
+      hostname: ${hostname_primary}
       provisioningLevels:
         class: Provision
         ltm: nominal
@@ -34,9 +34,8 @@ tmos_configdrive_openstack:
         bigIqUsername: ${license_username}
         bigIqPassword: ${license_password}
         licensePool: ${license_pool}
-        reachable: true
-        bigIpUsername: admin
-        bigIpPassword: ${tmos_admin_password}
+        reachable: false
+        hypervisor: kvm
       dbvars:
         class: DbVariables
         ui.advisory.enabled: true
@@ -45,10 +44,10 @@ tmos_configdrive_openstack:
       activeStandbyGroup:
         class: DeviceGroup
         type: sync-failover
-        owner: {{ hostname_secondary }}
+        owner: ${hostname_secondary}
         members:
-          - {{ hostname_primary }}
-          - {{ hostname_secondary }}
+          - ${hostname_primary}
+          - ${hostname_secondary}
         autoSync: false
         networkFailover: true
         saveOnAutoSync: false
