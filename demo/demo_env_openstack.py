@@ -198,12 +198,31 @@ def create_neutron_dhcp_subnet(sess, network_uuid, subnet_name,
     subnet = {
         'network_id': network_uuid,
         'name': subnet_name,
-        'subnet_cidr': subnet_cidr,
+        'ip_version': 4,
+        'cidr': subnet_cidr,
         'gateway_ip': subnet_gateway,
         'dns_nameservers': [dns_server],
         'allocation_pools': [{'start': start_address, 'end': end_address}]
     }
     return neutron.create_subnet({'subnet': subnet})['subnet']
+
+
+def create_neutron_router(sess, external_network_uuid):
+    neutron = get_neutron_client(sess)
+    router = {
+        "name": "demo_router",
+        "admin_state_up": True,
+        "external_gateway_info": {
+            "network_id": external_network_uuid,
+            "enable_snat": True
+        }
+    }
+    return neutron.create_router({'router': router})['router']
+
+
+def add_interface_to_neutron_router(sess, router_uuid, subnet_uuid):
+    neutron = get_neutron_client(sess)
+    return neutron.add_interface_router(router_uuid, {'subnet_id': subnet_uuid})
 
 
 def get_neutron_subnets(sess):
@@ -254,7 +273,7 @@ def os_session_from_env():
         print('\nplease source your OpenStack RC file before starting the demo.\n')
         sys.exit(1)
     return get_auth_session(os_auth_url, os_username, os_password,
-                            os_project_name, os_user_domain_name, 
+                            os_project_name, os_user_domain_name,
                             os_project_domain_id)
 
 
@@ -275,7 +294,7 @@ def populate():
         print('\nplease source your OpenStack RC file before starting the demo.\n')
         sys.exit(1)
     sess = get_auth_session(os_auth_url, os_username, os_password,
-                            os_project_name, os_user_domain_name, 
+                            os_project_name, os_user_domain_name,
                             os_project_domain_id)
 
     # template resource values, attempt to get them from env first
@@ -290,7 +309,8 @@ def populate():
     tmos_root_password = os.getenv('tmos_root_password', None)
     tmos_admin_password = os.getenv('tmos_admin_password', None)
     tmos_root_authkey_name = os.getenv('tmos_root_authkey_name', None)
-    tmos_root_authorized_ssh_key = os.getenv('tmos_root_authorized_ssh_key', None)
+    tmos_root_authorized_ssh_key = os.getenv(
+        'tmos_root_authorized_ssh_key', None)
     license_host = os.getenv('license_host', None)
     license_username = os.getenv('license_username', None)
     license_password = os.getenv('license_password', None)
@@ -364,7 +384,30 @@ def populate():
             vip_subnet_uuid = subnet['id']
     security_groups = get_neutron_security_groups(sess)
 
+    req_errors = False
+
+    if len(images) == 0:
+        print('\nplease patch and upload your TMOS images before setting up the demos.\n')
+        req_errors = True
+
+    if len(flavors) == 0:
+        print(
+            '\nplease create approriate TMOS compute flavors before setting up the demos.\n')
+        req_errors = True
+
+    if len(authkeys) == 0:
+        print('\nplease create or import an SSH key before setting up the demos.\n')
+        req_errors = True
+
+    if len(external_networks) == 0:
+        print('\nplease create an external network for Floating IPs before setting up the demos.\n')
+        req_errors = True
+
+    if req_errors:
+        sys.exit(1)
+
     # if not populated from env, prompt for discovery
+
     while not tmos_ltm_image_uuid:
         print('\nwhich image should we use to produce the ADC(LTM image) only templates:\n')
         for index, image in enumerate(images):
@@ -376,6 +419,7 @@ def populate():
                   (images[image_indx-1].name, images[image_indx-1].id))
             tmos_ltm_image_name = images[image_indx-1].name
             tmos_ltm_image_uuid = images[image_indx-1].id
+
     while not tmos_ltm_flavor_uuid:
         print(
             '\nwhich flavor should we use to produce the ADC(LTM image) only templates:\n')
@@ -388,6 +432,7 @@ def populate():
                   (flavors[flavor_indx-1].name, flavors[flavor_indx-1].id))
             tmos_ltm_flavor_name = flavors[flavor_indx-1].name
             tmos_ltm_flavor_uuid = flavors[flavor_indx-1].id
+
     while not tmos_all_image_uuid:
         print('\nwhich image should we use to produce the WAF(ALL image) only templates:\n')
         for index, image in enumerate(images):
@@ -399,6 +444,7 @@ def populate():
                   (images[image_indx-1].name, images[image_indx-1].id))
             tmos_all_image_name = images[image_indx-1].name
             tmos_all_image_uuid = images[image_indx-1].id
+
     while not tmos_all_flavor_uuid:
         print(
             '\nwhich flavor should we use to produce the WAF(ALL image) only templates:\n')
@@ -411,6 +457,40 @@ def populate():
                   (flavors[flavor_indx-1].name, flavors[flavor_indx-1].id))
             tmos_all_flavor_name = flavors[flavor_indx-1].name
             tmos_all_flavor_uuid = flavors[flavor_indx-1].id
+
+    while not security_group_uuid:
+        if len(security_groups) == 1:
+            security_group_name = security_groups[0]['name']
+            security_group_uuid = security_groups[0]['id']
+        else:
+            print(
+                '\nwhich security group should be used for the TMOS ports:\n')
+            for index, sg in enumerate(security_groups):
+                print("\t%d) %s" % (index + 1, sg['name']))
+            print('\n')
+            sg_indx = input('Enter number: ')
+            if len(security_groups) >= int(sg_indx):
+                print('\nusing security group: %s (%s)' %
+                      (security_groups[sg_indx-1]['name'], security_groups[sg_indx-1]['id']))
+                security_group_name = security_groups[sg_indx-1]['name']
+                security_group_uuid = security_groups[sg_indx-1]['id']
+
+    while not tmos_root_authkey_name:
+        if len(authkeys) == 1:
+            tmos_root_authkey_name = authkeys[0].id
+            tmos_root_authorized_ssh_key = authkeys[0].public_key.rstrip()
+        else:
+            print('\nwhich auth key should be injected for the TMOS root user:\n')
+            for index, key in enumerate(authkeys):
+                print("\t%d) %s" % (index + 1, key.name))
+            print('\n')
+            authkey_indx = input('Enter number: ')
+            if len(authkeys) >= int(authkey_indx):
+                print('\nusing key: %s' % authkeys[authkey_indx-1].id)
+                tmos_root_authkey_name = authkeys[authkey_indx-1].id
+                tmos_root_authorized_ssh_key = authkeys[authkey_indx -
+                                                        1].public_key.rstrip()
+
     while not external_network_name:
         if len(external_networks) == 1:
             external_network_name = external_networks[0]['name']
@@ -426,7 +506,8 @@ def populate():
                     external_networks[net_indx-1]['name'], external_networks[net_indx-1]['id']))
                 external_network_name = external_networks[net_indx-1]['name']
                 external_network_uuid = external_networks[net_indx-1]['id']
-    if not management_network_name:
+
+    if not management_network_name or len(networks) < 2:
         print('\nShould new tenant networks be created for demos: \n')
         y_n = raw_input('Enter (Y/N): ')
         if y_n.lower() == 'y':
@@ -435,7 +516,7 @@ def populate():
             management_network_name = management['name']
             management_network_uuid = management['id']
             management_network_mtu = management['mtu']
-            create_neutron_dhcp_subnet(
+            management_subnet = create_neutron_dhcp_subnet(
                 sess, management_network_uuid, 'tmos_demo_management',
                 '192.168.245.0/24', '192.168.245.1', '8.8.8.8', '192.168.245.20', '192.168.245.200'
             )
@@ -443,7 +524,7 @@ def populate():
             cluster_network_name = cluster['name']
             cluster_network_uuid = cluster['id']
             cluster_network_mtu = cluster['mtu']
-            create_neutron_dhcp_subnet(
+            cluster_subnet = create_neutron_dhcp_subnet(
                 sess, cluster_network_uuid, 'tmos_demo_HA',
                 '1.1.1.0/24', '1.1.1.1', '8.8.8.8', '1.1.1.20', '1.1.1.200'
             )
@@ -451,7 +532,7 @@ def populate():
             internal_network_name = internal['name']
             internal_network_uuid = internal['id']
             internal_network_mtu = internal['mtu']
-            create_neutron_dhcp_subnet(
+            internal_subnet = create_neutron_dhcp_subnet(
                 sess, internal_network_uuid, 'tmos_demo_internal',
                 '192.168.40.0/24', '192.168.40.1', '8.8.8.8', '192.168.40.20', '192.168.40.200'
             )
@@ -460,11 +541,24 @@ def populate():
             vip_network_uuid = external['id']
             vip_network_mtu = external['mtu']
             vip_subnet = create_neutron_dhcp_subnet(
-                sess, internal_network_uuid, 'tmos_demo_external',
+                sess, vip_network_uuid, 'tmos_demo_external',
                 '192.168.80.0/24', '192.168.80.1', '8.8.8.8', '192.168.80.20', '192.168.80.200'
             )
             vip_subnet_name = vip_subnet['name']
             vip_subnet_uuid = vip_subnet['id']
+            networks = [management_network_uuid, cluster_network_uuid,
+                        internal_network_uuid, external_network_uuid]
+            router = create_neutron_router(sess, external_network_uuid)
+            add_interface_to_neutron_router(
+                sess, router['id'], management_subnet['id'])
+            add_interface_to_neutron_router(
+                sess, router['id'], cluster_subnet['id'])
+            add_interface_to_neutron_router(
+                sess, router['id'], internal_subnet['id'])
+            add_interface_to_neutron_router(
+                sess, router['id'], vip_subnet['id'])
+    else:
+        print('\nPlease make sure all the networks you choose have a router interface attached\n')
 
     while not management_network_name:
         print('\nwhich network should be used for TMOS management:\n')
@@ -478,6 +572,7 @@ def populate():
             management_network_name = networks[net_indx-1]['name']
             management_network_uuid = networks[net_indx-1]['id']
             management_network_mtu = networks[net_indx-1]['mtu']
+
     while not cluster_network_name:
         print('\nwhich network should be used for TMOS cluster state communications:\n')
         for index, net in enumerate(networks):
@@ -490,6 +585,7 @@ def populate():
             cluster_network_name = networks[net_indx-1]['name']
             cluster_network_uuid = networks[net_indx-1]['id']
             cluster_network_mtu = networks[net_indx-1]['mtu']
+
     while not internal_network_name:
         print('\nwhich network should be used for the TMOS internal network:\n')
         for index, net in enumerate(networks):
@@ -502,6 +598,7 @@ def populate():
             internal_network_name = networks[net_indx-1]['name']
             internal_network_uuid = networks[net_indx-1]['id']
             internal_network_mtu = networks[net_indx-1]['mtu']
+
     while not (vip_network_name and vip_subnet_uuid):
         print('\nwhich network should be used for the TMOS virtual service listeners:\n')
         for index, net in enumerate(networks):
@@ -533,36 +630,7 @@ def populate():
                       (networks[net_indx-1]['name'], networks[net_indx-1]['id']))
                 vip_subnet_name = networks[net_indx-1]['name']
                 vip_subnet_uuid = networks[net_indx-1]['id']
-    while not security_group_uuid:
-        if len(security_groups) == 1:
-            security_group_name = security_groups[0]['name']
-            security_group_uuid = security_groups[0]['id']
-        else:
-            print(
-                '\nwhich security group should be used for the TMOS ports:\n')
-            for index, sg in enumerate(security_groups):
-                print("\t%d) %s" % (index + 1, sg['name']))
-            print('\n')
-            sg_indx = input('Enter number: ')
-            if len(security_groups) >= int(sg_indx):
-                print('\nusing security group: %s (%s)' %
-                      (security_groups[sg_indx-1]['name'], security_groups[sg_indx-1]['id']))
-                security_group_name = security_groups[sg_indx-1]['name']
-                security_group_uuid = security_groups[sg_indx-1]['id']
-    while not tmos_root_authkey_name:
-        if len(authkeys) == 1:
-            tmos_root_authkey_name = authkeys[0].id
-            tmos_root_authorized_ssh_key = authkeys[0].public_key.rstrip()
-        else:
-            print('\nwhich auth key should be injected for the TMOS root user:\n')
-            for index, key in enumerate(authkeys):
-                print("\t%d) %s" % (index + 1, key.name))
-            print('\n')
-            authkey_indx = input('Enter number: ')
-            if len(authkeys) >= int(authkey_indx):
-                print('\nusing key: %s' % authkeys[authkey_indx-1].id)
-                tmos_root_authkey_name = authkeys[authkey_indx-1].id
-                tmos_root_authorized_ssh_key = authkeys[authkey_indx-1].public_key.rstrip()
+
     while not tmos_root_password:
         tmos_root_password = 'f5c0nfig'
     while not tmos_admin_password:
@@ -730,6 +798,7 @@ def populate():
         with open(template, 'r') as t_f:
             with open(var_path, 'w+') as v_f:
                 v_f.write(pystache.render(t_f.read(), answers))
- 
+
+
 if __name__ == "__main__":
     populate()
