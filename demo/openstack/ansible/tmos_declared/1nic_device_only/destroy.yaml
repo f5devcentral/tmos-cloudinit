@@ -1,10 +1,117 @@
 ---
-- name: destroy_adc_instance_by_name
-  os_server:
-    state: absent
-    name: "{{ server_name }}"
-    wait: no
-- name: destroy_tmos_vip_port_by_name
-  os_port:
-    state: absent
-    name: "{{ server_name }}_vip_port"
+# avoiding os_*_info or os_*_facts, they are not reliable
+
+# populate auth_token and service_catalog from keystone
+- name: get_auth_token
+  os_auth:
+    wait: yes
+# get neutron and nova endpoints from keystone service_catalog
+- name: discover_network_endpoint
+  set_fact: 
+    neutron_url: "{{ service_catalog | json_query(lsc) | json_query(lep) | first | first }}"
+  vars:
+    - lsc: "[?name == 'neutron'].endpoints[*]"
+    - lep: "[*][?interface == 'public'].url"
+- name: discover_compute_endpoint
+  set_fact:
+    nova_url: "{{ service_catalog | json_query(lsc) | json_query(lep) | first | first }}"
+  vars:
+    - lsc: "[?name == 'nova'].endpoints[*]"
+    - lep: "[*][?interface == 'public'].url"
+# get project_id from nova endpoint URL
+- name: get_project_id
+  set_fact:
+    project_id: "{{ nova_url | basename }}"
+# query nova for all servers matching our server name
+- name: get_servers
+  uri:
+    url: "{{ nova_url }}/servers?name={{ server_name }}"
+    headers:
+      X-Auth-Token: "{{ auth_token }}"
+      Content-Type: application/json
+    method: GET
+    status_code: 200
+  register: servers_result
+# process output to a list of server ID strings
+- name: server_ids_list
+  set_fact:
+    server_id_item: "{{ item.id }}"
+  with_items: "{{ servers_result.json.servers }}"
+  register: server_id_list
+- name: server_ids
+  set_fact:
+    server_ids: "{{ server_id_list.results | map(attribute='ansible_facts.server_id_item') | list }}"
+# get all ports plugged to our servers
+- name: get_ports
+  uri:
+    url: "{{ neutron_url }}/v2.0/ports?project_id={{ project_id }}&device_id={{ item.id }}"
+    headers:
+      X-Auth-Token: "{{ auth_token }}"
+      Content-Type: application/json
+    method: GET
+    body_format: json
+    status_code: 200
+    return_content: yes
+  with_items: "{{ servers_result.json.servers }}"
+  register: server_ports_result
+# unwarp all the json lists for ports per server, then ports in list
+- name: servers_ports
+  set_fact:
+    server_ports: "{{ item.json }}"
+  with_items: "{{ server_ports_result.results }}"
+- name: server_ports_list
+  set_fact:
+    server_port_item: "{{ item }}"
+  with_items: "{{ server_ports_result.results | map(attribute='json') | map(attribute='ports') | list }}"
+  register: server_ports_list
+- name: server_ports
+  set_fact:
+    server_ports: "{{ server_ports_list.results | map(attribute='ansible_facts.server_port_item') | list }}"
+# delete all floatingip for any of the ports
+- name: get_floatingips
+  uri:
+    url: "{{ neutron_url }}/v2.0/floatingips?project_id={{ project_id }}&port_id={{ item.id }}"
+    headers:
+      X-Auth-Token: "{{ auth_token }}"
+      Content-Type: application/json
+    method: GET
+    body_format: json
+    status_code: 200
+    return_content: yes
+  with_items: "{{ server_ports }}"
+  register: server_floatingips_result
+# get rid of empty floatingips lists
+- name: server_floatingips
+  set_fact:
+    server_floatingip_item "{{ item }}"
+  with_items: "{{ server_floatingips_result.results | map(attribute='json') | map(attribute='floatingips') | list }}"
+  register: server_floatingips_list
+- name: delete_floating_ips
+  uri:
+    url: "{{ neutron_url }}/v2.0/floatingips/{{ item.item.id }}"
+    headers:
+      X-Auth-Token: "{{ auth_token }}"
+      Content-Type: application/json
+    method: DELETE
+    status_code: 204, 404
+  with_items: "{{ server_floatingips_list.results }}"
+# delete all ports
+- name: delete_ports
+  uri:
+    url: "{{ neutron_url }}/v2.0/ports/{{ item.id }}"
+    headers:
+      X-Auth-Token: "{{ auth_token }}"
+      Content-Type: application/json
+    method: DELETE
+    status_code: 204, 404
+  with_items: "{{ server_ports }}"
+# delete all servers
+- name: delete_servers
+  uri: 
+    url: "{{ nova_url }}/servers/{{ item }}"
+    headers:
+      X-Auth-Token: "{{ auth_token }}"
+      Content-Type: application/json
+    method: DELETE
+    status_code: 204, 404
+  with_items: "{{ server_ids }}"

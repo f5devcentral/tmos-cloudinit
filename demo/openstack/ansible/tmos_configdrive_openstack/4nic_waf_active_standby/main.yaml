@@ -3,7 +3,7 @@
   name: TMOS VE Instance
   vars_prompt:
     - name: do
-      prompt: "Do you want to create or destroy? [create|destroy]"
+      prompt: "Do you want to create or destroy? [create|destroy|test]"
       when: do is not defined
   tasks:
     - include_vars:
