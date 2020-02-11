@@ -11,6 +11,7 @@ from glanceclient import Client as glanceClient
 from novaclient.client import Client as novaClient
 from neutronclient.v2_0.client import Client as neutronClient
 
+HEADER = '\n\nOpenStack Demonstration Environment\n\n'
 
 def load_demo_defaults():
     env_json_path = "%s/demo_defaults.json" % os.path.dirname(
@@ -32,10 +33,10 @@ def load_locals():
     env_json_path = "%s/local_defaults.json" % os.path.dirname(
         os.path.realpath(__file__))
     if os.path.exists(env_json_path):
-        y_n = raw_input('\nFound previous demo environment. Load it? (Y/N): ')
+        y_n = print_screen(prompt='Discovered a previous demo environment. Should we reuse it? (Y/N): ')
         if not y_n.lower() == 'y':
             return
-        print('\n loading previous demo environment settings\n')
+        print_screen(message='Loading previous environment settings.. please wait.')
         j_f = open(env_json_path, 'r')
         local_vars = json.load(j_f)
         if 'globals' in local_vars:
@@ -255,6 +256,23 @@ def get_neutron_security_groups(sess):
     return security_groups
 
 
+def create_flavor(sess, name, vcpus, ram, disk):
+    """create flavor """
+    nova = get_nova_client(sess)
+    nova.flavor.create(name=name, vcpus=vcpus, ram=ram, disk=disk, is_public=True)
+
+
+def create_standard_f5_flavors(sess):
+    """create F5 Compute flavors"""
+    create_flavor(sess, 'm1.bigip.LTM_1SLOT', 1, 2, 20)
+    create_flavor(sess, 'm1.bigip.ALL_1SLOT', 2, 6, 60)
+    create_flavor(sess, 'm1.bigip.LTM.small', 2, 4, 40)
+    create_flavor(sess, 'm1.bigip.LTM.medium', 4, 8, 40)
+    create_flavor(sess, 'm1.bigip.ALL.large', 4, 8, 160)
+    create_flavor(sess, 'm1.bigip.ALL.exlarge', 8, 16, 160)
+    create_flavor(sess, 'm1.bigiq.medium', 4, 8, 160)
+
+
 def create_webhook_site_token_url():
     web_hook_url = 'https://webhook.site/token'
     resp = requests.post(web_hook_url, data={'default_status': 200, 'default_content': {
@@ -270,18 +288,36 @@ def os_session_from_env():
     os_project_domain_id = os.getenv('OS_PROJET_DOMAIN_ID', 'default')
     os_project_name = os.getenv('OS_PROJECT_NAME', 'admin')
     if not os_auth_url:
-        print('\nplease source your OpenStack RC file before starting the demo.\n')
+        print('\nplease source your OpenStack RC file before populating demo variables.\n')
         sys.exit(1)
     return get_auth_session(os_auth_url, os_username, os_password,
                             os_project_name, os_user_domain_name,
                             os_project_domain_id)
 
 
+def print_screen(message=None, prompt=None, menu=None, exit=False):
+    os.system('clear')
+    print(HEADER)
+    if message:
+        print(message)
+        print('\n')
+    if exit:
+        sys.exit(1)
+    if menu:
+        for index, item in enumerate(menu['items']):
+            print("\t%d) %s" % (index + 1, item))
+        print('\n')
+        menu_indx = input(menu['prompt'])      
+        if len(menu['items']) >= int(menu_indx):
+            return (menu_indx-1)
+    elif(prompt):
+        return raw_input(prompt)
+
+
 def populate():
     """initialize OpenStack demo environment"""
-    # load demo defaults into environment
-    load_demo_defaults()
-    load_locals()
+
+    print_screen(message='Please wait while we evaluate your OpenStack environemnt')
 
     # laod OpenStack standard environment variables for AAA
     os_auth_url = os.getenv('OS_AUTH_URL', None)
@@ -291,8 +327,11 @@ def populate():
     os_project_domain_id = os.getenv('OS_PROJET_DOMAIN_ID', 'default')
     os_project_name = os.getenv('OS_PROJECT_NAME', 'admin')
     if not os_auth_url:
-        print('\nplease source your OpenStack RC file before starting the demo.\n')
-        sys.exit(1)
+        print_screen(message='Please source your OpenStack RC and run this application again', exit=True)
+    # load demo defaults into environment
+    load_demo_defaults()
+    load_locals()
+
     sess = get_auth_session(os_auth_url, os_username, os_password,
                             os_project_name, os_user_domain_name,
                             os_project_domain_id)
@@ -340,6 +379,7 @@ def populate():
     security_group_uuid = os.getenv('security_group_uuid', None)
     heat_timeout = os.getenv('heat_timeout', 1800)
 
+    print_screen(message='Resolving resources from your OpenStack environment, please wait..')
     # resource discovery from environment
     images = get_glance_images(sess)
     for image in images:
@@ -348,6 +388,16 @@ def populate():
         if image.name == tmos_ltm_image_name:
             tmos_ltm_image_uuid = image.id
     flavors = get_nova_flavors(sess)
+    if os_project_name == 'admin':
+        found_big_flavors = False
+        for flavor in flavors:
+            if 'big' in flavor:
+                found_big_flavors = True
+        if not found_big_flavors:
+            y_n = print_screen(prompt="Should new TMOS flavors be create for demos? (Y/N): ")
+            if y_n.lower() == 'y':
+                create_standard_f5_flavors(sess)
+                flavors = get_nova_flavors(sess)
     for flavor in flavors:
         if flavor.name == tmos_all_flavor_name:
             tmos_all_flavor_uuid = flavor.id
@@ -385,131 +435,113 @@ def populate():
     security_groups = get_neutron_security_groups(sess)
 
     req_errors = False
+    error_messages = ''
 
     if len(images) == 0:
-        print('\nplease patch and upload your TMOS images before setting up the demos.\n')
+        error_messages += 'No compute images found.\n\n'
         req_errors = True
 
     if len(flavors) == 0:
-        print(
-            '\nplease create approriate TMOS compute flavors before setting up the demos.\n')
+        error_messages += 'No compute flavors found.\n\n'
         req_errors = True
 
     if len(authkeys) == 0:
-        print('\nplease create or import an SSH key before setting up the demos.\n')
+        error_messages += 'No compute authentication SSH keys found.\n\n'
         req_errors = True
 
     if len(external_networks) == 0:
-        print('\nplease create an external network for Floating IPs before setting up the demos.\n')
+        error_messages += 'No external networks found. Demos create Floating IPs.\n\n'
         req_errors = True
 
     if req_errors:
+        print_screen(message=error_messages, exit=True)
         sys.exit(1)
 
     # if not populated from env, prompt for discovery
 
     while not tmos_ltm_image_uuid:
-        print('\nwhich image should we use to produce the ADC(LTM image) only templates:\n')
-        for index, image in enumerate(images):
-            print("\t%d) %s" % (index + 1, image.name))
-        print('\n')
-        image_indx = input('Enter nunmber: ')
+        image_names = []
+        for image in images:
+            image_names.append(image.name)
+        image_indx = print_screen(message='Which LTM image should we use?', menu={'prompt': 'Enter number: ', 'items': image_names})
         if len(images) >= int(image_indx):
-            print('\nusing LTM image: %s (%s)' %
-                  (images[image_indx-1].name, images[image_indx-1].id))
-            tmos_ltm_image_name = images[image_indx-1].name
-            tmos_ltm_image_uuid = images[image_indx-1].id
+            tmos_ltm_image_name = images[image_indx].name
+            tmos_ltm_image_uuid = images[image_indx].id
 
     while not tmos_ltm_flavor_uuid:
-        print(
-            '\nwhich flavor should we use to produce the ADC(LTM image) only templates:\n')
-        for index, flavor in enumerate(flavors):
-            print("\t%d) %s" % (index + 1, flavor.name))
-        print('\n')
-        flavor_indx = input('Enter nunmber: ')
-        if len(flavors) >= int(flavor_indx):
-            print('\nusing LTM flavor: %s (%s)' %
-                  (flavors[flavor_indx-1].name, flavors[flavor_indx-1].id))
-            tmos_ltm_flavor_name = flavors[flavor_indx-1].name
-            tmos_ltm_flavor_uuid = flavors[flavor_indx-1].id
+        flavor_names = []
+        for flavor in flavors:
+            flavor_names.append(flavor.name)
+        flavor_indx = print_screen(message='Which LTM flavor should we use?', menu={'prompt': 'Enter number: ', 'items': flavor_names})
+        tmos_ltm_flavor_name = flavors[flavor_indx].name
+        tmos_ltm_flavor_uuid = flavors[flavor_indx].id
 
     while not tmos_all_image_uuid:
-        print('\nwhich image should we use to produce the WAF(ALL image) only templates:\n')
-        for index, image in enumerate(images):
-            print("\t%d) %s" % (index + 1, image.name))
-        print('\n')
-        image_indx = input('Enter nunmber: ')
+        image_names = []
+        for image in images:
+            image_names.append(image.name)
+        image_indx = print_screen(message='Which ALL image should we use?', menu={'prompt': 'Enter number: ', 'items': image_names})
         if len(images) >= int(image_indx):
-            print('\nusing ALL image: %s (%s)' %
-                  (images[image_indx-1].name, images[image_indx-1].id))
-            tmos_all_image_name = images[image_indx-1].name
-            tmos_all_image_uuid = images[image_indx-1].id
+            tmos_all_image_name = images[image_indx].name
+            tmos_all_image_uuid = images[image_indx].id
 
     while not tmos_all_flavor_uuid:
-        print(
-            '\nwhich flavor should we use to produce the WAF(ALL image) only templates:\n')
-        for index, flavor in enumerate(flavors):
-            print("\t%d) %s" % (index + 1, flavor.name))
-        print('\n')
-        flavor_indx = input('Enter nunmber: ')
-        if len(flavors) >= int(flavor_indx):
-            print('\nusing ALL flavor: %s (%s)' %
-                  (flavors[flavor_indx-1].name, flavors[flavor_indx-1].id))
-            tmos_all_flavor_name = flavors[flavor_indx-1].name
-            tmos_all_flavor_uuid = flavors[flavor_indx-1].id
+        flavor_names = []
+        for flavor in flavors:
+            flavor_names.append(flavor.name)
+        flavor_indx = print_screen(message='Which ALL flavor should we use?', menu={'prompt': 'Enter number: ', 'items': flavor_names})
+        tmos_all_flavor_name = flavors[flavor_indx].name
+        tmos_all_flavor_uuid = flavors[flavor_indx].id
+
 
     while not security_group_uuid:
         if len(security_groups) == 1:
             security_group_name = security_groups[0]['name']
             security_group_uuid = security_groups[0]['id']
         else:
-            print(
-                '\nwhich security group should be used for the TMOS ports:\n')
-            for index, sg in enumerate(security_groups):
-                print("\t%d) %s" % (index + 1, sg['name']))
-            print('\n')
-            sg_indx = input('Enter number: ')
-            if len(security_groups) >= int(sg_indx):
-                print('\nusing security group: %s (%s)' %
-                      (security_groups[sg_indx-1]['name'], security_groups[sg_indx-1]['id']))
-                security_group_name = security_groups[sg_indx-1]['name']
-                security_group_uuid = security_groups[sg_indx-1]['id']
+            security_group_names = []
+            
+            for sg in security_groups:
+                security_group_names.append(sg['name'])
+            sg_indx = print_screen(
+                message='Which security group should we use for TMOS interfaces?',
+                menu={'prompt': 'Enter number: ', 'items': security_group_names}
+            )
+            security_group_name = security_groups[sg_indx]['name']
+            security_group_uuid = security_groups[sg_indx]['id']
 
     while not tmos_root_authkey_name:
         if len(authkeys) == 1:
             tmos_root_authkey_name = authkeys[0].id
             tmos_root_authorized_ssh_key = authkeys[0].public_key.rstrip()
         else:
-            print('\nwhich auth key should be injected for the TMOS root user:\n')
-            for index, key in enumerate(authkeys):
-                print("\t%d) %s" % (index + 1, key.name))
-            print('\n')
-            authkey_indx = input('Enter number: ')
-            if len(authkeys) >= int(authkey_indx):
-                print('\nusing key: %s' % authkeys[authkey_indx-1].id)
-                tmos_root_authkey_name = authkeys[authkey_indx-1].id
-                tmos_root_authorized_ssh_key = authkeys[authkey_indx -
-                                                        1].public_key.rstrip()
+            key_names = []
+            for kn in authkeys:
+                key_names.append(kn)
+            authkey_indx = print_screen(
+                message='Which auth key should be injected into your TMOS instances?',
+                menu={'prompt': 'Enter number: ', 'items': key_names}
+            )
+            tmos_root_authkey_name = authkeys[authkey_indx].id
+            tmos_root_authorized_ssh_key = authkeys[authkey_indx].public_key.rstrip()
 
     while not external_network_name:
         if len(external_networks) == 1:
             external_network_name = external_networks[0]['name']
             external_network_uuid = external_networks[0]['id']
         else:
-            print('\nwhich external network should be used to create Floating IPs:\n')
-            for index, net in enumerate(external_networks):
-                print("\t%d) %s" % (index + 1, net['name']))
-            print('\n')
-            net_indx = input('Enter number: ')
-            if len(external_networks) >= int(net_indx):
-                print('\nusing network: %s (%s)' % (
-                    external_networks[net_indx-1]['name'], external_networks[net_indx-1]['id']))
-                external_network_name = external_networks[net_indx-1]['name']
-                external_network_uuid = external_networks[net_indx-1]['id']
+            ext_net_names = []
+            for en in external_networks:
+                ext_net_names.append(en['name'])
+            net_indx = print_screen(
+                message='Which external network should we use to create Floating IPs?',
+                menu={'prompt': 'Enter number: ', 'items': ext_net_names}
+            )
+            external_network_name = external_networks[net_indx]['name']
+            external_network_uuid = external_networks[net_indx]['id']
 
     if not management_network_name or len(networks) < 2:
-        print('\nShould new tenant networks be created for demos: \n')
-        y_n = raw_input('Enter (Y/N): ')
+        y_n = print_screen(prompt='Should we just create new tenant networks for demos? (Y/N): ')
         if y_n.lower() == 'y':
             management = create_neutron_network(
                 sess, 'tmos_demo_management')
@@ -557,60 +589,47 @@ def populate():
                 sess, router['id'], internal_subnet['id'])
             add_interface_to_neutron_router(
                 sess, router['id'], vip_subnet['id'])
-    else:
-        print('\nPlease make sure all the networks you choose have a router interface attached\n')
+    
+    network_names = []
+    for net in networks:
+        network_names.append(net['name'])
 
     while not management_network_name:
-        print('\nwhich network should be used for TMOS management:\n')
-        for index, net in enumerate(networks):
-            print("\t%d) %s" % (index + 1, net['name']))
-        print('\n')
-        net_indx = input('Enter number: ')
-        if len(networks) >= int(net_indx):
-            print('\nusing network: %s (%s)' %
-                  (networks[net_indx-1]['name'], networks[net_indx-1]['id']))
-            management_network_name = networks[net_indx-1]['name']
-            management_network_uuid = networks[net_indx-1]['id']
-            management_network_mtu = networks[net_indx-1]['mtu']
+        net_indx = print_screen(
+            message='Which network should we use for TMOS management interfaces?',
+            menu={'prompt': 'Enter number: ', 'items': network_names}
+        )
+        management_network_name = networks[net_indx]['name']
+        management_network_uuid = networks[net_indx]['id']
+        management_network_mtu = networks[net_indx]['mtu']
 
     while not cluster_network_name:
-        print('\nwhich network should be used for TMOS cluster state communications:\n')
-        for index, net in enumerate(networks):
-            print("\t%d) %s" % (index + 1, net['name']))
-        print('\n')
-        net_indx = input('Enter number: ')
-        if len(networks) >= int(net_indx):
-            print('\nusing network: %s (%s)' %
-                  (networks[net_indx-1]['name'], networks[net_indx-1]['id']))
-            cluster_network_name = networks[net_indx-1]['name']
-            cluster_network_uuid = networks[net_indx-1]['id']
-            cluster_network_mtu = networks[net_indx-1]['mtu']
+        net_indx = print_screen(
+            message='Which network should we use for TMOS cluster sync interfaces?',
+            menu={'prompt': 'Enter number: ', 'items': network_names}
+        )
+        cluster_network_name = networks[net_indx]['name']
+        cluster_network_uuid = networks[net_indx]['id']
+        cluster_network_mtu = networks[net_indx]['mtu']
 
     while not internal_network_name:
-        print('\nwhich network should be used for the TMOS internal network:\n')
-        for index, net in enumerate(networks):
-            print("\t%d) %s" % (index + 1, net['name']))
-        print('\n')
-        net_indx = input('Enter number: ')
-        if len(networks) >= int(net_indx):
-            print('\nusing network: %s (%s)' %
-                  (networks[net_indx-1]['name'], networks[net_indx-1]['id']))
-            internal_network_name = networks[net_indx-1]['name']
-            internal_network_uuid = networks[net_indx-1]['id']
-            internal_network_mtu = networks[net_indx-1]['mtu']
+        net_indx = print_screen(
+            message='Which network should we use for TMOS internal only interfaces?',
+            menu={'prompt': 'Enter number: ', 'items': network_names}
+        )
+        internal_network_name = networks[net_indx]['name']
+        internal_network_uuid = networks[net_indx]['id']
+        internal_network_mtu = networks[net_indx]['mtu']
 
     while not (vip_network_name and vip_subnet_uuid):
-        print('\nwhich network should be used for the TMOS virtual service listeners:\n')
-        for index, net in enumerate(networks):
-            print("\t%d) %s" % (index + 1, net['name']))
-        print('\n')
-        net_indx = input('Enter number: ')
-        if len(networks) >= int(net_indx):
-            print('\nusing network: %s (%s)' %
-                  (networks[net_indx-1]['name'], networks[net_indx-1]['id']))
-            vip_network_name = networks[net_indx-1]['name']
-            vip_network_uuid = networks[net_indx-1]['id']
-            vip_network_mtu = networks[net_indx-1]['mtu']
+        net_indx = print_screen(
+            message='Which network should we use for TMOS Virtual Servers?',
+            menu={'prompt': 'Enter number: ', 'items': network_names}
+        )
+        vip_network_name = networks[net_indx]['name']
+        vip_network_uuid = networks[net_indx]['id']
+        vip_network_mtu = networks[net_indx]['mtu']
+        
         candidate_subnets = []
         for subnet in subnets:
             if subnet['network_id'] == vip_network_uuid:
@@ -619,43 +638,34 @@ def populate():
             vip_subnet_name = candidate_subnets[0]['name']
             vip_subnet_uuid = candidate_subnets[0]['id']
         else:
-            print(
-                '\nwhich subnet should be used for the TMOS virtual service listeners:\n')
-            for index, net in enumerate(candidate_subnets):
-                print("\t%d) %s" % (index + 1, net['name']))
-            print('\n')
-            net_indx = input('Enter number: ')
-            if len(candidate_subnets) >= int(net_indx):
-                print('\nusing network: %s (%s)' %
-                      (networks[net_indx-1]['name'], networks[net_indx-1]['id']))
-                vip_subnet_name = networks[net_indx-1]['name']
-                vip_subnet_uuid = networks[net_indx-1]['id']
+            subnet_names = []
+            for sn in candidate_subnets:
+                subnet_names.append(sn['name'])
+            net_indx = print_screen(
+                message='Which subnet should we use for TMOS Virtual Servers?',
+                menu={'prompt': 'Enter number: ', 'items': subnet_names}
+            )
+            vip_subnet_name = networks[net_indx]['name']
+            vip_subnet_uuid = networks[net_indx]['id']
 
     while not tmos_root_password:
         tmos_root_password = 'f5c0nfig'
     while not tmos_admin_password:
         tmos_admin_password = 'f5c0nfig'
     while not license_host:
-        license_host = raw_input(
-            '\nWhat is the IP or hostname of your BIG-IQ license server: ')
+        license_host = print_screen(prompt='What is the IP or hostname of the BIG-IQ license server?: ')
     while not license_username:
-        license_username = raw_input(
-            '\nWhat is the uesrname to use for your BIG-IQ license server: ')
+        license_username = print_screen(prompt='What BIG-IQ username should we use?: ')
     while not license_password:
-        license_password = raw_input(
-            '\nWhat is the password for the BIG-IQ user %s: ' % license_username)
+        license_password = print_screen(prompt='What BIG-IQ password should we use?: ')
     while not license_pool:
-        license_pool = raw_input(
-            '\nWhat is the RegKey license pool name on the BIG-IQ license server: ')
+        license_pool = print_screen(prompt='What BIG-IQ RegKey license pool should we use?: ')
     while not do_url:
-        do_url = raw_input(
-            '\nWhat is the URL to download f5-declarative-onboarding control plane component: ')
+        do_url = print_screen(prompt='What f5-declarative-onboarding RPM download URL should we use?: ')
     while not as3_url:
-        as3_url = raw_input(
-            '\nWhat is the URL to download f5-appsvcs-extension control plane component: ')
+        as3_url = print_screen(prompt='What f5-appsvcs-extension RPM download URL should we use?: ')
     while not waf_policy_url:
-        waf_policy_url = raw_input(
-            '\nWhat is the URL to download your exported WAF policy XML: ')
+        waf_policy_url = print_screen('What is the URL to download your exported WAF policy XML file?: ')
     while not phone_home_url:
         phone_home_url = create_webhook_site_token_url()
 
@@ -799,6 +809,7 @@ def populate():
             with open(var_path, 'w+') as v_f:
                 v_f.write(pystache.render(t_f.read(), answers))
 
+    os.system('clear')
 
 if __name__ == "__main__":
     populate()
