@@ -59,10 +59,11 @@ LOG.addHandler(LOGSTREAM)
 def patch_images(tmos_image_dir, tmos_cloudinit_dir,
                  tmos_usr_inject_dir, tmos_var_inject_dir,
                  tmos_config_inject_dir, tmos_shared_inject_dir,
-                 tmos_icontrollx_dir, private_pem_key_path):
+                 tmos_icontrollx_dir, private_pem_key_path,
+                 image_overwrite):
     """Patch TMOS classic disk image"""
     if tmos_image_dir and os.path.exists(tmos_image_dir):
-        for disk_image in scan_for_images(tmos_image_dir):
+        for disk_image in scan_for_images(tmos_image_dir, image_overwrite):
             LOG.info('processing disk image: %s' % disk_image)
             (is_tmos, config_dev, usr_dev, var_dev, shared_dev) = \
                 validate_tmos_device(disk_image)
@@ -102,7 +103,7 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
         sys.exit(1)
 
 
-def scan_for_images(tmos_image_dir):
+def scan_for_images(tmos_image_dir, image_overwrite):
     """Scan for TMOS disk images"""
     return_image_files = []
     for image_file in os.listdir(tmos_image_dir):
@@ -110,7 +111,18 @@ def scan_for_images(tmos_image_dir):
         if os.path.isfile(filepath):
             extract_dir = "%s/%s" % (tmos_image_dir,
                                      os.path.splitext(image_file)[0])
-            if not os.path.exists(extract_dir):
+            if os.path.exists(extract_dir):
+                found_sum_files = False
+                LOG.debug('examining existing patching directory %s' % extract_dir)
+                for existing_file in os.listdir(extract_dir):
+                    if os.path.splitext(existing_file)[1] == '.md5':
+                        LOG.debug('found previous patching artifact file %s' % existing_file)
+                        found_sum_files = True
+                if not image_overwrite and found_sum_files:
+                    LOG.info('previous patch artifacts found in %s.. skipping patching.' % extract_dir)
+                    continue
+            else:
+                LOG.debug('creating patching directory %s' % extract_dir)
                 os.makedirs(extract_dir)
             arch_ext = os.path.splitext(image_file)[1]
             if arch_ext in ARCHIVE_EXTS:
@@ -455,6 +467,7 @@ if __name__ == "__main__":
     START_TIME = time.time()
     LOG.debug('process start time: %s', datetime.datetime.fromtimestamp(
         START_TIME).strftime("%A, %B %d, %Y %I:%M:%S"))
+    IMAGE_OVERWRITE = os.getenv('IMAGE_OVERWRITE', '0')
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     TMOS_CLOUDINIT_DIR = os.getenv('TMOS_CLOUDINIT_DIR', '/tmos-cloudinit')
     TMOS_ICONTROLLX_DIR = os.getenv(
@@ -488,10 +501,16 @@ if __name__ == "__main__":
     PRIVATE_KEY_PATH = None
     if PRIVATE_PEM_KEY_FILE and os.path.exists("%s/%s" % (PRIVATE_PEM_KEY_DIR, PRIVATE_PEM_KEY_FILE)):
         PRIVATE_KEY_PATH = "%s/%s" % (PRIVATE_PEM_KEY_DIR, PRIVATE_PEM_KEY_FILE)
+    if IMAGE_OVERWRITE == "1" or IMAGE_OVERWRITE.lower() == 'yes' or IMAGE_OVERWRITE.lower() == 'true':
+        IMAGE_OVERWRITE = True
+        LOG.info('force overwrite of existing patch file artifacts')
+    else:
+        IMAGE_OVERWRITE = False
     patch_images(TMOS_IMAGE_DIR, TMOS_CLOUDINIT_DIR,
                  TMOS_USR_INJECT_DIR, TMOS_VAR_INJECT_DIR,
                  TMOS_CONFIG_INJECT_DIR, TMOS_SHARED_INJECT_DIR,
-                 TMOS_ICONTROLLX_DIR, PRIVATE_KEY_PATH)
+                 TMOS_ICONTROLLX_DIR, PRIVATE_KEY_PATH,
+                 IMAGE_OVERWRITE)
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
     LOG.debug(

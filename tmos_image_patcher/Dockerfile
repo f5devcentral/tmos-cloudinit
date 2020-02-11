@@ -28,6 +28,7 @@ ENV TMOS_ICONTROLLX_DIR '/iControlLXPackages'
 ENV TMOS_USR_INJECT_DIR '/tmos-cloudinit/image_patch_files/usr'
 ENV USER 'root'
 ENV UPDATE_CLOUDINIT 'true'
+ENV IMAGE_OVERWRITE = 'no'
 
 ENTRYPOINT [ "/tmos-cloudinit/tmos_image_patcher/tmos_image_patcher.py" ]
 
