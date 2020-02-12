@@ -4,7 +4,7 @@
 import os
 import importlib
 
-DEMO_IAAS = ['OpenStack', 'libVirt']
+DEMO_IAAS = ['OpenStack']
 
 if __name__ == "__main__":
     INF = os.environ.get('DEMO_IAAS', None)
