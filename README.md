@@ -255,7 +255,7 @@ The OpenStack uploader will find md5, and optionally image signatures, and add t
 
 While IaaS clouds already support mechanisms to supply cloudinit userdata to declare guest instances configurations, some virtualization environments do not. For those environments, an ISO CDROM image can be attached to TMOS Virtual Edition guests prior to initial booting. If the ISO image is formatted as a cloudinit ConfigDrive data source, cloudinit modules can still be used, even when the virtualization environment does not directly support it.
 
-As an example, VMWare Workstation can be use to deploy a TMOS Virtual Edition instance from a patched OVA archive. It will build the instance attributes per the F5-defined OVF, and the instance will be powered off. Prior to starting the instance, the user can add an IDE CDROM drive device and attach a ConfigDrive ISO file.
+As an example, VMWare Workstation can be use to deploy a TMOS Virtual Edition instance from a patched OVA archive. Prior to starting the instance, the user can add an IDE CDROM drive device and connect a ConfigDrive ISO file which contains their userdata declaration.
 
 TMOS supports cloudinit OpenStack ConfigDrive. The ISO CDROM attached needs to have a volume label of `config-2` and must follow a specific layout of files, containing a specific JSON file with a specific attribute defined.
 
