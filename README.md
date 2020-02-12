@@ -55,7 +55,7 @@ The cloudinit modules included in this repository need to be file-injected into 
 
 ## Patching TMOS Virtual Edition Images to Install Cloudinit Modules - Using a Docker Instance ##
 
-In order to use these tmos-cloudinit extensions, standard TMOS Virtual Edition images need to be patched to include the cloudinit extensions and optionally also include the installation packages for F5 Automation and Orchestration iControl LX extensions.
+In order to use the cloudinit modules from this repository, standard TMOS Virtual Edition images need to be patched to include the modules and optionally include the installation packages for any F5 Automation and Orchestration iControl LX extensions.
 
 This repository includes a Dockerfile and patch scripts that enable you to build a Docker instance capable of patching standard TMOS Virtual Edition images from `downloads.f5.com` so that they will include this repositories' cloudinit modules and optionally iControl LX extensions.
 
