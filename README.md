@@ -1,27 +1,61 @@
 # tmos-cloudinit
-### Cloudinit Modules and Patching for F5  TMOS ###
 
-F5 TMOS is a secured operating system designed for deployment as a network appliance. While TMOS utilizes a CentOS-based kernel and linux-based control processes to bootstrap and configure distributed networking micro-kernels, it has been highly customized from typical linux distributions.
+[From TMOS Virtual Edition to a TMOS Cloud Virtual Machine](#cloudinit-modules-and-patching-for-f5--tmos)
 
-Linux distributions use a standard bootstrapping agent known as cloudinit to integrate cloud infrastructure metadata with the system's init processes.
+- [Patching BIG-IP Virtual Edition Images to Install Cloudinit Modules - Using a Docker Instance](#patching-big-ip-virtual-edition-images-to-install-cloudinit-modules---using-a-docker-instance)
 
-Starting with TMOS v13, TMOS inluded a version of cloudinit, but due to TMOS customizations, only the following cloudinit modules were enabled available:
+- [Creating OpenStack Formatted Cloudinit ConfigDrive ISOs - Using a Docker Instance (Optional)](#creating-openstack-formatted-cloudinit-configdrive-isos---using-a-docker-instance)
+
+[Using F5 TMOS Cloudinit Modules](#using-f5-tmos-cloudinit-modules)
+
+- [Which Cloudinit Module Should You Use?](#which-cloudinit-module-should-you-use)
+- [The `tmos_static_mgmt` Cloudinit Module](#the-tmos_static_mgmt-cloudinit-module)
+- [The `tmos_declared` Cloudinit Module](#the-tmos_declared-cloudinit-module)
+- [The `tmos_configdrive_openstack` Cloudinit Module](#the-tmos_configdrive_openstack-cloudinit-module)
+- [The `tmos_dhcpv4_tmm` Cloudinit Module](#the-tmos_dhcpv4_tmm-cloudinit-module)
+
+[TMOS Cloudinit Modules Support for SSH Keys and Passwords](#tmos-cloudinit-modules-support-for-ssh-keys-and-passwords)
+
+
+## From TMOS Virtual Edition to a TMOS Cloud Virtual Machine ##
+
+F5 TMOS is a secured operating system designed for deployment as a network appliance. While TMOS utilizes a CentOS-based kernel and linux-based control processes to bootstrap and configure distributed networking micro-kernels, it is highly customized compared to generalized linux distributions.
+
+Linux distributions create cloud editions of their distributions which include a standard bootstrapping agent known as `cloudinit` to integrate cloud infrastructure metadata with the regular system's init processes.
+
+Starting with TMOS v13, TMOS also includes a version of cloudinit, but due to TMOS customizations, only the following standard cloudinit modules were enabled:
 
 - bootcmd
 - write_file
 - runcmd
 
-Through the use of these cloudinit modules, various combinations of `bash`, `javascript`, and `python` onboard scripting were evolved within specific cloud ecosystems. TMOS onboarding templates were created for various IaaS environments. The templates created the necessary provisioning scripts to glean instance metadata from sources unique to each IaaS environment.
+Through the use of these cloudinit modules, various combinations of `bash`, `javascript`, and `python` onboard scripting were used by F5 to tailor TMOS virtual edition to specific cloud infrastructures, like AWS, Azure, GCP, and OpenStack. Naitive onboarding templates were created for these IaaS environments. The templates created the necessary provisioning scripts to glean instance metadata from sources unique to each IaaS environment. The templates were highly coupled to the version of the IaaS APIs being deployed.
 
-To standardize TMOS orchestration efforts, F5 created a service framework capable of extending TMOS' REST provisioning called iControl LX. Supported iControl LX extensions that provide base TMOS system provisioning (f5-declarative-onboaring) and TMM service provisioning (f5-appsvcs-extension) are evolving to support a catalog of deployment use cases. These and other extensions make up the F5 Automation and Orchestration (A & O) toolchain.
+In an effort to standardize TMOS orchestration across clouds and in physical infrastructures, F5 created a service framework capable of extending the control plane APIs offered by TMOS. This framework, called iControl LX, provides a way to extend TMOS native REST APIs with onboarding workflows written in Javascript. F5 pusblishes supported iControl LX extensions that provide base TMOS system provisioning (f5-declarative-onboaring) and TMM service provisioning (f5-appsvcs-extension) as a way of making service catalog easy to compose in any IaaS environment. These and other F5 supported extensions make up the F5 Automation and Orchestration (A & O) toolchain.
 
-The cloudinit modules found in this repository unify TMOS cloudinit agent support with iControl LX extensions. Each of these modules supports the publishing and installation of iControl LX extensions for use in TMOS orchestration. They are experimental cloudinit modules that extend TMOS support for static management interface provisioning, provisioning of TMM interfaces through DHCPv4, and total system network provisioning gleaned from TMOS standard network_data.json metadata.
+![Orchestrating TMOS with REST APIs](resources/orchestrate_with_rest_apis.png)
+
+The cloudinit modules found in this repository unify TMOS cloudinit agent declarations with the F5 Automation and Orchestration (A & O) toolchain iControl LX extension declarations. The same advanced functionality provided by the F5 Automation and Orchestration toolchain declarations become available via industry standard `cloudinit` userdata declarations. This reduces the need to learn and support separate TMOS orchestration modules to only utilizing the orchestrator's support for `cloudinit` on compute instances. TMOS Virtual Edition is transitioned into a cloud ready immutable infrastrucutre component.
+
+![Orchestrating TMOS through cloudinit userdata YAML declarations](resources/orchestrate_through_cloudinit_userdata_declaration.png)
+
+Each of the tmos-cloudinit modules supports the publishing and installation of iControl LX extensions for use in TMOS orchestration. This decouples the version of TMOS virtual edition from specific iControl LX extension functionality.
+
+The `tmos_static_mgmt` cloudinit module extends TMOS virtual edition deployments to environments that do not support DHCP for the management interface.
+
+The `tmos_dhcpv4_tmm` cludinit module extends TMOS virtual edition to support DHCPv4 provisioning of TMM data plane interfaces. Addition `f5-declarative-onboarding` and `f5-appsvcs-extention` extension declarations attributes are merged with the DHCPv4 provisioned attributes.
+
+The `tmos_configdrive_openstack` coudinit module extends TMOS virtual edition to provision link layer, IP layer, DNS, and NTP services from standard OpenStack `network_data.json` metadata. Addition `f5-declarative-onboarding` and `f5-appsvcs-extention` extension declarations attributes are merged with the `network_data.json` provisioned attributes.
+
+The `tmos_declared` cloudinit module simply declares `f5-declarative-onboarding` and `f5-appsvcs-extention` extension declarations from userdata YAML.
 
 The cloudinit modules included in this repository need to be file-injected into standard TMOS v13+ images before they can be used.
 
 ## Patching BIG-IP Virtual Edition Images to Install Cloudinit Modules - Using a Docker Instance ##
 
-This repository includes a Dockerfile and patch scripts that enable you to build a Docker instance capable of patching standard images from `downloads.f5.com` so that they will include additional cloudinit modules and iControl LX extensions.
+In order to use these tmos-cloudinit extensions, standard TMOS virtual edition images need to be patched to include the cloudinit extensions and optionally also include the installation packages for F5 Automation and Orchestration iControl LX extensions.
+
+This repository includes a Dockerfile and patch scripts that enable you to build a Docker instance capable of patching standard TMOS virtual edition images from `downloads.f5.com` so that they will include this repositories' cloudinit modules and optionally iControl LX extensions.
 
 From the F5 Downloads site, download all image(s) you wish to patch with these cloudinit modules to a directory available as a volume mount to your docker instance (see mounts below).
 
