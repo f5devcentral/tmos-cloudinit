@@ -2,11 +2,11 @@
 
 [From TMOS Virtual Edition to a TMOS Cloud Virtual Machine](#cloudinit-modules-and-patching-for-f5--tmos)
 
-- [Patching TMOS Virtual Edition Images to Install Cloudinit Modules - Using a Docker Instance](#patching-tmos-virtual-edition-images-to-install-cloudinit-modules---using-a-docker-instance)
+- [Patching TMOS Virtual Edition Images to Install Cloudinit Modules](#patching-tmos-virtual-edition-images-to-install-cloudinit-modules)
 
   * [Patched Image Uploaders](#patched-image-uploaders)
 
-- [Creating OpenStack Formatted Cloudinit ConfigDrive ISOs - Using a Docker Instance (Optional)](#creating-openstack-formatted-cloudinit-configdrive-isos---using-a-docker-instance)
+- [Creating OpenStack Formatted Cloudinit ConfigDrive ISOs (Optional)](#creating-openstack-formatted-cloudinit-configdrive-isos)
 
 [Using F5 TMOS Cloudinit Modules](#using-f5-tmos-cloudinit-modules)
 
@@ -53,7 +53,7 @@ The `tmos_declared` cloudinit module simply declares `f5-declarative-onboarding`
 
 The cloudinit modules included in this repository need to be file-injected into standard TMOS v13+ images before they can be used.
 
-## Patching TMOS Virtual Edition Images to Install Cloudinit Modules - Using a Docker Instance ##
+## Patching TMOS Virtual Edition Images to Install Cloudinit Modules##
 
 In order to use the cloudinit modules from this repository, standard TMOS Virtual Edition images need to be patched to include the modules and optionally include the installation packages for any F5 Automation and Orchestration iControl LX extensions.
 
@@ -251,7 +251,7 @@ docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -e OS_USERNAME=$OS_USERNAME 
 
 The OpenStack uploader will find md5, and optionally image signatures, and add them with the appropriate image shade metadata.
 
-## Creating OpenStack Formatted Cloudinit ConfigDrive ISOs - Using a Docker Instance ##
+## Creating OpenStack Formatted Cloudinit ConfigDrive ISOs ##
 
 While IaaS clouds already support mechanisms to supply cloudinit userdata to declare guest instances configurations, some virtualization environments do not. For those environments, an ISO CDROM image can be attached to TMOS Virtual Edition guests prior to initial booting. If the ISO image is formatted as a cloudinit ConfigDrive data source, cloudinit modules can still be used, even when the virtualization environment does not directly support it.
 
