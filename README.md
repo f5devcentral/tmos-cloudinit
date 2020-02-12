@@ -4,8 +4,7 @@
 
 - [Patching BIG-IP Virtual Edition Images to Install Cloudinit Modules - Using a Docker Instance](#patching-big-ip-virtual-edition-images-to-install-cloudinit-modules---using-a-docker-instance)
 
-  * [Patched Image Uploaders](!#patched-image-uploaders)
-
+  * [Patched Image Uploaders](#patched-image-uploaders)
 
 - [Creating OpenStack Formatted Cloudinit ConfigDrive ISOs - Using a Docker Instance (Optional)](#creating-openstack-formatted-cloudinit-configdrive-isos---using-a-docker-instance)
 
