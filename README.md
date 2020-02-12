@@ -4,6 +4,8 @@
 
 - [Patching BIG-IP Virtual Edition Images to Install Cloudinit Modules - Using a Docker Instance](#patching-big-ip-virtual-edition-images-to-install-cloudinit-modules---using-a-docker-instance)
 
+  * [Patched Image Uploaders](!#patched-image-uploaders)
+
 - [Creating OpenStack Formatted Cloudinit ConfigDrive ISOs - Using a Docker Instance (Optional)](#creating-openstack-formatted-cloudinit-configdrive-isos---using-a-docker-instance)
 
 [Using F5 TMOS Cloudinit Modules](#using-f5-tmos-cloudinit-modules)
@@ -225,7 +227,7 @@ $ openstack image create --disk-format qcow2 --container-format bare --file /dat
 
 Once your patched images are deployed in your virtualized environment, you can use cloudinit userdata to handle initial device and service provisioning.
 
-## Patching Image Uploaders ##
+## Patched Image Uploaders ##
 
 Various uplaoders will be added to this project as infrastructure environments demand them.
 
