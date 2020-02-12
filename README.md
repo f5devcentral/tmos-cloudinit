@@ -2,7 +2,7 @@
 
 [From TMOS Virtual Edition to a TMOS Cloud Virtual Machine](#cloudinit-modules-and-patching-for-f5--tmos)
 
-- [Patching BIG-IP Virtual Edition Images to Install Cloudinit Modules - Using a Docker Instance](#patching-big-ip-virtual-edition-images-to-install-cloudinit-modules---using-a-docker-instance)
+- [Patching TMOS Virtual Edition Images to Install Cloudinit Modules - Using a Docker Instance](#patching-tmos-virtual-edition-images-to-install-cloudinit-modules---using-a-docker-instance)
 
   * [Patched Image Uploaders](#patched-image-uploaders)
 
@@ -31,7 +31,7 @@ Starting with TMOS v13, TMOS also includes a version of cloudinit, but due to TM
 - write_file
 - runcmd
 
-Through the use of these cloudinit modules, various combinations of `bash`, `javascript`, and `python` onboard scripting were used by F5 to tailor TMOS virtual edition to specific cloud infrastructures, like AWS, Azure, GCP, and OpenStack. Naitive onboarding templates were created for these IaaS environments. The templates created the necessary provisioning scripts to glean instance metadata from sources unique to each IaaS environment. The templates were highly coupled to the version of the IaaS APIs being deployed.
+Through the use of these cloudinit modules, various combinations of `bash`, `javascript`, and `python` onboard scripting were used by F5 to tailor TMOS Virtual Edition to specific cloud infrastructures, like AWS, Azure, GCP, and OpenStack. Naitive onboarding templates were created for these IaaS environments. The templates created the necessary provisioning scripts to glean instance metadata from sources unique to each IaaS environment. The templates were highly coupled to the version of the IaaS APIs being deployed.
 
 In an effort to standardize TMOS orchestration across clouds and in physical infrastructures, F5 created a service framework capable of extending the control plane APIs offered by TMOS. This framework, called iControl LX, provides a way to extend TMOS native REST APIs with onboarding workflows written in Javascript. F5 pusblishes supported iControl LX extensions that provide base TMOS system provisioning (f5-declarative-onboaring) and TMM service provisioning (f5-appsvcs-extension) as a way of making service catalog easy to compose in any IaaS environment. These and other F5 supported extensions make up the F5 Automation and Orchestration (A & O) toolchain.
 
@@ -41,23 +41,23 @@ The cloudinit modules found in this repository unify TMOS cloudinit agent declar
 
 ![Orchestrating TMOS through cloudinit userdata YAML declarations](resources/orchestrate_through_cloudinit_userdata_declaration.png)
 
-Each of the tmos-cloudinit modules supports the publishing and installation of iControl LX extensions for use in TMOS orchestration. This decouples the version of TMOS virtual edition from specific iControl LX extension functionality.
+Each of the tmos-cloudinit modules supports the publishing and installation of iControl LX extensions for use in TMOS orchestration. This decouples the version of TMOS Virtual Edition from specific iControl LX extension functionality.
 
-The `tmos_static_mgmt` cloudinit module extends TMOS virtual edition deployments to environments that do not support DHCP for the management interface.
+The `tmos_static_mgmt` cloudinit module extends TMOS Virtual Edition deployments to environments that do not support DHCP for the management interface.
 
-The `tmos_dhcpv4_tmm` cludinit module extends TMOS virtual edition to support DHCPv4 provisioning of TMM data plane interfaces. Addition `f5-declarative-onboarding` and `f5-appsvcs-extention` extension declarations attributes are merged with the DHCPv4 provisioned attributes.
+The `tmos_dhcpv4_tmm` cludinit module extends TMOS Virtual Edition to support DHCPv4 provisioning of TMM data plane interfaces. Addition `f5-declarative-onboarding` and `f5-appsvcs-extention` extension declarations attributes are merged with the DHCPv4 provisioned attributes.
 
-The `tmos_configdrive_openstack` coudinit module extends TMOS virtual edition to provision link layer, IP layer, DNS, and NTP services from standard OpenStack `network_data.json` metadata. Addition `f5-declarative-onboarding` and `f5-appsvcs-extention` extension declarations attributes are merged with the `network_data.json` provisioned attributes.
+The `tmos_configdrive_openstack` coudinit module extends TMOS Virtual Edition to provision link layer, IP layer, DNS, and NTP services from standard OpenStack `network_data.json` metadata. Addition `f5-declarative-onboarding` and `f5-appsvcs-extention` extension declarations attributes are merged with the `network_data.json` provisioned attributes.
 
 The `tmos_declared` cloudinit module simply declares `f5-declarative-onboarding` and `f5-appsvcs-extention` extension declarations from userdata YAML.
 
 The cloudinit modules included in this repository need to be file-injected into standard TMOS v13+ images before they can be used.
 
-## Patching BIG-IP Virtual Edition Images to Install Cloudinit Modules - Using a Docker Instance ##
+## Patching TMOS Virtual Edition Images to Install Cloudinit Modules - Using a Docker Instance ##
 
-In order to use these tmos-cloudinit extensions, standard TMOS virtual edition images need to be patched to include the cloudinit extensions and optionally also include the installation packages for F5 Automation and Orchestration iControl LX extensions.
+In order to use these tmos-cloudinit extensions, standard TMOS Virtual Edition images need to be patched to include the cloudinit extensions and optionally also include the installation packages for F5 Automation and Orchestration iControl LX extensions.
 
-This repository includes a Dockerfile and patch scripts that enable you to build a Docker instance capable of patching standard TMOS virtual edition images from `downloads.f5.com` so that they will include this repositories' cloudinit modules and optionally iControl LX extensions.
+This repository includes a Dockerfile and patch scripts that enable you to build a Docker instance capable of patching standard TMOS Virtual Edition images from `downloads.f5.com` so that they will include this repositories' cloudinit modules and optionally iControl LX extensions.
 
 From the F5 Downloads site, download all image(s) you wish to patch with these cloudinit modules to a directory available as a volume mount to your docker instance (see mounts below).
 
@@ -253,9 +253,9 @@ The OpenStack uploader will find md5, and optionally image signatures, and add t
 
 ## Creating OpenStack Formatted Cloudinit ConfigDrive ISOs - Using a Docker Instance ##
 
-While IaaS clouds already support mechanisms to supply cloudinit userdata to declare guest instances configurations, some virtualization environments do not. For those environments, an ISO CDROM image can be attached to BIG-IP Virtual Edition guests prior to initial booting. If the ISO image is formatted as a cloudinit ConfigDrive data source, cloudinit modules can still be used, even when the virtualization environment does not directly support it.
+While IaaS clouds already support mechanisms to supply cloudinit userdata to declare guest instances configurations, some virtualization environments do not. For those environments, an ISO CDROM image can be attached to TMOS Virtual Edition guests prior to initial booting. If the ISO image is formatted as a cloudinit ConfigDrive data source, cloudinit modules can still be used, even when the virtualization environment does not directly support it.
 
-As an example, VMWare Workstation can be use to deploy a BIG-IP Virtual Edition instance from a patched OVA archive. It will build the instance attributes per the F5-defined OVF, and the instance will be powered off. Prior to starting the instance, the user can add an IDE CDROM drive device and attach a ConfigDrive ISO file.
+As an example, VMWare Workstation can be use to deploy a TMOS Virtual Edition instance from a patched OVA archive. It will build the instance attributes per the F5-defined OVF, and the instance will be powered off. Prior to starting the instance, the user can add an IDE CDROM drive device and attach a ConfigDrive ISO file.
 
 TMOS supports cloudinit OpenStack ConfigDrive. The ISO CDROM attached needs to have a volume label of `config-2` and must follow a specific layout of files, containing a specific JSON file with a specific attribute defined.
 
@@ -368,7 +368,7 @@ configdrive.iso
 
 F5 TMOS cloudinit modules each include an `enabled` attribute which must be set to `true` for any onboard configuration to take place. For the most part, these modules are mutually exclusive, meaning you should only use the one that fits your deployment environment.
 
-All modules log to the common `/var/log/f5-cloudinit.log` log file on the BIG-IP Virtual Edition instance.
+All modules log to the common `/var/log/f5-cloudinit.log` log file on the TMOS Virtual Edition instance.
 
 
 ## Which Cloudinit Module Should You Use? ##
@@ -386,9 +386,9 @@ You should use the module which matches your sources of per-instance configurati
 
 ## The tmos_static_mgmt Cloudinit Module ##
 
-This cloudinit module extends BIG-IP Virtual Edition to allow for static address assignment provided through cloudinit userdata.
+This cloudinit module extends TMOS Virtual Edition to allow for static address assignment provided through cloudinit userdata.
 
-This modules create initialization scripts containing `tmsh` commands to fulfill the specified configurations. The generated initialization scripts are created in the `/opt/cloud/tmos_static_mgmt` directory on the BIG-IP device.
+This modules create initialization scripts containing `tmsh` commands to fulfill the specified configurations. The generated initialization scripts are created in the `/opt/cloud/tmos_static_mgmt` directory on the TMOS device.
 
 | Module Attribute | Default | Description|
 | --------------------- | -----------| ---------------|
@@ -449,9 +449,9 @@ This module assumes the management interface provisioning completes via the defa
 
 The declarations must be coherent with the deployment environment. As an example, the f5-declarative-onboarding declaration would need to include the `internal` VLAN and the `self_1nic` SelfIP classes to properly declare a 1NIC deployment.
 
-This cloudinit module optionally composes f5-declarative-onboarding declarations in the `/var/lib/cloud/f5-declarative-onboarding` directory on BIG-IP. This declaration is in JSON format.
+This cloudinit module optionally composes f5-declarative-onboarding declarations in the `/var/lib/cloud/f5-declarative-onboarding` directory on TMOS. This declaration is in JSON format.
 
-This cloudinit module optionally composes f5-appsvcs-extension declarations in the `/var/lib/cloud/f5-appsvcs-extension` directory on the BIG-IP. This declaration is in JSON format.
+This cloudinit module optionally composes f5-appsvcs-extension declarations in the `/var/lib/cloud/f5-appsvcs-extension` directory on the TMOS. This declaration is in JSON format.
 
 | Module Attribute | Default | Description|
 | --------------------- | -----------| ---------------|
