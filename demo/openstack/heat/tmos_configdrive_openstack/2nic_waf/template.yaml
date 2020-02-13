@@ -123,6 +123,14 @@ parameters:
     description: Virtual Servers Subnet for Client Virtual Servers
     constraints:
       - custom_constraint: neutron.subnet
+  pool_member:
+    type: string
+    label: Pool Member IP
+    description: Pool Member IP Address Behind the WAF
+  pool_member_port:
+    type: number
+    label: Pool Member TCP Port
+    description: Pool Member TCP Port Behind the WAF
   heat_timeout:
     type: number
     label: Heat Stack Timeout
@@ -155,6 +163,9 @@ parameter_groups:
   - vip_network
   - vip_network_security_group
   - vip_subnet
+- parameters:
+  - pool_member
+  - pool_member_port
 - parameters:
   - heat_timeout
 
@@ -225,6 +236,8 @@ resources:
             $as3_url: { get_param: as3_url }
             $waf_vip: { get_attr: [ tmos_vip_port, fixed_ips, 0, ip_address ] }
             $waf_policy_url: { get_param: waf_policy_url }
+            $pool_member: { get_param: pool_member }
+            $pool_member_port: { get_param: pool_member_port }
             $phone_home_url: { get_param: phone_home_url }
             $wc_notify: { get_attr: ['wait_handle', 'curl_cli'] }
           template: { get_file: 'user_data.yaml' }

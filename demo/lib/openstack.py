@@ -172,13 +172,13 @@ def create_flavor(sess, name, vcpus, ram, disk):
 def create_standard_f5_flavors(sess):
     """create F5 Compute flavors"""
     standard_flavors = [
-        {'name': 'm1.bigip.LTM.1SLOT', 'vcpus': 1, 'ram': 2, 'disk': 20},
-        {'name': 'm1.bigip.ALL.1SLOT', 'vcpus': 2, 'ram': 6, 'disk': 60},
-        {'name': 'm1.bigip.LTM.small', 'vcpus': 2, 'ram': 4, 'disk': 40},
-        {'name': 'm1.bigip.LTM.medium','vcpus': 4, 'ram': 8, 'disk': 40},
-        {'name': 'm1.bigip.ALL.large', 'vcpus': 4, 'ram': 8, 'disk': 160},
-        {'name': 'm1.bigip.ALL.exlarge', 'vcpus': 8, 'ram': 16, 'disk': 160},
-        {'name': 'm1.bigiq.medium', 'vcpus': 4, 'ram': 8, 'disk': 160},
+        {'name': 'm1.bigip.LTM.1SLOT', 'vcpus': 1, 'ram': 2048, 'disk': 20},
+        {'name': 'm1.bigip.ALL.1SLOT', 'vcpus': 2, 'ram': 6144, 'disk': 60},
+        {'name': 'm1.bigip.LTM.small', 'vcpus': 2, 'ram': 4096, 'disk': 40},
+        {'name': 'm1.bigip.LTM.medium','vcpus': 4, 'ram': 8192, 'disk': 40},
+        {'name': 'm1.bigip.ALL.large', 'vcpus': 4, 'ram': 8192, 'disk': 160},
+        {'name': 'm1.bigip.ALL.exlarge', 'vcpus': 8, 'ram': 16384, 'disk': 160},
+        {'name': 'm1.bigiq.medium', 'vcpus': 4, 'ram': 8192, 'disk': 160},
     ]
     need_to_create = {}
     for flavor in standard_flavors:

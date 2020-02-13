@@ -4,6 +4,7 @@
   vars_prompt:
     - name: do
       prompt: "Do you want to create or destroy? [create|destroy]"
+      private: no
       when: do is not defined
   tasks:
     - include_vars:

@@ -97,12 +97,9 @@ tmos_declared:
           monitors:
             - http
           members:
-            - servicePort: 80
+            - servicePort: ${pool_member_port}
               serverAddresses:
-                - 157.245.230.31
-            - servicePort: 80
-              serverAddresses:
-                - 157.245.212.107
+                - "${pool_member}"
         WAFPolicy:
           class: WAF_Policy
           url: "${waf_policy_url}"

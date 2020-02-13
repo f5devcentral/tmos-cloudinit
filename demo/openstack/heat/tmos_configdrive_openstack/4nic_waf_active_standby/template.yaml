@@ -150,6 +150,14 @@ parameters:
     description: Virtual Servers Subnet for Client Virtual Servers
     constraints:
       - custom_constraint: neutron.subnet
+  pool_member:
+    type: string
+    label: Pool Member IP
+    description: Pool Member IP Address Behind the WAF
+  pool_member_port:
+    type: number
+    label: Pool Member TCP Port
+    description: Pool Member TCP Port Behind the WAF
   heat_timeout:
     type: number
     label: Heat Stack Timeout
@@ -185,6 +193,9 @@ parameter_groups:
   - vip_network
   - vip_network_security_group
   - vip_subnet
+- parameters:
+  - pool_member
+  - pool_member_port
 - parameters:
   - heat_timeout
 
@@ -322,6 +333,8 @@ resources:
             $waf_policy_url: { get_param: waf_policy_url }
             $phone_home_url: { get_param: phone_home_url }
             $secondary_cluster_ip: { get_attr: [ secondary_tmos_cluster_port, fixed_ips, 0, ip_address ] }
+            $pool_member: { get_param: pool_member }
+            $pool_member_port: { get_param: pool_member_port }
             $wc_notify: { get_attr: ['wait_handle', 'curl_cli'] }
           template: { get_file: 'user_data_primary.yaml' }
   secondary_waf_instance:
@@ -353,6 +366,8 @@ resources:
             $waf_policy_url: { get_param: waf_policy_url }
             $phone_home_url: { get_param: phone_home_url }
             $secondary_cluster_ip: { get_attr: [ secondary_tmos_cluster_port, fixed_ips, 0, ip_address ] }
+            $pool_member: { get_param: pool_member }
+            $pool_member_port: { get_param: pool_member_port }
             $wc_notify: { get_attr: ['wait_handle', 'curl_cli'] }
           template: { get_file: 'user_data_secondary.yaml' }
 outputs:

@@ -82,6 +82,8 @@ def populate():
     security_group_name = os.getenv('security_group_name', None)
     security_group_uuid = os.getenv('security_group_uuid', None)
     heat_timeout = os.getenv('heat_timeout', 1800)
+    pool_member = os.getenv('pool_member', None)
+    pool_member_port = os.getenv('pool_member_port', 80)
 
     screen.print_screen(
         HEADER,
@@ -434,6 +436,16 @@ def populate():
             prompt='What is the URL to download your exported WAF policy XML file?: ')
     while not phone_home_url:
         phone_home_url = create_webhook_site_token_url()
+    while not pool_member:
+        pool_member = screen.print_screen(
+            HEADER,
+            prompt='What IP address should we behind the WAF as a pool member?: '
+        )
+        pool_member_port = screen.print_screen(
+            HEADER,
+            prompt='What TCP port is the WAF pool member listing on? [i.e. 80]: '
+        )
+        pool_member_port = int(pool_member_port)
 
     # save locals for next run
     env.save_locals({
@@ -447,7 +459,9 @@ def populate():
             'license_pool': license_pool,
             'do_url': do_url,
             'as3_url': as3_url,
-            'waf_policy_url': waf_policy_url
+            'waf_policy_url': waf_policy_url,
+            'pool_member': pool_member,
+            'pool_member_port': pool_member_port
         },
         'openstack': {
             'tmos_ltm_image_name': tmos_ltm_image_name,
@@ -532,6 +546,8 @@ def populate():
         'vip_network_security_group_uuid': security_group_uuid,
         'vip_subnet_name': vip_subnet_name,
         'vip_subnet_uuid': vip_subnet_uuid,
+        'pool_member': pool_member,
+        'pool_member_port': pool_member_port,
         'heat_timeout': heat_timeout
     }
 

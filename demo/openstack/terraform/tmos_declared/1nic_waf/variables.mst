@@ -82,6 +82,14 @@ variable "vip_subnet" {
   default = "{{vip_subnet_uuid}}"
 }
 
+variable "pool_member" {
+  default = "{{pool_member}}"
+}
+
+variable "pool_member_port" {
+  default = "{{pool_member_port}}"
+}
+
 variable "server_name" {
   default = "waf1nic"
 }

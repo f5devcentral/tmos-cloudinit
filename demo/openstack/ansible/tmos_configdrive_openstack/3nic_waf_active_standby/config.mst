@@ -22,4 +22,6 @@ internal_network_security_group: {{internal_network_security_group_uuid}}
 vip_network: {{vip_network_uuid}}
 vip_network_security_group: {{vip_network_security_group_uuid}}
 vip_subnet: {{vip_subnet_uuid}}
+pool_member: {{pool_member}}
+pool_member_port: {{pool_member_port}}
 server_name: waf3nic

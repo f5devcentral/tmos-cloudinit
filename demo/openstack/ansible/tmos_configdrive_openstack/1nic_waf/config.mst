@@ -15,4 +15,6 @@ phone_home_url: {{phone_home_url}}
 external_network: {{external_network_uuid}}
 management_network: {{vip_network_uuid}}
 management_network_security_group: {{vip_network_security_group_uuid}}
+pool_member: {{pool_member}}
+pool_member_port: {{pool_member_port}}
 server_name: waf1nic
