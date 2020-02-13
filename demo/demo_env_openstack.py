@@ -276,12 +276,12 @@ def populate():
             HEADER,
             prompt='Should we just create new tenant networks for demos? (Y/N): ')
         if y_n.lower() == 'y':
-            management = create_neutron_network(
+            management = openstakc.create_neutron_network(
                 sess, 'tmos_demo_management')
             management_network_name = management['name']
             management_network_uuid = management['id']
             management_network_mtu = management['mtu']
-            management_subnet = create_neutron_dhcp_subnet(
+            management_subnet = openstack.create_neutron_dhcp_subnet(
                 sess, management_network_uuid, 'tmos_demo_management',
                 '192.168.245.0/24', '192.168.245.1', '8.8.8.8', '192.168.245.20', '192.168.245.200'
             )
@@ -289,7 +289,7 @@ def populate():
             cluster_network_name = cluster['name']
             cluster_network_uuid = cluster['id']
             cluster_network_mtu = cluster['mtu']
-            cluster_subnet = create_neutron_dhcp_subnet(
+            cluster_subnet = openstack.create_neutron_dhcp_subnet(
                 sess, cluster_network_uuid, 'tmos_demo_HA',
                 '1.1.1.0/24', '1.1.1.1', '8.8.8.8', '1.1.1.20', '1.1.1.200'
             )
@@ -297,15 +297,15 @@ def populate():
             internal_network_name = internal['name']
             internal_network_uuid = internal['id']
             internal_network_mtu = internal['mtu']
-            internal_subnet = create_neutron_dhcp_subnet(
+            internal_subnet = openstack.create_neutron_dhcp_subnet(
                 sess, internal_network_uuid, 'tmos_demo_internal',
                 '192.168.40.0/24', '192.168.40.1', '8.8.8.8', '192.168.40.20', '192.168.40.200'
             )
-            external = create_neutron_network(sess, 'tmos_demo_external')
+            external = openstack.create_neutron_network(sess, 'tmos_demo_external')
             vip_network_name = external['name']
             vip_network_uuid = external['id']
             vip_network_mtu = external['mtu']
-            vip_subnet = create_neutron_dhcp_subnet(
+            vip_subnet = openstack.create_neutron_dhcp_subnet(
                 sess, vip_network_uuid, 'tmos_demo_external',
                 '192.168.80.0/24', '192.168.80.1', '8.8.8.8', '192.168.80.20', '192.168.80.200'
             )
@@ -313,7 +313,7 @@ def populate():
             vip_subnet_uuid = vip_subnet['id']
             networks = [management_network_uuid, cluster_network_uuid,
                         internal_network_uuid, external_network_uuid]
-            router = create_neutron_router(sess, external_network_uuid)
+            router = openstack.create_neutron_router(sess, external_network_uuid)
             add_interface_to_neutron_router(
                 sess, router['id'], management_subnet['id'])
             add_interface_to_neutron_router(
