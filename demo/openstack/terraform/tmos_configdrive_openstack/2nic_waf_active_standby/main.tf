@@ -108,6 +108,8 @@ data "template_file" "user_data_primary" {
     secondary_cluster_ip = "${element("${openstack_networking_port_v2.vip_port_secondary.all_fixed_ips}", 1)}"
     waf_vip              = "${element("${openstack_networking_port_v2.vip_port_secondary.all_fixed_ips}", 0)}"
     waf_policy_url       = "${var.waf_policy_url}"
+    pool_member          = "${var.pool_member}"
+    pool_member_port     = "${var.pool_member_port}"
     phone_home_url       = "${var.phone_home_url}"
   }
 }
@@ -128,6 +130,8 @@ data "template_file" "user_data_secondary" {
     secondary_cluster_ip = "${element("${openstack_networking_port_v2.vip_port_secondary.all_fixed_ips}", 1)}"
     waf_vip              = "${element("${openstack_networking_port_v2.vip_port_secondary.all_fixed_ips}", 0)}"
     waf_policy_url       = "${var.waf_policy_url}"
+    pool_member          = "${var.pool_member}"
+    pool_member_port     = "${var.pool_member_port}"
     phone_home_url       = "${var.phone_home_url}"
   }
 }

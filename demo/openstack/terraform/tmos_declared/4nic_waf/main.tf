@@ -149,6 +149,8 @@ data "template_file" "user_data" {
     vip_gateway                  = "${data.openstack_networking_subnet_v2.vip_subnet.gateway_ip}"
     vip_mtu                      = "${data.openstack_networking_network_v2.vip_network.mtu}"
     waf_vip                      = "${element("${openstack_networking_port_v2.vip_port.all_fixed_ips}", 0)}"
+    pool_member                  = "${var.pool_member}"
+    pool_member_port             = "${var.pool_member_port}"
     phone_home_url               = "${var.phone_home_url}"
   }
 }

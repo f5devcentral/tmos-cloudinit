@@ -57,6 +57,8 @@ data "template_file" "user_data" {
     vip_mask                     = "${element(split("/", "${data.openstack_networking_subnet_v2.vip_subnet.cidr}"), 1)}"
     vip_gateway                  = "${data.openstack_networking_subnet_v2.vip_subnet.gateway_ip}"
     vip_mtu                      = "${data.openstack_networking_network_v2.vip_network.mtu}"
+    pool_member                  = "${var.pool_member}"
+    pool_member_port             = "${var.pool_member_port}"
     phone_home_url               = "${var.phone_home_url}"
   }
 }

@@ -73,6 +73,8 @@ data "template_file" "user_data" {
     license_pool        = "${var.license_pool}"
     waf_vip             = "${element("${openstack_networking_port_v2.vip_port.all_fixed_ips}", 0)}"
     waf_policy_url      = "${var.waf_policy_url}"
+    pool_member         = "${var.pool_member}"
+    pool_member_port    = "${var.pool_member_port}"
     phone_home_url      = "${var.phone_home_url}"
   }
 }
