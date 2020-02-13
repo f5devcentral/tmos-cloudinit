@@ -439,7 +439,7 @@ def populate():
     while not pool_member:
         pool_member = screen.print_screen(
             HEADER,
-            prompt='What IP address should we behind the WAF as a pool member?: '
+            prompt='What should be the IP address of the pool member behind the WAF?: '
         )
         pool_member_port = screen.print_screen(
             HEADER,
