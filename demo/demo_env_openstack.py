@@ -276,7 +276,7 @@ def populate():
             HEADER,
             prompt='Should we just create new tenant networks for demos? (Y/N): ')
         if y_n.lower() == 'y':
-            management = openstakc.create_neutron_network(
+            management = openstack.create_neutron_network(
                 sess, 'tmos_demo_management')
             management_network_name = management['name']
             management_network_uuid = management['id']
@@ -285,7 +285,7 @@ def populate():
                 sess, management_network_uuid, 'tmos_demo_management',
                 '192.168.245.0/24', '192.168.245.1', '8.8.8.8', '192.168.245.20', '192.168.245.200'
             )
-            cluster = create_neutron_network(sess, 'tmos_demo_HA')
+            cluster = openstack.create_neutron_network(sess, 'tmos_demo_HA')
             cluster_network_name = cluster['name']
             cluster_network_uuid = cluster['id']
             cluster_network_mtu = cluster['mtu']
@@ -293,7 +293,7 @@ def populate():
                 sess, cluster_network_uuid, 'tmos_demo_HA',
                 '1.1.1.0/24', '1.1.1.1', '8.8.8.8', '1.1.1.20', '1.1.1.200'
             )
-            internal = create_neutron_network(sess, 'tmos_demo_internal')
+            internal = openstack.create_neutron_network(sess, 'tmos_demo_internal')
             internal_network_name = internal['name']
             internal_network_uuid = internal['id']
             internal_network_mtu = internal['mtu']
@@ -314,15 +314,15 @@ def populate():
             networks = [management_network_uuid, cluster_network_uuid,
                         internal_network_uuid, external_network_uuid]
             router = openstack.create_neutron_router(sess, external_network_uuid)
-            add_interface_to_neutron_router(
+            openstack.add_interface_to_neutron_router(
                 sess, router['id'], management_subnet['id'])
-            add_interface_to_neutron_router(
+            openstack.add_interface_to_neutron_router(
                 sess, router['id'], cluster_subnet['id'])
-            add_interface_to_neutron_router(
+            openstack.add_interface_to_neutron_router(
                 sess, router['id'], internal_subnet['id'])
-            add_interface_to_neutron_router(
+            openstack.add_interface_to_neutron_router(
                 sess, router['id'], vip_subnet['id'])
-
+            networks = openstack.get_neutron_networks(sess)
     network_names = []
     for net in networks:
         network_names.append(net['name'])
