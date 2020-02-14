@@ -180,23 +180,18 @@ def _report(license_members, members_to_revoke):
             if member['id'] == revoke['id']:
                 preserve_member = False
                 return_records.append(
-                    "OFF,%s,%s,%s,%s,%s" % (
-                        member['deviceMachineId'],
-                        member['lastGoodHealthCheckDateTime'],
+                    "OFF,%s,%s,%s" % (
                         fmt_ts,
                         member['macAddress'],
-                        '%s:%d' % (member['deviceAddress'],
-                                   member['httpsPort'])
+                        member['deviceAddress']
                     )
                 )
         if preserve_member:
             return_records.append(
-                "ON,%s,%s,%s,%s,%s" % (
-                    member['deviceMachineId'],
-                    member['lastGoodHealthCheckDateTime'],
+                "ON,%s,%s,%s" % (
                     fmt_ts,
                     member['macAddress'],
-                    '%s:%d' % (member['deviceAddress'], member['httpsPort'])
+                    member['deviceAddress']
                 )
             )
     return return_records
@@ -268,7 +263,12 @@ def main(ctx):
                 LOG.info('Existing..')
                 sys.exit(1)
             except Exception as ex:
-                LOG.error("Pool %s not found - %s", ctx.licensepool, ex)
+                if 'Unauthorized' in str(ex):
+                    LOG.error('BIG-IQ session expited')
+                    ctx.bigiq = None
+                    ctx.bigiq_pool_id = _get_pool_id(ctx)   
+                else:
+                    LOG.error("Pool %s not found - %s", ctx.licensepool, ex)
                 time.sleep(ctx.poll_cycle)
                 continue
             try:
@@ -285,7 +285,12 @@ def main(ctx):
                 LOG.info('Existing..')
                 sys.exit(1)
             except Exception as ex:
-                LOG.error("Error reconciling licenses %s", ex)
+                if 'Unauthorized' in str(ex):
+                    LOG.error('BIG-IQ session expited')
+                else:
+                    LOG.error("Error reconciling licenses %s", ex)
+                ctx.bigiq = None
+                ctx.openstack = None
                 time.sleep(ctx.poll_cycle)
     else:
         # resolve the Pool ID from pool name

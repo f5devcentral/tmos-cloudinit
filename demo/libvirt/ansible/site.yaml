@@ -4,7 +4,7 @@
   name: TMOS VE Instance
   tasks:
     - include_vars:
-        file: config.yml
+        file: config.yaml
     - include_role:
         name: networks
     - include_role:

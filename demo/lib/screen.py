@@ -9,7 +9,7 @@ def clear_screen():
         os.system('clear')
 
 
-def print_screen(header=None, message=None, prompt=None, menu=None, exit=False):
+def print_screen(header=None, message=None, prompt=None, menu=None, exit=False, echo=True):
     clear_screen()
     print(header)
     if message:
