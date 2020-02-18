@@ -246,7 +246,7 @@ docker build --rm -t openstack_image_uploader:latest openstack_image_uploader
 Source your OpenStack RC file, putting the require environment variables into your shell environment. These environment variables are then presented as to the `openstack_image_uploader` container with Docker environment variables.
 
 ```
-docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -e OS_USERNAME=$OS_USERNAME -e OS_PASSWORD=$OS_PASSWORD -e OS_AUTH_URL=$OS_AUTH_UTL openstack_image_uploader:latest
+docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -e OS_USERNAME=$OS_USERNAME -e OS_PASSWORD=$OS_PASSWORD -e OS_AUTH_URL=$OS_AUTH_URL openstack_image_uploader:latest
 ```
 
 The OpenStack uploader will find md5, and optionally image signatures, and add them with the appropriate image shade metadata.
@@ -460,6 +460,7 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 | icontrollx_package_urls | none | List of URLs to download and install iControl LX extension packages before onboarding |
 | do_declaration | none |  YAML formatted f5-declarative-onboarding declaration. This declaration will augment or overwrite the declaration created by resource discovery |
 | as3_declaration | none | The f5-appsvcs-extension declaration to declare if enabled |
+| ts_declaration | none | The f5-telemetry-streaming declaration to decare if enabled |
 | phone_home_url | url | Reachable URL to report completion of this modules onboarding. |
 | phone_home_url_verify_tls | true | If the phone_home_url uses TLS, verify the host certificate. |
 | phone_home_cli | cli command | CLI command to run when this modules completes successfully. |
@@ -559,6 +560,12 @@ tmos_declared:
         ui.advisory.enabled: true
         ui.advisory.color: orange
         ui.advisory.text: This device is under centralized management.
+  ts_declaration:
+    class: Telemetry
+    sysPoller:
+      class: Telemetry_System
+      systemPoller:
+        interval: 60
   as3_declaration:
     class: ADC
     schemaVersion: 3.0.0
@@ -609,9 +616,10 @@ The application listening at the `phone_home_url` must accept a `POST` reqeust. 
   "product": "BIGIP",
   "hostname": "waf1primary.local",
   "management": "192.168.245.119/24",
-  "installed_extensions": ["f5-service-discovery", "f5-declarative-onboarding", "f5-appsvcs"],
+  "installed_extensions": ["f5-service-discovery", "f5-declarative-onboarding", "f5-appsvcs", "f5-telemetry-streaming"],
   "as3_enabled": true,
   "do_enabled": true,
+  "ts_enabled": true,
   "status": "SUCCESS"
 }
 ```
@@ -645,6 +653,8 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 | icontrollx_package_urls | none | List of URLs to download and install iControl LX extension packages before onboarding |
 | do_enable | true | Enables an attempt to create a f5-declarative-onboarding declaration from discovered resources. If enabled, an asynchronous attempt to declare resouces via f5-declarative-onboarding will be made. If the initial request fails, non-declarative onboarding will resumse |
 | do_declaration | none |  YAML formatted f5-declarative-onboarding declaration. This declaration will augment or overwrite the declaration created by resource discovery |
+| ts_enabled | true | Enables attempt to declare telemetry streaming configuration with f5-telemetry-streaming|
+| ts_declaration | true | The f5-telemetry-streaming declaration to declare if enabled |
 | as3_enabled | true | Enables attempt to declare an application services configuration with f5-appsvcs-extension|
 | as3_declaration | none | The f5-appsvcs-extension declaration to declare if enabled |
 | post_onboard_enabled | false | Enable the attempt to run a list of commands after onboarding completes |
@@ -735,6 +745,8 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 | icontrollx_package_urls | none | List of URLs to download and install iControl LX extension packages before onboarding |
 | do_enable | true | Enables attempt to create a f5-declarative-onboarding declaration from discovered resources. If enabled, an asynchronous attempt to declare resouces via f5-declarative-onboarding will be made. If the initial request fails, non-declarative onboarding will resumse |
 | do_declaration | none |  YAML formatted f5-declarative-onboarding declaration. This declaration will augment or overwrite the declaration created by resource discovery |
+| ts_enabled | true | Enables attempt to declare telemetry streaming configuration with f5-telemetry-streaming|
+| ts_declaration | true | The f5-telemetry-streaming declaration to declare if enabled |
 | as3_enabled | true | Enables attempt to declare an application services configuration with f5-appsvcs-extension|
 | as3_declaration | none | The f5-appsvcs-extension declaration to declare if enabled |
 | post_onboard_enabled | false | Enable the attempt to run a list of commands after onboarding completes |
