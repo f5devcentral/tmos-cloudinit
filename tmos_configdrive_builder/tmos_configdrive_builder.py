@@ -154,6 +154,7 @@ def build_configdrive_from_files(userdata_file=None, configdrive_file=None,
 
 
 def build_configdrive_from_decs(do_declaration_file=None,
+                                ts_declaration_file=None,
                                 as3_declaration_file=None,
                                 configdrive_file=None,
                                 phone_home_url=None,
@@ -165,6 +166,13 @@ def build_configdrive_from_decs(do_declaration_file=None,
         with open(do_declaration_file) as do_file:
             do_declaration = do_file.read()
         do_obj = load_declaration(do_declaration)
+
+    ts_obj = None
+    if ts_declaration_file:
+        ts_declaration = None
+        with open(ts_declaration_file) as ts_file:
+            ts_declaration = ts_file.read()
+        ts_obj = load_declaration(ts_declaration)
 
     as3_obj = None
     if as3_declaration_file:
@@ -180,6 +188,9 @@ def build_configdrive_from_decs(do_declaration_file=None,
     if do_obj:
         LOG.info('adding f5-declarative-onboarding declaration to user_data')
         userdata_obj['tmos_declared']['do_declaration'] = do_obj
+    if ts_obj:
+        LOG.info('adding f5-telemetry-streaming declaration to user_data')
+        userdata_obj['tmos_declared']['ts_declaration'] = ts_obj        
     if as3_obj:
         LOG.info('adding f5-appsvcs-extensions declaration to user_data')
         userdata_obj['tmos_declared']['as3_declaration'] = as3_obj
@@ -222,11 +233,13 @@ if __name__ == "__main__":
         'VENDORDATA_FILE', '/declarations/vendor_data.json')
     NETWORKDATA_FILE = os.getenv(
         'NETWORKDATA_FILE', '/declarations/network_data.json')
-
     DO_DECLARATION_FILE = os.getenv(
         'DO_DECLARATION_FILE', '/declarations/do_declaration.json')
+    TS_DECLARATION_FILE = os.getenv(
+        'TS_DECLARATION_FILE', '/declarations/ts_declaration.json')
     AS3_DECLARATION_FILE = os.getenv(
         'AS3_DECLARATION_FILE', '/declarations/as3_declaration.json')
+    
     PHONE_HOME_CLI = os.getenv('PHONE_HOME_CLI', None)
     PHONE_HOME_URL = os.getenv('PHONE_HOME_URL', None)
 
@@ -253,13 +266,16 @@ if __name__ == "__main__":
         HAVE_DO = False
         if os.path.exists(DO_DECLARATION_FILE):
             HAVE_DO = True
+        HAVE_TS = False
+        if os.path.exists(TS_DECLARATION_FILE):
+            HAVE_TS = True
         HAVE_AS3 = False
         if os.path.exists(AS3_DECLARATION_FILE):
             HAVE_AS3 = True
-        if HAVE_DO or HAVE_AS3:
+        if HAVE_DO or HAVE_TS or HAVE_AS3:
             LOG.info('building ISO9660 for tmos_declared module with declarations')
             BUILT = build_configdrive_from_decs(
-                DO_DECLARATION_FILE, AS3_DECLARATION_FILE,
+                DO_DECLARATION_FILE, TS_DECLARATION_FILE, AS3_DECLARATION_FILE,
                 CONFIGDRIVE_FILE, PHONE_HOME_URL, PHONE_HOME_CLI)
             if not BUILT:
                 LOG.error('could not build ISO9660 configdrive')
