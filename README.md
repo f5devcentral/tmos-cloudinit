@@ -617,7 +617,7 @@ The application listening at the `phone_home_url` must accept a `POST` reqeust. 
   "product": "BIGIP",
   "hostname": "waf1primary.local",
   "management": "192.168.245.119/24",
-  "installed_extensions": ["f5-service-discovery", "f5-declarative-onboarding", "f5-appsvcs", "f5-telemetry-streaming"],
+  "installed_extensions": ["f5-service-discovery", "f5-declarative-onboarding", "f5-appsvcs", "f5-telemetry"],
   "as3_enabled": true,
   "do_enabled": true,
   "ts_enabled": true,
