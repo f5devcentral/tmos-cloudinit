@@ -303,6 +303,7 @@ The following environment variables determine how the CDROM ISO is built:
 | Environment Variable | Required | Default | Description|
 | --------------------- | ----- | ---------- | ---------------|
 | DO_DECLARATION_FILE   | Yes | /declarations/do_declaration.json | Your f5-declarative-onboarding declaration in a text file. The declaration can be in JSON or YAML format. |
+| TS_DECLARATION_FILE  | No | /declarations/ts_declaration.json | Your f5-telemetry-streaming declaration in a text file. The declaration can be in JSON or YAML format. |
 | AS3_DECLARATION_FILE  | No | /declarations/as3_declaration.json | Your f5-appsvcs-extension declaration in a text file. The declaration can be in JSON or YAML format. |
 | PHOME_HOME_URL | No | None | The URL to use as the `phone_home_url` attributed of the `tmos_declared` declaration. |
 | PHOME_HOME_CLI | No | None | The URL to use as the `phone_home_url` attributed of the `tmos_declared` declaration. |
