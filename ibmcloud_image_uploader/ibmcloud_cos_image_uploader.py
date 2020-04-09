@@ -65,7 +65,7 @@ def get_patched_images(tmos_image_dir):
 
 def get_bucket_name(image_path):
     """Get bucket for this patched image"""
-    return os.path.splitext(os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, ''))[0].replace('_', '-').lower()
+    return "%s-%s" % (os.path.splitext(os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, ''))[0].replace('_', '-').lower(), COS_IMAGE_LOCATION)
 
 
 def get_object_name(image_path):
@@ -187,11 +187,11 @@ def initialize():
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
     COS_RESOURCE_CRN = os.getenv('COS_RESOURCE_CRN', None)
-    COS_IMAGE_LOCATION = os.getenv('COS_IMAGE_LOCATION', 'us-standard')
+    COS_IMAGE_LOCATION = os.getenv('COS_IMAGE_LOCATION', 'us-south')
     COS_AUTH_ENDPOINT = os.getenv(
-        'COS_AUTH_ENDPOINT', 'https://iam.bluemix.net/oidc/token')
+        'COS_AUTH_ENDPOINT', 'https://iam.cloud.ibm.com/identity/token')
     COS_ENDPOINT = os.getenv(
-        'COS_ENDPOINT', 'https://s3-api.us-geo.objectstorage.softlayer.net')
+        'COS_ENDPOINT', 'https://s3.us-west.cloud-object-storage.appdomain.cloud')
 
 
 if __name__ == "__main__":
