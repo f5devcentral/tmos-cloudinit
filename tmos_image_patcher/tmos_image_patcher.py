@@ -73,10 +73,9 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
                         'UPDATE_CLOUDINIT', default="true")
                     if update_cloudinit == "true":
                         update_cloudinit_modules(tmos_cloudinit_dir)
-                    inject_cloudinit_modules(disk_image, tmos_cloudinit_dir,
-                        force_cloudinit_source, usr_dev)
+                    inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, usr_dev)
                 if usr_dev and tmos_usr_inject_dir:
-                    inject_usr_files(disk_image, tmos_usr_inject_dir, usr_dev)
+                    inject_usr_files(disk_image, tmos_usr_inject_dir, force_cloudinit_source, usr_dev)
                 if var_dev and tmos_var_inject_dir:
                     inject_var_files(disk_image, tmos_var_inject_dir, var_dev)
                 if var_dev and tmos_icontrollx_dir:
@@ -310,7 +309,7 @@ def update_cloudinit_modules(tmos_cloudinit_dir):
     os.chdir(start_directory)
 
 
-def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, force_cloudinit_source, dev):
+def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, dev):
     """Inject cloudinit modules into TMOS disk image"""
     gfs = guestfs.GuestFS(python_return_dict=True)
     gfs.add_drive_opts(disk_image)
@@ -328,19 +327,6 @@ def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, force_cloudinit_sou
                 os.path.join(root, file_name)[len(tmos_cc_path):])
     for tmos_cc_file in tmos_cc_files:
         local = "%s%s" % (tmos_cc_path, tmos_cc_file)
-        if force_cloudinit_source:
-            find_in_file = "UNIX_CONFIG_CLOUDINIT_REPLACE_DATASOURCELIST"
-            replace_found = False
-            with open(local) as f:
-                s = f.read()
-                if find_in_file in s:
-                    replace_found = True
-            if replace_found:
-                with open(local, 'w') as f:
-                    s = f.read()
-                    LOG.debug('overwriting cloudinit sources to: %s in %s' % (force_cloudinit_source, local))
-                    s = s.replace(find_in_file, force_cloudinit_source)
-                    f.write(s)
         remote = "%s%s" % (python_system_path, tmos_cc_file)
         LOG.debug('injecting %s to /usr%s', os.path.basename(local), remote)
         mkdir_path = os.path.dirname(remote)
@@ -379,7 +365,7 @@ def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
     wait_for_gfs(gfs)
 
 
-def inject_usr_files(disk_image, usr_dir, dev):
+def inject_usr_files(disk_image, usr_dir, force_cloudinit_source, dev):
     """Patch /usr file system of a TMOS disk image"""
     LOG.debug('injecting files into /usr')
     gfs = guestfs.GuestFS(python_return_dict=True)
@@ -392,6 +378,19 @@ def inject_usr_files(disk_image, usr_dir, dev):
             usr_files.append(os.path.join(root, file_name)[len(usr_dir):])
     for usr_file in usr_files:
         local = "%s%s" % (usr_dir, usr_file)
+        if force_cloudinit_source and os.path.basename(local) == 'cloud-init.tmpl':
+            find_in_file = "UNIX_CONFIG_CLOUDINIT_REPLACE_DATASOURCELIST"
+            replace_found = False
+            with open(local) as f:
+                s = f.read()
+                if find_in_file in s:
+                    replace_found = True
+            if replace_found:
+                with open(local, 'w') as f:
+                    s = f.read()
+                    LOG.debug('overwriting cloudinit sources to: %s in %s' % (force_cloudinit_source, local))
+                    s = s.replace(find_in_file, force_cloudinit_source)
+                    f.write(s)
         LOG.debug('injecting %s to /usr%s', os.path.basename(local), usr_file)
         mkdir_path = os.path.dirname(usr_file)
         gfs.mkdir_p(mkdir_path)
@@ -520,6 +519,8 @@ if __name__ == "__main__":
         LOG.info('force overwrite of existing patch file artifacts')
     else:
         IMAGE_OVERWRITE = False
+    if FORCE_CLOUDINIT_SOURCE:
+        LOG.info('forcing cloudinit data source to: %s' % FORCE_CLOUDINIT_SOURCE)
     patch_images(TMOS_IMAGE_DIR, TMOS_CLOUDINIT_DIR,
                  TMOS_USR_INJECT_DIR, TMOS_VAR_INJECT_DIR,
                  TMOS_CONFIG_INJECT_DIR, TMOS_SHARED_INJECT_DIR,
