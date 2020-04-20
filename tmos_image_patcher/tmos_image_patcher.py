@@ -379,18 +379,12 @@ def inject_usr_files(disk_image, usr_dir, force_cloudinit_source, dev):
     for usr_file in usr_files:
         local = "%s%s" % (usr_dir, usr_file)
         if force_cloudinit_source and os.path.basename(local) == 'cloud-init.tmpl':
+            LOG.debug('overwriting cloudinit sources to: %s in template file %s' % (force_cloudinit_source, local))
             find_in_file = "UNIX_CONFIG_CLOUDINIT_REPLACE_DATASOURCELIST"
-            replace_found = False
-            with open(local) as f:
+            with open(local, 'w') as f:
                 s = f.read()
-                if find_in_file in s:
-                    replace_found = True
-            if replace_found:
-                with open(local, 'w') as f:
-                    s = f.read()
-                    LOG.debug('overwriting cloudinit sources to: %s in %s' % (force_cloudinit_source, local))
-                    s = s.replace(find_in_file, force_cloudinit_source)
-                    f.write(s)
+                s = s.replace(find_in_file, force_cloudinit_source)
+                f.write(s)
         LOG.debug('injecting %s to /usr%s', os.path.basename(local), usr_file)
         mkdir_path = os.path.dirname(usr_file)
         gfs.mkdir_p(mkdir_path)
