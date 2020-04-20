@@ -60,7 +60,7 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
                  tmos_usr_inject_dir, tmos_var_inject_dir,
                  tmos_config_inject_dir, tmos_shared_inject_dir,
                  tmos_icontrollx_dir, private_pem_key_path,
-                 image_overwrite):
+                 force_cloudinit_source, image_overwrite):
     """Patch TMOS classic disk image"""
     if tmos_image_dir and os.path.exists(tmos_image_dir):
         for disk_image in scan_for_images(tmos_image_dir, image_overwrite):
@@ -73,8 +73,8 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
                         'UPDATE_CLOUDINIT', default="true")
                     if update_cloudinit == "true":
                         update_cloudinit_modules(tmos_cloudinit_dir)
-                    inject_cloudinit_modules(
-                        disk_image, tmos_cloudinit_dir, usr_dev)
+                    inject_cloudinit_modules(disk_image, tmos_cloudinit_dir,
+                        force_cloudinit_source, usr_dev)
                 if usr_dev and tmos_usr_inject_dir:
                     inject_usr_files(disk_image, tmos_usr_inject_dir, usr_dev)
                 if var_dev and tmos_var_inject_dir:
@@ -310,7 +310,7 @@ def update_cloudinit_modules(tmos_cloudinit_dir):
     os.chdir(start_directory)
 
 
-def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, dev):
+def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, force_cloudinit_source, dev):
     """Inject cloudinit modules into TMOS disk image"""
     gfs = guestfs.GuestFS(python_return_dict=True)
     gfs.add_drive_opts(disk_image)
@@ -328,6 +328,19 @@ def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, dev):
                 os.path.join(root, file_name)[len(tmos_cc_path):])
     for tmos_cc_file in tmos_cc_files:
         local = "%s%s" % (tmos_cc_path, tmos_cc_file)
+        if force_cloudinit_source:
+            find_in_file = "UNIX_CONFIG_CLOUDINIT_REPLACE_DATASOURCELIST"
+            replace_found = False
+            with open(local) as f:
+                s = f.read()
+                if find_in_file in s:
+                    replace_found = True
+            if replace_found:
+                with open(local, 'w') as f:
+                    s = f.read()
+                    LOG.debug('overwriting cloudinit sources to: %s in %s' % (force_cloudinit_source, local))
+                    s = s.replace(find_in_file, force_cloudinit_source)
+                    f.write(s)
         remote = "%s%s" % (python_system_path, tmos_cc_file)
         LOG.debug('injecting %s to /usr%s', os.path.basename(local), remote)
         mkdir_path = os.path.dirname(remote)
@@ -478,6 +491,7 @@ if __name__ == "__main__":
     TMOS_CONFIG_INJECT_DIR = os.getenv('TMOS_CONFIG_INJECT_DIR', None)
     PRIVATE_PEM_KEY_DIR = os.getenv('PRIVATE_PEM_KEY_PATH', '/keys')
     PRIVATE_PEM_KEY_FILE = os.getenv('PRIVATE_PEM_KEY_FILE', None)
+    FORCE_CLOUDINIT_SOURCE = os.getenv('FORCE_CLOUDINIT_SOURCE', None)
     if len(sys.argv) > 1:
         TMOS_IMAGE_DIR = sys.argv[1]
     if len(sys.argv) > 2:
@@ -509,7 +523,7 @@ if __name__ == "__main__":
     patch_images(TMOS_IMAGE_DIR, TMOS_CLOUDINIT_DIR,
                  TMOS_USR_INJECT_DIR, TMOS_VAR_INJECT_DIR,
                  TMOS_CONFIG_INJECT_DIR, TMOS_SHARED_INJECT_DIR,
-                 TMOS_ICONTROLLX_DIR, PRIVATE_KEY_PATH,
+                 TMOS_ICONTROLLX_DIR, PRIVATE_KEY_PATH, FORCE_CLOUDINIT_SOURCE,
                  IMAGE_OVERWRITE)
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
