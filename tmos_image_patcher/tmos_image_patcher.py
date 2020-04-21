@@ -31,6 +31,7 @@ import time
 import logging
 import subprocess
 import guestfs
+import re
 
 from Crypto.Hash import SHA384
 from Crypto.Signature import PKCS1_v1_5
@@ -309,6 +310,16 @@ def update_cloudinit_modules(tmos_cloudinit_dir):
     os.chdir(start_directory)
 
 
+def replace_in_file( filePath, text, subs, flags=0 ):
+    with open( filePath, "r+" ) as file:
+        fileContents = file.read()
+        textPattern = re.compile( re.escape( text ), flags )
+        fileContents = textPattern.sub( subs, fileContents )
+        file.seek( 0 )
+        file.truncate()
+        file.write( fileContents )
+
+
 def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, dev):
     """Inject cloudinit modules into TMOS disk image"""
     gfs = guestfs.GuestFS(python_return_dict=True)
@@ -381,10 +392,7 @@ def inject_usr_files(disk_image, usr_dir, force_cloudinit_source, dev):
         if force_cloudinit_source and os.path.basename(local) == 'cloud-init.tmpl':
             LOG.debug('overwriting cloudinit sources to: %s in template file %s' % (force_cloudinit_source, local))
             find_in_file = "UNIX_CONFIG_CLOUDINIT_REPLACE_DATASOURCELIST"
-            with open(local, 'w+') as f:
-                s = f.read()
-                s = s.replace(find_in_file, force_cloudinit_source)
-                f.write(s)
+            replace_in_file(local, find_in_file, force_cloudinit_source)
         LOG.debug('injecting %s to /usr%s', os.path.basename(local), usr_file)
         mkdir_path = os.path.dirname(usr_file)
         gfs.mkdir_p(mkdir_path)
