@@ -353,7 +353,7 @@ def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, dev):
 
 def inject_cloudinit_config_template(disk_image, tmos_cloudinit_dir, cloud_template_file, dev):
     """Inject cloudinit configuration template into TMOS disk image"""
-    LOG.debug('injecting cloudinit configuration template' % cloud_template_file)
+    LOG.debug('injecting cloudinit configuration template %s' % cloud_template_file)
     gfs = guestfs.GuestFS(python_return_dict=True)
     gfs.add_drive_opts(disk_image)
     gfs.launch()
