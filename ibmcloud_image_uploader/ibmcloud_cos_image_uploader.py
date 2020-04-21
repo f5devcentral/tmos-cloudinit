@@ -105,6 +105,7 @@ def assure_bucket(bucket_name):
                 return True
         LOG.debug('creating bucket %s', bucket_name)
         cos_res.Bucket(bucket_name).create(
+            ACL='public-read',
             CreateBucketConfiguration={
                 "LocationConstraint": COS_IMAGE_LOCATION
             }
