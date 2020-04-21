@@ -61,7 +61,7 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
                  tmos_usr_inject_dir, tmos_var_inject_dir,
                  tmos_config_inject_dir, tmos_shared_inject_dir,
                  tmos_icontrollx_dir, private_pem_key_path,
-                 force_cloudinit_source, image_overwrite):
+                 cloud_template_file, image_overwrite):
     """Patch TMOS classic disk image"""
     if tmos_image_dir and os.path.exists(tmos_image_dir):
         for disk_image in scan_for_images(tmos_image_dir, image_overwrite):
@@ -75,8 +75,10 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
                     if update_cloudinit == "true":
                         update_cloudinit_modules(tmos_cloudinit_dir)
                     inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, usr_dev)
+                if usr_dev and cloud_template_file:
+                    inject_cloudinit_config_template(disk_image, tmos_cloudinit_dir, cloud_template_file, usr_dev)
                 if usr_dev and tmos_usr_inject_dir:
-                    inject_usr_files(disk_image, tmos_usr_inject_dir, force_cloudinit_source, usr_dev)
+                    inject_usr_files(disk_image, tmos_usr_inject_dir, usr_dev)
                 if var_dev and tmos_var_inject_dir:
                     inject_var_files(disk_image, tmos_var_inject_dir, var_dev)
                 if var_dev and tmos_icontrollx_dir:
@@ -349,6 +351,24 @@ def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, dev):
     wait_for_gfs(gfs)
 
 
+def inject_cloudinit_config_template(disk_image, tmos_cloudinit_dir, cloud_template_file, dev):
+    """Inject cloudinit configuration template into TMOS disk image"""
+    LOG.debug('injecting cloudinit configuration template' % cloud_template_file)
+    gfs = guestfs.GuestFS(python_return_dict=True)
+    gfs.add_drive_opts(disk_image)
+    gfs.launch()
+    gfs.mount(dev, '/')
+    local = "%s%s" % (tmos_cloudinit_dir, cloud_template_file)
+    mkdir_path='/share/defaults/config/templates'
+    dest_template_file = "%s/cloud-init.tmpl" % mkdir_path
+    gfs.mkdir_p(mkdir_path)
+    gfs.upload(local, dest_template_file)
+    gfs.sync()
+    gfs.shutdown()
+    gfs.close()
+    wait_for_gfs(gfs)
+
+
 def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
     """Inject iControl LX install packages into TMOS disk image"""
     LOG.debug('injecting files from %s into /var/lib/cloud/icontrollx_installs' % icontrollx_dir)
@@ -376,7 +396,7 @@ def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
     wait_for_gfs(gfs)
 
 
-def inject_usr_files(disk_image, usr_dir, force_cloudinit_source, dev):
+def inject_usr_files(disk_image, usr_dir, dev):
     """Patch /usr file system of a TMOS disk image"""
     LOG.debug('injecting files into /usr')
     gfs = guestfs.GuestFS(python_return_dict=True)
@@ -389,10 +409,6 @@ def inject_usr_files(disk_image, usr_dir, force_cloudinit_source, dev):
             usr_files.append(os.path.join(root, file_name)[len(usr_dir):])
     for usr_file in usr_files:
         local = "%s%s" % (usr_dir, usr_file)
-        if force_cloudinit_source and os.path.basename(local) == 'cloud-init.tmpl':
-            LOG.debug('overwriting cloudinit sources to: %s in template file %s' % (force_cloudinit_source, local))
-            find_in_file = "UNIX_CONFIG_CLOUDINIT_REPLACE_DATASOURCELIST"
-            replace_in_file(local, find_in_file, force_cloudinit_source)
         LOG.debug('injecting %s to /usr%s', os.path.basename(local), usr_file)
         mkdir_path = os.path.dirname(usr_file)
         gfs.mkdir_p(mkdir_path)
@@ -492,7 +508,7 @@ if __name__ == "__main__":
     TMOS_CONFIG_INJECT_DIR = os.getenv('TMOS_CONFIG_INJECT_DIR', None)
     PRIVATE_PEM_KEY_DIR = os.getenv('PRIVATE_PEM_KEY_PATH', '/keys')
     PRIVATE_PEM_KEY_FILE = os.getenv('PRIVATE_PEM_KEY_FILE', None)
-    FORCE_CLOUDINIT_SOURCE = os.getenv('FORCE_CLOUDINIT_SOURCE', None)
+    TMOS_CLOUDINIT_CONFIG_TEMPLATE = os.getenv('TMOS_CLOUDINIT_CONFIG_TEMPLATE', None)
     if len(sys.argv) > 1:
         TMOS_IMAGE_DIR = sys.argv[1]
     if len(sys.argv) > 2:
@@ -521,12 +537,12 @@ if __name__ == "__main__":
         LOG.info('force overwrite of existing patch file artifacts')
     else:
         IMAGE_OVERWRITE = False
-    if FORCE_CLOUDINIT_SOURCE:
-        LOG.info('forcing cloudinit data source to: %s' % FORCE_CLOUDINIT_SOURCE)
+    if TMOS_CLOUDINIT_CONFIG_TEMPLATE:
+        LOG.info('cloudinit configuration template: %s' % TMOS_CLOUDINIT_CONFIG_TEMPLATE)
     patch_images(TMOS_IMAGE_DIR, TMOS_CLOUDINIT_DIR,
                  TMOS_USR_INJECT_DIR, TMOS_VAR_INJECT_DIR,
                  TMOS_CONFIG_INJECT_DIR, TMOS_SHARED_INJECT_DIR,
-                 TMOS_ICONTROLLX_DIR, PRIVATE_KEY_PATH, FORCE_CLOUDINIT_SOURCE,
+                 TMOS_ICONTROLLX_DIR, PRIVATE_KEY_PATH, TMOS_CLOUDINIT_CONFIG_TEMPLATE,
                  IMAGE_OVERWRITE)
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
