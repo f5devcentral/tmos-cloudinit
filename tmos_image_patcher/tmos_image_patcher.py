@@ -358,11 +358,10 @@ def inject_cloudinit_config_template(disk_image, tmos_cloudinit_dir, cloud_templ
     gfs.add_drive_opts(disk_image)
     gfs.launch()
     gfs.mount(dev, '/')
-    local = "%s%s" % (tmos_cloudinit_dir, cloud_template_file)
     mkdir_path='/share/defaults/config/templates'
     dest_template_file = "%s/cloud-init.tmpl" % mkdir_path
     gfs.mkdir_p(mkdir_path)
-    gfs.upload(local, dest_template_file)
+    gfs.upload(cloud_template_file, dest_template_file)
     gfs.sync()
     gfs.shutdown()
     gfs.close()

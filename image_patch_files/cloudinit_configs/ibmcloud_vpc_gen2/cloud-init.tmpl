@@ -19,7 +19,7 @@ disable_root: false
 preserve_hostname: true
 
 # Do not modify the line below (modified by vadc-init)
-datasource_list: [ UNIX_CONFIG_CLOUDINIT_REPLACE_DATASOURCELIST ]
+datasource_list: [ NoCloud ]
 datasource:
   Ec2:
     # metadata_urls: ['http://169.254.169.254']
@@ -48,8 +48,8 @@ cloud_init_modules:
 @perl_begin
     print "# " if 'UNIX_CONFIG_CLOUDINIT_REPLACE_HASCONFIGMODULES' ne 'true';
     print "cloud_config_modules:\n";
+    print " - ibm_vpc_gen2_defaults\n";
     print " - set-passwords\n";
-    print " - tmos-configdrive-openstack\n";
     print " - tmos-static-mgmt\n";
     print " - tmos-dhcpv4-tmm\n";
     print " - tmos-declared\n";
