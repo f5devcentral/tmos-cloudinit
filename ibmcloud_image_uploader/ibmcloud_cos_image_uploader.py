@@ -121,11 +121,6 @@ def assure_bucket(bucket_name):
         return False
 
 
-def delete_object(bucket_name, object_name):
-    cos_res = get_cos_resource()
-    cos_res.
-
-
 def assure_object(file_path, bucket_name, object_name):
     """check if patched image already exists"""
     cos_res = get_cos_resource()
