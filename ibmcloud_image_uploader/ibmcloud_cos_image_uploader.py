@@ -38,7 +38,7 @@ COS_RESOURCE_CRN = None
 COS_IMAGE_LOCATION = None
 COS_AUTH_ENDPOINT = None
 COS_ENDPOINT = None
-UPDATE_IMAGES = False
+UPDATE_IMAGES = None
 
 LOG = logging.getLogger('tmos_image_patcher')
 LOG.setLevel(logging.DEBUG)
@@ -197,9 +197,11 @@ def initialize():
         'COS_AUTH_ENDPOINT', 'https://iam.cloud.ibm.com/identity/token')
     COS_ENDPOINT = os.getenv(
         'COS_ENDPOINT', 'https://s3.us-west.cloud-object-storage.appdomain.cloud')
-    UPDATE_IMAGES = os.getenv('UPDATE_IMAGES', False)
+    UPDATE_IMAGES = os.getenv('UPDATE_IMAGES', 'false')
     if UPDATE_IMAGES.lower() == 'true':
         UPDATE_IMAGES = True
+    else:
+        UPDATE_IMAGES = False
 
 
 if __name__ == "__main__":
