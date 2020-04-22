@@ -38,6 +38,7 @@ COS_RESOURCE_CRN = None
 COS_IMAGE_LOCATION = None
 COS_AUTH_ENDPOINT = None
 COS_ENDPOINT = None
+UPDATE_IMAGES = False
 
 LOG = logging.getLogger('tmos_image_patcher')
 LOG.setLevel(logging.DEBUG)
@@ -120,13 +121,21 @@ def assure_bucket(bucket_name):
         return False
 
 
+def delete_object(bucket_name, object_name):
+    cos_res = get_cos_resource()
+    cos_res.
+
+
 def assure_object(file_path, bucket_name, object_name):
     """check if patched image already exists"""
     cos_res = get_cos_resource()
     try:
         for obj in cos_res.Bucket(bucket_name).objects.all():
             if obj.key == object_name:
-                return True
+                if UPDATE_IMAGES:
+                    obj.delete()
+                else:
+                    return True
         LOG.debug('starting upload of image %s to %s/%s',
                   file_path, bucket_name, object_name)
 
@@ -184,7 +193,7 @@ def upload_patched_images():
 
 def initialize():
     """initialize configuration from environment variables"""
-    global TMOS_IMAGE_DIR, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, COS_AUTH_ENDPOINT, COS_ENDPOINT
+    global TMOS_IMAGE_DIR, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, COS_AUTH_ENDPOINT, COS_ENDPOINT, UPDATE_IMAGES
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
     COS_RESOURCE_CRN = os.getenv('COS_RESOURCE_CRN', None)
@@ -193,6 +202,9 @@ def initialize():
         'COS_AUTH_ENDPOINT', 'https://iam.cloud.ibm.com/identity/token')
     COS_ENDPOINT = os.getenv(
         'COS_ENDPOINT', 'https://s3.us-west.cloud-object-storage.appdomain.cloud')
+    UPDATE_IMAGES = os.getenv('UPDATE_IMAGES', False)
+    if UPDATE_IMAGES.lower() == 'true':
+        UPDATE_IMAGES = True
 
 
 if __name__ == "__main__":
