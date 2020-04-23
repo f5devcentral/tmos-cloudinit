@@ -216,16 +216,17 @@ def inventory():
     cos_res = get_cos_resource()
     try:
         images = []
+        urlp = urlparse.urlparse(COS_ENDPOINT)
         for bucket in cos_res.buckets.all():
-            LOG.debug('inventory add bucket: %s', bucket.name)
             for obj in cos_res.Bucket(bucket.name).objects.all():
-                LOG.debug('inventory add %s/%s', bucket.name, obj.key)
-                urlp = urlparse.urlparse(COS_ENDPOINT)
-                inv_obj = {
-                    'sql_url': "cos://%s/%s/%s" % (COS_IMAGE_LOCATION, bucket.name, obj.key),
-                    'public_url': "https://%s.%s/%s" % (urlp.netloc, bucket.name, obj.key)
-                }
-                images.append(inv_obj)
+                if os.path.splitext(obj.key)[1] in IMAGE_TYPES:
+                    LOG.debug('inventory add %s/%s', bucket.name, obj.key)
+                    inv_obj = {
+                        'image_file': obj.key,
+                        'sql_url': "cos://%s/%s/%s" % (COS_IMAGE_LOCATION, bucket.name, obj.key),
+                        'public_url': "https://%s.%s/%s" % (urlp.netloc, bucket.name, obj.key)
+                    }
+                    images.append(inv_obj)
         if images:
             with open(inventory_file, 'w') as ivf:
                 ivf.write(json.dumps(images))
