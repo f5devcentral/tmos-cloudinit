@@ -218,6 +218,7 @@ def inventory():
         for bucket in cos_res.buckets.all():
             LOG.debug('deleting bucket: %s', bucket.name)
             for obj in cos_res.Bucket(bucket.name).objects.all():
+                LOG.debug('inventory add %s/%s', bucket.name, obj.key)
                 images.append(obj)
         if images:
             with open(inventory_file, 'w') as ivf:
@@ -278,6 +279,7 @@ if __name__ == "__main__":
         delete_all()
     else:
         upload_patched_images()
+    inventory()
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
     LOG.debug(
