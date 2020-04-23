@@ -111,7 +111,7 @@ def assure_glance_image(image_path):
         LOG.debug('image created with id: %s for name %s', image.id, image_name)
         glance.images.upload(image.id, open(image_path, 'rb'))
         LOG.debug('upload complete image: %s', image_name)
-        kwargs = {'owner_specified.uploader_managed':True}
+        kwargs = {'owner_specified.uploader_managed':'true'}
         glance.images.update(image.id, **kwargs)
         md5sum_path = "%s.md5" % image_path
         if os.path.exists(md5sum_path):
