@@ -27,6 +27,7 @@ import base64
 import time
 import datetime
 import logging
+import json
 
 from keystoneauth1 import loading
 from keystoneauth1 import session
@@ -42,6 +43,8 @@ OS_IMAGE_VISIBILITY = None
 OS_USERNAME = None
 OS_PASSWORD = None
 OS_AUTH_URL = None
+UPDATE_IMAGES = None
+DELETE_ALL = None
 
 LOG = logging.getLogger('tmos_image_patcher')
 LOG.setLevel(logging.DEBUG)
@@ -50,6 +53,7 @@ FORMATTER = logging.Formatter(
 LOGSTREAM = logging.StreamHandler(sys.stdout)
 LOGSTREAM.setFormatter(FORMATTER)
 LOG.addHandler(LOGSTREAM)
+
 
 def get_patched_images(tmos_image_dir):
     """get TMOS patched disk images"""
@@ -93,15 +97,22 @@ def assure_glance_image(image_path):
 
     try:
         glance = get_glance_client()
-
+        exist_image_id = None
         for image in glance.images.list():
             if image.name == image_name:
                 LOG.debug('found existing image %s with name %s', image.id, image_name)
-                return True
-        image = glance.images.create(name=image_name, container_format='bare', disk_format='qcow2', visibility=OS_IMAGE_VISIBILITY)
+                if UPDATE_IMAGES:
+                    LOG.debug('deleting existing image %s', image.id)
+                    glance.images.delete(image.id)
+                    exist_image_id = image.id
+                else:
+                    return True
+        image = glance.images.create(name=image_name, id=exist_image_id, container_format='bare', disk_format='qcow2', visibility=OS_IMAGE_VISIBILITY)
         LOG.debug('image created with id: %s for name %s', image.id, image_name)
         glance.images.upload(image.id, open(image_path, 'rb'))
         LOG.debug('upload complete image: %s', image_name)
+        kwargs = {'owner_specified.uploader_managed':True}
+        glance.images.update(image.id, **kwargs)
         md5sum_path = "%s.md5" % image_path
         if os.path.exists(md5sum_path):
             with open(md5sum_path, 'r') as md5sum_file:
@@ -125,9 +136,38 @@ def upload_patched_images():
         assure_glance_image(image_path)
 
 
+def delete_image(image_id):
+    """delete a glance image by id"""
+    glance = get_glance_client()
+    glance.images.delete(image_id)
+
+
+def delete_all():
+    """delete all uploader managed images"""
+    glance = get_glance_client()
+    for image in glance.images.list():
+        if 'owner_specified.uploader_managed' in image:
+            glance.images.delete(id)
+
+
+def inventory():
+    """create inventory JSON"""
+    inventory_file = "%s/openstack_images.json" % TMOS_IMAGE_DIR
+    if os.path.exists(inventory_file):
+        os.unlink(inventory_file)
+    glance = get_glance_client()
+    images = []
+    for image in glance.images.list():
+        if 'owner_specified.uploader_managed' in image:
+            images.append(image)
+    if images:
+        with open(inventory_file, 'w') as ivf:
+            ivf.write(json.dumps(images))
+
+
 def initialize():
     """initialize configuration from environment"""
-    global TMOS_IMAGE_DIR, OS_PROJECT_DOMAIN_NAME, OS_USER_DOMAIN_NAME, OS_PROJECT_NAME, OS_IMAGE_VISIBILITY, OS_USERNAME, OS_PASSWORD, OS_AUTH_URL
+    global TMOS_IMAGE_DIR, OS_PROJECT_DOMAIN_NAME, OS_USER_DOMAIN_NAME, OS_PROJECT_NAME, OS_IMAGE_VISIBILITY, OS_USERNAME, OS_PASSWORD, OS_AUTH_URL, UPDATE_IMAGES, DELETE_ALL
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     OS_PROJECT_DOMAIN_NAME = os.getenv('OS_PROJECT_DOMAIN_NAME', 'default')
     OS_USER_DOMAIN_NAME = os.getenv('OS_USER_DOMAIN_NAME', 'default')
@@ -136,6 +176,16 @@ def initialize():
     OS_USERNAME = os.getenv('OS_USERNAME', None)
     OS_PASSWORD = os.getenv('OS_PASSWORD', None)
     OS_AUTH_URL = os.getenv('OS_AUTH_URL', None)
+    UPDATE_IMAGES = os.getenv('UPDATE_IMAGES', 'false')
+    if UPDATE_IMAGES.lower() == 'true':
+        UPDATE_IMAGES = True
+    else:
+        UPDATE_IMAGES = False
+    DELETE_ALL = os.getenv('DELETE_ALL', 'false')
+    if DELETE_ALL.lower() == 'true':
+        DELETE_ALL = True
+    else:
+        DELETE_ALL = False
 
 
 if __name__ == "__main__":

@@ -26,6 +26,7 @@ import sys
 import time
 import datetime
 import logging
+import json
 import ibm_boto3
 
 from ibm_botocore.client import Config, ClientError
@@ -204,6 +205,29 @@ def upload_patched_images():
     """check for iamges and assure upload to IBM COS"""
     for image_path in get_patched_images(TMOS_IMAGE_DIR):
         assure_cos_image(image_path)
+
+
+def inventory():
+    """create inventory JSON"""
+    inventory_file = "%s/ibmcos_images_%s.json" % (TMOS_IMAGE_DIR, COS_IMAGE_LOCATION)
+    if os.path.exists(inventory_file):
+        os.unlink(inventory_file)
+    cos_res = get_cos_resource()
+    try:
+        images = []
+        for bucket in cos_res.buckets.all():
+            LOG.debug('deleting bucket: %s', bucket.name)
+            for obj in cos_res.Bucket(bucket.name).objects.all():
+                images.append(obj)
+        if images:
+            with open(inventory_file, 'w') as ivf:
+                ivf.write(json.dumps(images))
+    except ClientError as client_error:
+        LOG.error('client error creating inventory of resources: %s', client_error)
+        return False
+    except Exception as ex:
+        LOG.error('exception creating inventory of resources: %s', ex)
+        return False
 
 
 def initialize():
