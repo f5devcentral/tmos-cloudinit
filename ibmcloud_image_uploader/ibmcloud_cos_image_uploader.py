@@ -39,6 +39,7 @@ COS_IMAGE_LOCATION = None
 COS_AUTH_ENDPOINT = None
 COS_ENDPOINT = None
 UPDATE_IMAGES = None
+DELETE_ALL = None
 
 LOG = logging.getLogger('tmos_image_patcher')
 LOG.setLevel(logging.DEBUG)
@@ -180,6 +181,23 @@ def assure_cos_image(image_path):
         assure_object(sig_path, bucket_name, sig_object_name)
 
 
+def delete_all():
+    """delete all files and buckets from the COS resource"""
+    cos_res = get_cos_resource()
+    try:
+        for bucket in cos_res.buckets.all():
+            for obj in cos_res.Bucket(bucket.name).objects.all():
+                obj.delete()
+            bucket.delete()
+        return True
+    except ClientError as client_error:
+        LOG.error('client error deleting all resources: %s', client_error)
+        return False
+    except Exception as ex:
+        LOG.error('exception occurred deleting all resources: %s', ex)
+        return False
+
+
 def upload_patched_images():
     """check for iamges and assure upload to IBM COS"""
     for image_path in get_patched_images(TMOS_IMAGE_DIR):
@@ -188,7 +206,7 @@ def upload_patched_images():
 
 def initialize():
     """initialize configuration from environment variables"""
-    global TMOS_IMAGE_DIR, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, COS_AUTH_ENDPOINT, COS_ENDPOINT, UPDATE_IMAGES
+    global TMOS_IMAGE_DIR, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, COS_AUTH_ENDPOINT, COS_ENDPOINT, UPDATE_IMAGES, DELETE_ALL
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
     COS_RESOURCE_CRN = os.getenv('COS_RESOURCE_CRN', None)
@@ -202,6 +220,11 @@ def initialize():
         UPDATE_IMAGES = True
     else:
         UPDATE_IMAGES = False
+    DELETE_ALL = os.getenv('DELETE_ALL', 'false')
+    if DELETE_ALL.lower() == 'true':
+        DELETE_ALL = True
+    else:
+        DELETE_ALL = False
 
 
 if __name__ == "__main__":
@@ -211,19 +234,24 @@ if __name__ == "__main__":
     initialize()
     ERROR_MESSAGE = ''
     ERROR = False
-    if not TMOS_IMAGE_DIR:
-        ERROR = True
-        ERROR_MESSAGE += "please set env TMOS_IMAGE_DIR to scan for patched TMOS images\n"
     if not COS_API_KEY:
         ERROR = True
         ERROR_MESSAGE += "please set env COS_API_KEY for your IBM COS resource\n"
     if not COS_RESOURCE_CRN:
         ERROR = True
         ERROR_MESSAGE += "please set env COS_RESOURCE_CRN for your IBM COS resource\n"
+    if not TMOS_IMAGE_DIR and not DELETE_ALL:
+        ERROR = True
+        ERROR_MESSAGE += "please set env TMOS_IMAGE_DIR to scan for patched TMOS images\n"
+    
     if ERROR:
         LOG.error('\n\n%s\n', ERROR_MESSAGE)
         sys.exit(1)
-    upload_patched_images()
+    
+    if DELETE_ALL:
+        delete_all()
+    else:
+        upload_patched_images()
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
     LOG.debug(
