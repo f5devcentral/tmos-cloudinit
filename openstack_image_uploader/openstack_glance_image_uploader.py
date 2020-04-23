@@ -150,7 +150,7 @@ def delete_all():
     glance = get_glance_client()
     for image in glance.images.list():
         if 'owner_specified.uploader_managed' in image:
-            glance.images.delete(id)
+            glance.images.delete(image.id)
 
 
 def inventory():
