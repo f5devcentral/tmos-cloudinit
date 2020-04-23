@@ -150,6 +150,7 @@ def delete_all():
     glance = get_glance_client()
     for image in glance.images.list():
         if 'owner_specified.uploader_managed' in image:
+            LOG.debug('deleting image %s:%s', image.id, image.name)
             glance.images.delete(image.id)
 
 
