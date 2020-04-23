@@ -214,7 +214,10 @@ if __name__ == "__main__":
     if ERRPR:
         LOG.error('\n\n%s\n', ERROR_MESSAGE)
         sys.exit(1)
-    upload_patched_images()
+    if DELETE_ALL:
+        delete_all()
+    else:
+        upload_patched_images()
     inventory()
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
