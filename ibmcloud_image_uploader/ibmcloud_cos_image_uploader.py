@@ -186,7 +186,9 @@ def delete_all():
     cos_res = get_cos_resource()
     try:
         for bucket in cos_res.buckets.all():
+            LOG.debug('deleting bucket: %s', bucket.name)
             for obj in cos_res.Bucket(bucket.name).objects.all():
+                LOG.debug('deleting object: %s', obj.key)
                 obj.delete()
             bucket.delete()
         return True
