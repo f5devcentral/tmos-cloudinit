@@ -28,6 +28,7 @@ import datetime
 import logging
 import json
 import ibm_boto3
+import urlparse
 
 from ibm_botocore.client import Config, ClientError
 
@@ -216,10 +217,15 @@ def inventory():
     try:
         images = []
         for bucket in cos_res.buckets.all():
-            LOG.debug('deleting bucket: %s', bucket.name)
+            LOG.debug('inventory add bucket: %s', bucket.name)
             for obj in cos_res.Bucket(bucket.name).objects.all():
                 LOG.debug('inventory add %s/%s', bucket.name, obj.key)
-                images.append(obj)
+                urlp = urlparse.urlparse(COS_ENDPOINT)
+                inv_obj = {
+                    'sql_url': "cos://%s/%s/%s" % (COS_IMAGE_LOCATION, bucket.name, obj.key),
+                    'public_url': "https://%s.%s/%s" % (urlp.netloc, bucket.name, obj.key)
+                }
+                images.append(inv_obj)
         if images:
             with open(inventory_file, 'w') as ivf:
                 ivf.write(json.dumps(images))
@@ -241,7 +247,7 @@ def initialize():
     COS_AUTH_ENDPOINT = os.getenv(
         'COS_AUTH_ENDPOINT', 'https://iam.cloud.ibm.com/identity/token')
     COS_ENDPOINT = os.getenv(
-        'COS_ENDPOINT', 'https://s3.us-west.cloud-object-storage.appdomain.cloud')
+        'COS_ENDPOINT', 'https://s3.us-south.cloud-object-storage.appdomain.cloud')
     UPDATE_IMAGES = os.getenv('UPDATE_IMAGES', 'false')
     if UPDATE_IMAGES.lower() == 'true':
         UPDATE_IMAGES = True
