@@ -222,9 +222,13 @@ def inventory():
                 if os.path.splitext(obj.key)[1] in IMAGE_TYPES:
                     LOG.debug('inventory add %s/%s', bucket.name, obj.key)
                     inv_obj = {
+                        'location': COS_IMAGE_LOCATION,
+                        'image_name': bucket.name,
                         'image_file': obj.key,
-                        'sql_url': "cos://%s/%s/%s" % (COS_IMAGE_LOCATION, bucket.name, obj.key),
-                        'public_url': "https://%s.%s/%s" % (urlp.netloc, bucket.name, obj.key)
+                        'image_sql_url': "cos://%s/%s/%s" % (COS_IMAGE_LOCATION, bucket.name, obj.key),
+                        'image_public_url': "https://%s.%s/%s" % (bucket.name, urlp.netloc, obj.key),
+                        'md5_sql_url': "cos://%s/%s/%s.md5" % (COS_IMAGE_LOCATION, bucket.name, os.path.splitext(obj.key)[0]),
+                        'md5_public_url': "https://%s.%s/%s.md5" % (bucket.name, urlp.netloc, os.path.splitext(obj.key)[0])
                     }
                     images.append(inv_obj)
         if images:
