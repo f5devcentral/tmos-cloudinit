@@ -28,6 +28,7 @@ import time
 import datetime
 import logging
 import json
+import uuid
 
 from keystoneauth1 import loading
 from keystoneauth1 import session
@@ -107,6 +108,8 @@ def assure_glance_image(image_path):
                     exist_image_id = image.id
                 else:
                     return True
+        if not exist_image_id:
+            exist_image_id = uuid.uuid4()
         image = glance.images.create(name=image_name, id=exist_image_id, container_format='bare', disk_format='qcow2', visibility=OS_IMAGE_VISIBILITY)
         LOG.debug('image created with id: %s for name %s', image.id, image_name)
         glance.images.upload(image.id, open(image_path, 'rb'))
