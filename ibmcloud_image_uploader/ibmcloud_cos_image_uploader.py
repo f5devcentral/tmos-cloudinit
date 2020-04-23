@@ -227,8 +227,8 @@ def inventory():
                         'image_file': obj.key,
                         'image_sql_url': "cos://%s/%s/%s" % (COS_IMAGE_LOCATION, bucket.name, obj.key),
                         'image_public_url': "https://%s.%s/%s" % (bucket.name, urlp.netloc, obj.key),
-                        'md5_sql_url': "cos://%s/%s/%s.md5" % (COS_IMAGE_LOCATION, bucket.name, os.path.splitext(obj.key)[0]),
-                        'md5_public_url': "https://%s.%s/%s.md5" % (bucket.name, urlp.netloc, os.path.splitext(obj.key)[0])
+                        'md5_sql_url': "cos://%s/%s/%s.md5" % (COS_IMAGE_LOCATION, bucket.name, obj.key),
+                        'md5_public_url': "https://%s.%s/%s.md5" % (bucket.name, urlp.netloc, obj.key)
                     }
                     images.append(inv_obj)
         if images:
