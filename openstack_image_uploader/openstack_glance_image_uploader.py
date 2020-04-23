@@ -162,6 +162,7 @@ def inventory():
     images = []
     for image in glance.images.list():
         if 'owner_specified.uploader_managed' in image:
+            LOG.debug('inventory add %s:%s', image.id, image.name)
             images.append(image)
     if images:
         with open(inventory_file, 'w') as ivf:
