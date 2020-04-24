@@ -33,6 +33,7 @@ import urlparse
 from ibm_botocore.client import Config, ClientError
 
 IMAGE_TYPES = ['.qcow2', '.vhd', '.vmdk']
+IBM_COS_REGIONS = []
 
 TMOS_IMAGE_DIR = None
 COS_API_KEY = None
@@ -67,12 +68,12 @@ def get_patched_images(tmos_image_dir):
     return return_image_files
 
 
-def get_bucket_name(image_path):
+def get_bucket_name(image_path, location):
     """Get bucket for this patched image"""
-    return "%s-%s" % (os.path.splitext(os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, ''))[0].replace('_', '-').lower(), COS_IMAGE_LOCATION)
+    return "%s-%s" % (os.path.splitext(os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, ''))[0].replace('_', '-').lower(), location)
 
 
-def get_object_name(image_path):
+def get_object_name(image_path, location):
     """Get object name for this patched image"""
     if 'DATASTOR' in image_path:
         return "%s_DATASTOR" % os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, '')
@@ -80,29 +81,31 @@ def get_object_name(image_path):
         return os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, '')
 
 
-def get_cos_client():
+def get_cos_client(location):
     """return IBM COS client object"""
+    cos_endpoint = "https://s3.%s.cloud-object-storage.appdomain.cloud" % location
     return ibm_boto3.client("s3",
                             ibm_api_key_id=COS_API_KEY,
                             ibm_service_instance_id=COS_RESOURCE_CRN,
                             ibm_auth_endpoint=COS_AUTH_ENDPOINT,
                             config=Config(signature_version="oauth"),
-                            endpoint_url=COS_ENDPOINT)
+                            endpoint_url=cos_endpoint)
 
 
-def get_cos_resource():
+def get_cos_resource(location):
     """return IBM COS resource object"""
+    cos_endpoint = "https://s3.%s.cloud-object-storage.appdomain.cloud" % location
     return ibm_boto3.resource("s3",
                               ibm_api_key_id=COS_API_KEY,
                               ibm_service_instance_id=COS_RESOURCE_CRN,
                               ibm_auth_endpoint=COS_AUTH_ENDPOINT,
                               config=Config(signature_version="oauth"),
-                              endpoint_url=COS_ENDPOINT)
+                              endpoint_url=cos_endpoint)
 
 
-def assure_bucket(bucket_name):
+def assure_bucket(bucket_name, location):
     """Make sure bucket exists"""
-    cos_res = get_cos_resource()
+    cos_res = get_cos_resource(location)
     try:
         for bucket in cos_res.buckets.all():
             if bucket.name == bucket_name:
@@ -124,9 +127,9 @@ def assure_bucket(bucket_name):
         return False
 
 
-def assure_object(file_path, bucket_name, object_name):
+def assure_object(file_path, bucket_name, object_name, location):
     """check if patched image already exists"""
-    cos_res = get_cos_resource()
+    cos_res = get_cos_resource(location)
     try:
         for obj in cos_res.Bucket(bucket_name).objects.all():
             if obj.key == object_name:
@@ -145,7 +148,7 @@ def assure_object(file_path, bucket_name, object_name):
             multipart_chunksize=part_size
         )
 
-        cos_client = get_cos_client()
+        cos_client = get_cos_client(location)
         transfer_mgr = ibm_boto3.s3.transfer.TransferManager(
             cos_client, config=transfer_config)
         upload = transfer_mgr.upload(file_path, bucket_name, object_name)
@@ -165,47 +168,49 @@ def assure_object(file_path, bucket_name, object_name):
         return False
 
 
-def assure_cos_image(image_path):
+def assure_cos_image(image_path, location):
     """assure patch image object"""
-    bucket_name = get_bucket_name(image_path)
-    object_name = get_object_name(image_path)
+    bucket_name = get_bucket_name(image_path, location)
+    object_name = get_object_name(image_path, location)
     LOG.debug('checking IBM COS Object: %s/%s exists',
               bucket_name, object_name)
-    if assure_bucket(bucket_name):
-        assure_object(image_path, bucket_name, object_name)
+    if assure_bucket(bucket_name, location):
+        assure_object(image_path, bucket_name, object_name, location)
     md5_path = "%s.md5" % image_path
     if os.path.exists(md5_path):
         md5_object_name = "%s.md5" % object_name
-        assure_object(md5_path, bucket_name, md5_object_name)
+        assure_object(md5_path, bucket_name, md5_object_name, location)
     sig_path = "%s.384.sig" % image_path
     if os.path.exists(sig_path):
         sig_object_name = "%s.384.sig" % object_name
-        assure_object(sig_path, bucket_name, sig_object_name)
+        assure_object(sig_path, bucket_name, sig_object_name, location)
 
 
 def delete_all():
     """delete all files and buckets from the COS resource"""
-    cos_res = get_cos_resource()
-    try:
-        for bucket in cos_res.buckets.all():
-            LOG.debug('deleting bucket: %s', bucket.name)
-            for obj in cos_res.Bucket(bucket.name).objects.all():
-                LOG.debug('deleting object: %s', obj.key)
-                obj.delete()
-            bucket.delete()
-        return True
-    except ClientError as client_error:
-        LOG.error('client error deleting all resources: %s', client_error)
-        return False
-    except Exception as ex:
-        LOG.error('exception occurred deleting all resources: %s', ex)
-        return False
+    for location in IBM_COS_REGIONS:
+        cos_res = get_cos_resource(location)
+        try:
+            for bucket in cos_res.buckets.all():
+                LOG.debug('deleting bucket: %s', bucket.name)
+                for obj in cos_res.Bucket(bucket.name).objects.all():
+                    LOG.debug('deleting object: %s', obj.key)
+                    obj.delete()
+                bucket.delete()
+            return True
+        except ClientError as client_error:
+            LOG.error('client error deleting all resources: %s', client_error)
+            return False
+        except Exception as ex:
+            LOG.error('exception occurred deleting all resources: %s', ex)
+            return False
 
 
 def upload_patched_images():
     """check for iamges and assure upload to IBM COS"""
     for image_path in get_patched_images(TMOS_IMAGE_DIR):
-        assure_cos_image(image_path)
+        for location in IBM_COS_REGIONS:
+            assure_cos_image(image_path, location)
 
 
 def inventory():
@@ -244,15 +249,14 @@ def inventory():
 
 def initialize():
     """initialize configuration from environment variables"""
-    global TMOS_IMAGE_DIR, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, COS_AUTH_ENDPOINT, COS_ENDPOINT, UPDATE_IMAGES, DELETE_ALL
+    global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
     COS_RESOURCE_CRN = os.getenv('COS_RESOURCE_CRN', None)
     COS_IMAGE_LOCATION = os.getenv('COS_IMAGE_LOCATION', 'us-south')
+    IBM_COS_REGIONS = [ x.strip() for x in COS_IMAGE_LOCATION.split(',') ]
     COS_AUTH_ENDPOINT = os.getenv(
         'COS_AUTH_ENDPOINT', 'https://iam.cloud.ibm.com/identity/token')
-    COS_ENDPOINT = os.getenv(
-        'COS_ENDPOINT', 'https://s3.us-south.cloud-object-storage.appdomain.cloud')
     UPDATE_IMAGES = os.getenv('UPDATE_IMAGES', 'false')
     if UPDATE_IMAGES.lower() == 'true':
         UPDATE_IMAGES = True
