@@ -114,7 +114,7 @@ def assure_bucket(bucket_name, location):
         cos_res.Bucket(bucket_name).create(
             ACL='public-read',
             CreateBucketConfiguration={
-                "LocationConstraint": COS_IMAGE_LOCATION
+                "LocationConstraint": location
             }
         )
         return True
@@ -215,36 +215,34 @@ def upload_patched_images():
 
 def inventory():
     """create inventory JSON"""
-    inventory_file = "%s/ibmcos_images_%s.json" % (TMOS_IMAGE_DIR, COS_IMAGE_LOCATION)
+    inventory_file = "%s/ibmcos_images.json" % (TMOS_IMAGE_DIR)
     if os.path.exists(inventory_file):
         os.unlink(inventory_file)
-    cos_res = get_cos_resource()
-    try:
-        images = []
-        urlp = urlparse.urlparse(COS_ENDPOINT)
-        for bucket in cos_res.buckets.all():
-            for obj in cos_res.Bucket(bucket.name).objects.all():
-                if os.path.splitext(obj.key)[1] in IMAGE_TYPES:
+    inventory = {}
+    for location in IBM_COS_REGIONS:
+        inventory[location] = []
+        cos_res = get_cos_resource(location)
+        try:
+            for bucket in cos_res.buckets.all():
+                for obj in cos_res.Bucket(bucket.name).objects.all():
                     LOG.debug('inventory add %s/%s', bucket.name, obj.key)
-                    inv_obj = {
-                        'location': COS_IMAGE_LOCATION,
-                        'image_name': bucket.name,
-                        'image_file': obj.key,
-                        'image_sql_url': "cos://%s/%s/%s" % (COS_IMAGE_LOCATION, bucket.name, obj.key),
-                        'image_public_url': "https://%s.%s/%s" % (bucket.name, urlp.netloc, obj.key),
-                        'md5_sql_url': "cos://%s/%s/%s.md5" % (COS_IMAGE_LOCATION, bucket.name, obj.key),
-                        'md5_public_url': "https://%s.%s/%s.md5" % (bucket.name, urlp.netloc, obj.key)
-                    }
-                    images.append(inv_obj)
-        if images:
-            with open(inventory_file, 'w') as ivf:
-                ivf.write(json.dumps(images))
-    except ClientError as client_error:
-        LOG.error('client error creating inventory of resources: %s', client_error)
-        return False
-    except Exception as ex:
-        LOG.error('exception creating inventory of resources: %s', ex)
-        return False
+                    if os.path.splitext(obj.key)[1] in IMAGE_TYPES:
+                        netloc = "https://%s.s3.%s.cloud-object-storage.appdomain.cloud" % (bucket.name, location)
+                        inv_obj = {
+                            'image_name': bucket.name,
+                            'image_file': obj.key,
+                            'image_sql_url': "cos://%s/%s/%s" % (location, bucket.name, obj.key),
+                            'image_public_url': "https://%s.%s/%s" % (bucket.name, netloc, obj.key),
+                            'md5_sql_url': "cos://%s/%s/%s.md5" % (location, bucket.name, obj.key),
+                            'md5_public_url': "https://%s.%s/%s.md5" % (bucket.name, netloc, obj.key)
+                        }
+                        inventory[location].append(inv_obj)
+        except ClientError as client_error:
+            LOG.error('client error creating inventory of resources: %s', client_error)
+        except Exception as ex:
+            LOG.error('exception creating inventory of resources: %s', ex)
+    with open(inventory_file, 'w') as ivf:
+        ivf.write(json.dumps(inventory))
 
 
 def initialize():
