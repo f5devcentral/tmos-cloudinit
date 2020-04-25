@@ -29,6 +29,7 @@ import logging
 import json
 import ibm_boto3
 import urlparse
+import requests
 
 from ibm_botocore.client import Config, ClientError
 
@@ -112,10 +113,7 @@ def assure_bucket(bucket_name, location):
                 return True
         LOG.debug('creating bucket %s', bucket_name)
         cos_res.Bucket(bucket_name).create(
-            ACL='public-read',
-            CreateBucketConfiguration={
-                "LocationConstraint": location
-            }
+            ACL='public-read'
         )
         return True
     except ClientError as client_error:
@@ -151,7 +149,7 @@ def assure_object(file_path, bucket_name, object_name, location):
         cos_client = get_cos_client(location)
         transfer_mgr = ibm_boto3.s3.transfer.TransferManager(
             cos_client, config=transfer_config)
-        upload = transfer_mgr.upload(file_path, bucket_name, object_name)
+        upload = transfer_mgr.upload(file_path, bucket_name, object_name, extra_args={'ACL': 'public-read'})
         upload.result()
 
         LOG.debug('upload complete for %s/%s', bucket_name, object_name)
@@ -188,22 +186,22 @@ def assure_cos_image(image_path, location):
 
 def delete_all():
     """delete all files and buckets from the COS resource"""
+    LOG.debug('deleting images in: %s', IBM_COS_REGIONS)
     for location in IBM_COS_REGIONS:
+        LOG.debug("deleting images in %s region" % location)
         cos_res = get_cos_resource(location)
         try:
             for bucket in cos_res.buckets.all():
-                LOG.debug('deleting bucket: %s', bucket.name)
-                for obj in cos_res.Bucket(bucket.name).objects.all():
-                    LOG.debug('deleting object: %s', obj.key)
-                    obj.delete()
-                bucket.delete()
-            return True
+                if location in bucket.name:
+                    LOG.debug('deleting bucket: %s', bucket.name)
+                    for obj in cos_res.Bucket(bucket.name).objects.all():
+                        LOG.debug('deleting object: %s', obj.key)
+                        obj.delete()
+                    bucket.delete()
         except ClientError as client_error:
             LOG.error('client error deleting all resources: %s', client_error)
-            return False
         except Exception as ex:
             LOG.error('exception occurred deleting all resources: %s', ex)
-            return False
 
 
 def upload_patched_images():
@@ -224,19 +222,16 @@ def inventory():
         cos_res = get_cos_resource(location)
         try:
             for bucket in cos_res.buckets.all():
-                for obj in cos_res.Bucket(bucket.name).objects.all():
-                    LOG.debug('inventory add %s/%s', bucket.name, obj.key)
-                    if os.path.splitext(obj.key)[1] in IMAGE_TYPES:
-                        netloc = "https://%s.s3.%s.cloud-object-storage.appdomain.cloud" % (bucket.name, location)
-                        inv_obj = {
-                            'image_name': bucket.name,
-                            'image_file': obj.key,
-                            'image_sql_url': "cos://%s/%s/%s" % (location, bucket.name, obj.key),
-                            'image_public_url': "https://%s.%s/%s" % (bucket.name, netloc, obj.key),
-                            'md5_sql_url': "cos://%s/%s/%s.md5" % (location, bucket.name, obj.key),
-                            'md5_public_url': "https://%s.%s/%s.md5" % (bucket.name, netloc, obj.key)
-                        }
-                        inventory[location].append(inv_obj)
+                if location in bucket.name:
+                    for obj in cos_res.Bucket(bucket.name).objects.all():
+                        LOG.debug('inventory add %s/%s', bucket.name, obj.key)
+                        if os.path.splitext(obj.key)[1] in IMAGE_TYPES:
+                            inv_obj = {
+                                'image_name': bucket.name.replace('.', '-'),
+                                'image_sql_url': "cos://%s/%s/%s" % (location, bucket.name, obj.key),
+                                'md5_sql_url': "cos://%s/%s/%s.md5" % (location, bucket.name, obj.key)
+                            }
+                            inventory[location].append(inv_obj)
         except ClientError as client_error:
             LOG.error('client error creating inventory of resources: %s', client_error)
         except Exception as ex:
@@ -253,6 +248,7 @@ def initialize():
     COS_RESOURCE_CRN = os.getenv('COS_RESOURCE_CRN', None)
     COS_IMAGE_LOCATION = os.getenv('COS_IMAGE_LOCATION', 'us-south')
     IBM_COS_REGIONS = [ x.strip() for x in COS_IMAGE_LOCATION.split(',') ]
+    LOG.debug('processing images in %s', IBM_COS_REGIONS)
     COS_AUTH_ENDPOINT = os.getenv(
         'COS_AUTH_ENDPOINT', 'https://iam.cloud.ibm.com/identity/token')
     UPDATE_IMAGES = os.getenv('UPDATE_IMAGES', 'false')
