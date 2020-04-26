@@ -42,6 +42,7 @@ COS_RESOURCE_CRN = None
 COS_IMAGE_LOCATION = None
 COS_AUTH_ENDPOINT = None
 COS_ENDPOINT = None
+
 UPDATE_IMAGES = None
 DELETE_ALL = None
 
@@ -236,8 +237,16 @@ def inventory():
             LOG.error('client error creating inventory of resources: %s', client_error)
         except Exception as ex:
             LOG.error('exception creating inventory of resources: %s', ex)
+    # write it locally
     with open(inventory_file, 'w') as ivf:
         ivf.write(json.dumps(inventory))
+    # store in each location
+    for location in IBM_COS_REGIONS:
+        bucket_name = "f5-image-catalog-%s" % location
+        public_url = "https://%s.s3.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (bucket_name, location)
+        LOG.debug('writing image catalog to: %s', public_url)
+        assure_bucket(bucket_name, location)
+        assure_object(inventory_file, bucket_name, "f5-image-catalog.json")
 
 
 def initialize():
