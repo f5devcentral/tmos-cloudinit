@@ -39,7 +39,7 @@ Run the python script
 Build the docker container
 
 `
-docker build -t imbcloud_vpc_image_importer:latest .
+docker build -t ibmcloud_vpc_image_importer:latest .
 `
 
 Set environment variables in your shell (bash used in example)
@@ -53,5 +53,5 @@ export IMAGE_MATCH='^bigip-14'
 Run the container with the supplying environment variables.
 
 ```
-docker run --rm -it -e API_KEY="$API_KEY" -e TMOS_IMAGE_CATALOG_URL="$TMOS_IMAGE_CATALOG_URL" -e IMAGE_MATCH="$IMAGE_MATCH" imbcloud_vpc_image_importer:latest
+docker run --rm -it -e API_KEY="$API_KEY" -e TMOS_IMAGE_CATALOG_URL="$TMOS_IMAGE_CATALOG_URL" -e IMAGE_MATCH="$IMAGE_MATCH" ibmcloud_vpc_image_importer:latest
 ```
