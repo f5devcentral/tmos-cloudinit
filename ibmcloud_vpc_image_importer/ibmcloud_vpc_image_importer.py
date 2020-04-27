@@ -18,7 +18,7 @@
 #
 """
 This module contains the logic to create VPC images from
-f5 COS image JSON file.
+F5 public COS image URLs.
 """
 
 import os
@@ -30,7 +30,7 @@ import datetime
 import time
 import re
 
-TMOS_IMAGE_DIR = None
+TMOS_IMAGE_CATALOG_URL = None
 API_KEY = None
 IMAGE_MATCH = '^[a-zA-Z]'
 REGION = 'us-south'
@@ -119,30 +119,13 @@ def import_image(token, region, name, cos_url):
     return response
 
 
-def get_available_f5_images(inventory_file, region=None):
-    if os.path.exists(inventory_file):
-        try:
-            image_data = None
-            with open(inventory_file, 'r') as jd:
-                image_data = json.loads(jd.read())
-            if region:
-                if region in image_data:
-                    return { region: image_data[region] }
-                else:
-                    return None
-            else:
-                return image_data
-        except Exception:
-            return None
-
-
 def image_exists(image_name, region=None):
     token = get_iam_token()
     existing_images = get_images(token, region)
     if existing_images:
         for image in existing_images['images']:
             if image_name == image['name']:
-                reponse = requests.delete()
+                return True
     return False
 
 
@@ -166,11 +149,10 @@ def delete_image(image_name, region=None):
     return False
 
 
-def dry_run():
-    image_data = get_available_f5_images(inventory_db)
+def dry_run(catalog_db):
     for region in REGION:
-        if region in image_data:
-            for image in image_data[region]:
+        if region in catalog_db:
+            for image in catalog_db[region]:
                 if re.search(IMAGE_MATCH, image['image_name']):
                     if DELETE_ALL:
                         LOG.info('dry run - would delete %s in %s if exists', image['image_name'], region)
@@ -191,12 +173,11 @@ def delete_all_images():
                     LOG.error('image deletion failed for image %s', image['name'])
 
 
-def import_images(inventory_db):
-    image_data = get_available_f5_images(inventory_db)
+def import_images(catalog_db):
     token = get_iam_token()
     for region in REGION:
-        if region in image_data:
-            for image in image_data[region]:
+        if region in catalog_db:
+            for image in catalog_db[region]:
                 if re.search(IMAGE_MATCH, image['image_name']):
                     exists = image_exists(image['image_name'], region)
                     if exists and UPDATE_IMAGES:
@@ -217,10 +198,27 @@ def import_images(inventory_db):
                             LOG.info('imported image %s', image['image_name'])
 
 
+def get_tmos_image_catalog():
+    """get TMOS catalog JSON"""
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    }
+    response = requests.get(TMOS_IMAGE_CATALOG_URL, headers=headers)
+    if response.status_code > 400:
+        LOG.error('could not retrieve F5 TMOS image catalog %d:%s' % (response.status_code, response.content))
+        return None
+    else:
+        return response.json()
+
+
 def initialize():
     """initialize configuration from environment variables"""
-    global TMOS_IMAGE_DIR, API_KEY, IMAGE_MATCH, REGION, UPDATE_IMAGES, DRY_RUN, DELETE_ALL, AUTH_ENDPOINT
-    TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
+    global TMOS_IMAGE_CATALOG_URL, API_KEY, IMAGE_MATCH, REGION, UPDATE_IMAGES, DRY_RUN, DELETE_ALL, AUTH_ENDPOINT
+    TMOS_IMAGE_CATALOG_URL = os.getenv(
+        'TMOS_IMAGE_CATALOG_URL',
+        'https://f5-image-catalog-us-south.s3.us-south.cloud-object-storage.appdomain.cloud/f5-image-catalog.json'
+    )
     API_KEY = os.getenv('API_KEY', None)
     IMAGE_MATCH = os.getenv('IMAGE_MATCH', '^[a-zA-Z]')
     REGION = os.getenv('REGION', 'us-south')
@@ -255,20 +253,20 @@ if __name__ == "__main__":
     if not API_KEY:
         ERROR = True
         ERROR_MESSAGE += "please set env API_KEY for your IBM IaaS Account\n"
-    inventory_db = "%s/%s" % (TMOS_IMAGE_DIR, 'ibmcos_images.json')
-    if not os.path.exists(inventory_db):
+    catalog_db = get_tmos_image_catalog()
+    if not catalog_db:
         ERROR = True
-        ERROR_MESSAGE += "could not read %s file\n" % inventory_db
+        ERROR_MESSAGE += "could not read TMOS image catalog\n"
     if ERROR:
         LOG.error('\n\n%s\n', ERROR_MESSAGE)
         sys.exit(1)
     if DRY_RUN:
-        dry_run()
+        dry_run(catalog_db)
     else:
         if DELETE_ALL:
             delete_all_images()
         else:
-            import_images(inventory_db)
+            import_images(catalog_db)
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
     LOG.debug(
