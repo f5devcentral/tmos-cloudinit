@@ -207,6 +207,7 @@ def delete_all():
 
 def upload_patched_images():
     """check for iamges and assure upload to IBM COS"""
+    LOG.debug('uploading images in %s', IBM_COS_REGIONS)
     for image_path in get_patched_images(TMOS_IMAGE_DIR):
         for location in IBM_COS_REGIONS:
             assure_cos_image(image_path, location)
@@ -214,6 +215,7 @@ def upload_patched_images():
 
 def inventory():
     """create inventory JSON"""
+    global UPDATE_IMAGES
     inventory_file = "%s/ibmcos_images.json" % (TMOS_IMAGE_DIR)
     if os.path.exists(inventory_file):
         os.unlink(inventory_file)
@@ -241,12 +243,14 @@ def inventory():
     with open(inventory_file, 'w') as ivf:
         ivf.write(json.dumps(inventory))
     # store in each location
-    for location in IBM_COS_REGIONS:
-        bucket_name = "f5-image-catalog-%s" % location
-        public_url = "https://%s.s3.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (bucket_name, location)
-        LOG.debug('writing image catalog to: %s', public_url)
-        assure_bucket(bucket_name, location)
-        assure_object(inventory_file, bucket_name, "f5-image-catalog.json")
+    if not DELETE_ALL:
+        UPDATE_IMAGES = True
+        for location in IBM_COS_REGIONS:
+            bucket_name = "f5-image-catalog-%s" % location
+            public_url = "https://%s.s3.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (bucket_name, location)
+            LOG.debug('writing image catalog to: %s', public_url)
+            assure_bucket(bucket_name, location)
+            assure_object(inventory_file, bucket_name, "f5-image-catalog.json", location)
 
 
 def initialize():
@@ -257,7 +261,6 @@ def initialize():
     COS_RESOURCE_CRN = os.getenv('COS_RESOURCE_CRN', None)
     COS_IMAGE_LOCATION = os.getenv('COS_IMAGE_LOCATION', 'us-south')
     IBM_COS_REGIONS = [ x.strip() for x in COS_IMAGE_LOCATION.split(',') ]
-    LOG.debug('processing images in %s', IBM_COS_REGIONS)
     COS_AUTH_ENDPOINT = os.getenv(
         'COS_AUTH_ENDPOINT', 'https://iam.cloud.ibm.com/identity/token')
     UPDATE_IMAGES = os.getenv('UPDATE_IMAGES', 'false')
