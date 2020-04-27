@@ -7,7 +7,7 @@ This python script and packaged Docker container preforms the task of taking loc
 The script functionality is driven by environment variables. This makes it simple to dockerize. The following environment variable are supported:
 
 | ENV Variable | Default | Required | Description |
-| :----------: | :-------: | :--------: | -----------: |
+| :---------- | :------- | :-------- | :----------- |
 | TMOS_IMAGE_DIR | None | Yes | Directory to look for patched images |
 | COS_API_KEY | None | Yes | The COS resource service API key |
 | COS_RESOURCE_CRN | None | Yes | The COS resource CRN (id) |
