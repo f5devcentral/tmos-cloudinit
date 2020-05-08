@@ -46,7 +46,7 @@ COS_ENDPOINT = None
 UPDATE_IMAGES = None
 DELETE_ALL = None
 
-LOG = logging.getLogger('tmos_image_patcher')
+LOG = logging.getLogger('ibmcloud_cos_image_uploader')
 LOG.setLevel(logging.DEBUG)
 FORMATTER = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s')

@@ -39,7 +39,7 @@ DRY_RUN = None
 DELETE_ALL = None
 AUTH_ENDPOINT = 'https://iam.cloud.ibm.com/identity/token'
 
-LOG = logging.getLogger('tmos_image_patcher')
+LOG = logging.getLogger('ibmcloud_vpc_image_importer')
 LOG.setLevel(logging.DEBUG)
 FORMATTER = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -183,6 +183,8 @@ def import_images(catalog_db):
                     if exists and UPDATE_IMAGES:
                         LOG.info('deleting image %s to force update', image['image_name'])
                         if delete_image(image['image_name'], region):
+                            # allow time for delete to take place
+                            time.sleep(10)
                             exists = False
                     if exists:
                         LOG.info('image %s already exists', image['image_name'])
@@ -210,6 +212,33 @@ def get_tmos_image_catalog():
         return None
     else:
         return response.json()
+
+
+def create_inventory(f5_image_catalog):
+    """create VPC Image Catalog"""
+    token = get_iam_token()
+    catalog = {}
+    for region in REGION:
+        if region in f5_image_catalog:
+            catalog[region] = []
+            regional_images = get_images(token, region)['images']
+            for image in regional_images:
+                for f5image in f5_image_catalog[region]:
+                    if image['name'] == f5image['image_name']:
+                        catalog[region].append({
+                            'image_name': image['name'],
+                            'id': image['id']
+                        })
+    catalog_json = json.dumps(catalog, sort_keys=True, indent=4, separators=(',', ': '))
+    catalog_file = os.getenv('CATALOG_FILE', None)
+    
+    if catalog_file:
+        with open(catalog_file, 'w') as cf:
+            cf.write(catalog_json)
+    else:
+        print("\n")
+        print(catalog_json)
+        print("\n")
 
 
 def initialize():
@@ -267,6 +296,7 @@ if __name__ == "__main__":
             delete_all_images()
         else:
             import_images(catalog_db)
+    create_inventory(catalog_db)
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
     LOG.debug(
