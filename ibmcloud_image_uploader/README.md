@@ -59,5 +59,5 @@ Run the container with the supplying environment variables.
 Note: by default the docker container will make the `TMOS_IMAGE_DIR` to the `/TMOSImages` directory inside the container. The example uses an volume to mount the host directory to the `/TMOSImages` directory in the container.
 
 ```
-docker run --rm -it -v $TMOS_IMAGE_DIR:/TMOSImages -e COS_API_KEY="$COS_API_KEY" -e COST_RESOURCE_CRN="$COS_RESOURCE_CRN" -e COS_IMAGE_LOCATION="$COS_IMAGE_LOCATION" ibmcloud_image_uploader:latest
+docker run --rm -it -v $TMOS_IMAGE_DIR:/TMOSImages -e COS_API_KEY="$COS_API_KEY" -e COS_RESOURCE_CRN="$COS_RESOURCE_CRN" -e COS_IMAGE_LOCATION="$COS_IMAGE_LOCATION" ibmcloud_image_uploader:latest
 ```
