@@ -42,7 +42,7 @@ Run the python script
 Build the docker container
 
 `
-docker build -t imbcloud_image_uploader:latest .
+docker build -t ibmcloud_image_uploader:latest .
 `
 
 Set environment variables in your shell (bash used in example)

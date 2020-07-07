@@ -30,6 +30,7 @@ import json
 import ibm_boto3
 import urlparse
 import requests
+import re
 
 from ibm_botocore.client import Config, ClientError
 
@@ -42,6 +43,8 @@ COS_RESOURCE_CRN = None
 COS_IMAGE_LOCATION = None
 COS_AUTH_ENDPOINT = None
 COS_ENDPOINT = None
+
+IMAGE_MATCH = '^[a-zA-Z]'
 
 UPDATE_IMAGES = None
 DELETE_ALL = None
@@ -171,18 +174,19 @@ def assure_cos_image(image_path, location):
     """assure patch image object"""
     bucket_name = get_bucket_name(image_path, location)
     object_name = get_object_name(image_path, location)
-    LOG.debug('checking IBM COS Object: %s/%s exists',
-              bucket_name, object_name)
-    if assure_bucket(bucket_name, location):
-        assure_object(image_path, bucket_name, object_name, location)
-    md5_path = "%s.md5" % image_path
-    if os.path.exists(md5_path):
-        md5_object_name = "%s.md5" % object_name
-        assure_object(md5_path, bucket_name, md5_object_name, location)
-    sig_path = "%s.384.sig" % image_path
-    if os.path.exists(sig_path):
-        sig_object_name = "%s.384.sig" % object_name
-        assure_object(sig_path, bucket_name, sig_object_name, location)
+    if re.search(IMAGE_MATCH, object_name):
+        LOG.debug('checking IBM COS Object: %s/%s exists',
+                bucket_name, object_name)
+        if assure_bucket(bucket_name, location):
+            assure_object(image_path, bucket_name, object_name, location)
+        md5_path = "%s.md5" % image_path
+        if os.path.exists(md5_path):
+            md5_object_name = "%s.md5" % object_name
+            assure_object(md5_path, bucket_name, md5_object_name, location)
+        sig_path = "%s.384.sig" % image_path
+        if os.path.exists(sig_path):
+            sig_object_name = "%s.384.sig" % object_name
+            assure_object(sig_path, bucket_name, sig_object_name, location)
 
 
 def delete_all():
@@ -194,11 +198,15 @@ def delete_all():
         try:
             for bucket in cos_res.buckets.all():
                 if location in bucket.name:
-                    LOG.debug('deleting bucket: %s', bucket.name)
+                    delete_bucket = False
                     for obj in cos_res.Bucket(bucket.name).objects.all():
-                        LOG.debug('deleting object: %s', obj.key)
-                        obj.delete()
-                    bucket.delete()
+                        if re.search(IMAGE_MATCH, obj.key):
+                            LOG.debug('deleting object: %s', obj.key)
+                            obj.delete()
+                            delete_bucket = True
+                    if delete_bucket:
+                        LOG.debug('deleting bucket: %s', bucket.name)
+                        bucket.delete()
         except ClientError as client_error:
             LOG.error('client error deleting all resources: %s', client_error)
         except Exception as ex:
@@ -255,11 +263,12 @@ def inventory():
 
 def initialize():
     """initialize configuration from environment variables"""
-    global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL
+    global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL, IMAGE_MATCH
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
     COS_RESOURCE_CRN = os.getenv('COS_RESOURCE_CRN', None)
     COS_IMAGE_LOCATION = os.getenv('COS_IMAGE_LOCATION', 'us-south')
+    IMAGE_MATCH = os.getenv('IMAGE_MATCH', '^[a-zA-Z]')
     IBM_COS_REGIONS = [ x.strip() for x in COS_IMAGE_LOCATION.split(',') ]
     COS_AUTH_ENDPOINT = os.getenv(
         'COS_AUTH_ENDPOINT', 'https://iam.cloud.ibm.com/identity/token')
