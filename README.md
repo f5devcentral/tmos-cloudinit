@@ -439,25 +439,6 @@ tmos_static_mgmt:
   phone_home_cli: "curl -i -X POST -H 'X-Auth-Token: gAAAAABc5UscwS1py5XfC3yPcyN8KcgD7hYtEZ2-xHw95o4YIh0j5IDjAu9qId3JgMOp9hnHwP42mYA7oPPP0yl-OQXvCaCS3OezKlO7MsS-ZCTJzuS3sSysIMHTA78fGsXbMgCQZCi5G-evLG9xUNrYp5d3blhMnpHR0dlHPz6VMacNkPhyrQI' -H 'Content-Type: application/json' -H 'Accept: application/json' http://192.168.0.121:8004/v1/d3779c949b57403bb7f703016e91a425/stacks/demo_waf/3dd6ce45-bb8c-400d-a48c-87ac9e46e60e/resources/wait_handle/signal"
 ```
 
-The application listening at the `phone_home_url` must accept a `POST` reqeust. The `POST` body will be a JSON object with the following format:
-
-```json
-{
-  "id": "a67d1edb-0a4a-4101-afd1-2fbf04713cfa",
-  "version": "14.1.0.1-0.0.7.0",
-  "product": "BIGIP",
-  "hostname": "waf1primary.local",
-  "management": "192.168.245.119/24",
-  "installed_extensions": ["f5-service-discovery", "f5-declarative-onboarding", "f5-appsvcs", "f5-telemetry"],
-  "as3_enabled": true,
-  "do_enabled": true,
-  "ts_enabled": true,
-  "status": "SUCCESS"
-}
-```
-
-The `phone_home_cli` will only be called if the module runs successfully, to the degree the provisioning can be synchronized. The `phone_home_cli` command execution allows for OpenStack Heat and AWS CFT type wait condition resources to be used with their auto-generated curl CLI notifications.
-
 ## The tmos_declared Cloudinit Module
 
 This module assumes the management interface provisioning completes via the default method (DHCPv4 or DHCPv6), but that all other onboard configurations should be handled through f5-declarative-onboarding and f5-appsvcs-extension declarations.
@@ -647,25 +628,6 @@ tmos_declared:
   phone_home_cli: "curl -i -X POST -H 'X-Auth-Token: gAAAAABc5UscwS1py5XfC3yPcyN8KcgD7hYtEZ2-xHw95o4YIh0j5IDjAu9qId3JgMOp9hnHwP42mYA7oPPP0yl-OQXvCaCS3OezKlO7MsS-ZCTJzuS3sSysIMHTA78fGsXbMgCQZCi5G-evLG9xUNrYp5d3blhMnpHR0dlHPz6VMacNkPhyrQI' -H 'Content-Type: application/json' -H 'Accept: application/json' http://192.168.0.121:8004/v1/d3779c949b57403bb7f703016e91a425/stacks/demo_waf/3dd6ce45-bb8c-400d-a48c-87ac9e46e60e/resources/wait_handle/signal"
 ```
 
-The application listening at the `phone_home_url` must accept a `POST` reqeust. The `POST` body will be a JSON object with the following format:
-
-```json
-{
-  "id": "a67d1edb-0a4a-4101-afd1-2fbf04713cfa",
-  "version": "14.1.0.1-0.0.7.0",
-  "product": "BIGIP",
-  "hostname": "waf1primary.local",
-  "management": "192.168.245.119/24",
-  "installed_extensions": ["f5-service-discovery", "f5-declarative-onboarding", "f5-appsvcs", "f5-telemetry"],
-  "as3_enabled": true,
-  "do_enabled": true,
-  "ts_enabled": true,
-  "status": "SUCCESS"
-}
-```
-
-The `phone_home_cli` will only be called if the module runs successfully, to the degree the provisioning can be synchronized. The `phone_home_cli` command execution allows for OpenStack Heat and AWS CFT type wait condition resources to be used with their auto-generated curl CLI notifications.
-
 ## The tmos_configdrive_openstack Cloudinit Module
 
 This cloudinit module requries the use of a ConfigDrive data source and OpenStack file formatted meta_data.json and network_data.json metadata files. This module extends TMOS functionality to include static provisioning of all interfaces (management and TMM) via either network metadata or the use of DHCPv4. This interface includes the ability to augment the configuration data retrieved via metadata and DHCP with additional f5-declarative-onboarding and f5-appsvc-3 declarations. Any supplied f5-declarative-onboarding declarations will be overwritten or will be merged with configuration declarations defined via metadata resource resolution. This module supports both 1NIC and nNIC deployments.
@@ -750,33 +712,6 @@ tmos_configdrive_openstack:
   phone_home_cli: "curl -i -X POST -H 'X-Auth-Token: gAAAAABc5UscwS1py5XfC3yPcyN8KcgD7hYtEZ2-xHw95o4YIh0j5IDjAu9qId3JgMOp9hnHwP42mYA7oPPP0yl-OQXvCaCS3OezKlO7MsS-ZCTJzuS3sSysIMHTA78fGsXbMgCQZCi5G-evLG9xUNrYp5d3blhMnpHR0dlHPz6VMacNkPhyrQI' -H 'Content-Type: application/json' -H 'Accept: application/json' http://192.168.0.121:8004/v1/d3779c949b57403bb7f703016e91a425/stacks/demo_waf/3dd6ce45-bb8c-400d-a48c-87ac9e46e60e/resources/wait_handle/signal"
 ```
 
-The application listening at the `phone_home_url` must accept a `POST` reqeust. The `POST` body will be a JSON object with the following format:
-
-```json
-{
-  "id": "a67d1edb-0a4a-4101-afd1-2fbf04713cfa",
-  "version": "14.1.0.1-0.0.7.0",
-  "product": "BIGIP",
-  "hostname": "waf1primary.local",
-  "management": "192.168.245.119/24",
-  "installed_extensions": ["f5-service-discovery", "f5-declarative-onboarding", "f5-appsvcs", "f5-telemetry"],
-  "as3_enabled": true,
-  "do_enabled": true,
-  "ts_enabled": true,
-  "status": "SUCCESS"
-}
-```
-
-The `phone_home_cli` will only be called if the module runs successfully, to the degree the provisioning can be synchronized. The `phone_home_cli` command execution allows for OpenStack Heat and AWS CFT type wait condition resources to be used with their auto-generated curl CLI notifications.
-
-In addition to the declared elements, this module also supports `cloud-config` declarations for `ssh_authorized_keys`. Any declared keys will be authorized for the TMOS root account.
-
-```yaml
-#cloud-config
-ssh_authorized_keys:
-  - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAGEA3FSyQwBI6Z+nCSjUUk8EEAnnkhXlukKoUPND/RRClWz2s5TCzIkd3Ou5+Cyz71X0XmazM3l5WgeErvtIwQMyT1KjNoMhoJMrJnWqQPOt5Q8zWd9qG7PBl9+eiH5qV7NZ mykey@host
-```
-
 ## The tmos_dhcpv4_tmm Cloudinit Module
 
 This cloudinit module resolves configuration data for all interfaces (management and TMM) through DHCPv4. All interfaces should be connected to networks with DHCPv4 services. This module supports both 1NIC and nNIC deployments.
@@ -849,34 +784,7 @@ tmos_dhcpv4_tmm:
   phone_home_cli: "curl -i -X POST -H 'X-Auth-Token: gAAAAABc5UscwS1py5XfC3yPcyN8KcgD7hYtEZ2-xHw95o4YIh0j5IDjAu9qId3JgMOp9hnHwP42mYA7oPPP0yl-OQXvCaCS3OezKlO7MsS-ZCTJzuS3sSysIMHTA78fGsXbMgCQZCi5G-evLG9xUNrYp5d3blhMnpHR0dlHPz6VMacNkPhyrQI' -H 'Content-Type: application/json' -H 'Accept: application/json' http://192.168.0.121:8004/v1/d3779c949b57403bb7f703016e91a425/stacks/demo_waf/3dd6ce45-bb8c-400d-a48c-87ac9e46e60e/resources/wait_handle/signal"
 ```
 
-The application listening at the `phone_home_url` must accept a `POST` reqeust. The `POST` body will be a JSON object with the following format:
-
-```json
-{
-  "id": "a67d1edb-0a4a-4101-afd1-2fbf04713cfa",
-  "version": "14.1.0.1-0.0.7.0",
-  "product": "BIGIP",
-  "hostname": "waf1primary.local",
-  "management": "192.168.245.119/24",
-  "installed_extensions": ["f5-service-discovery", "f5-declarative-onboarding", "f5-appsvcs", "f5-telemetry"],
-  "as3_enabled": true,
-  "do_enabled": true,
-  "ts_enabled": true,
-  "status": "SUCCESS"
-}
-```
-
-The `phone_home_cli` will only be called if the module runs successfully, to the degree the provisioning can be synchronized. The `phone_home_cli` command execution allows for OpenStack Heat and AWS CFT type wait condition resources to be used with their auto-generated curl CLI notifications.
-
-In addition to the declared elements, this module also supports `cloud-config` declarations for `ssh_authorized_keys`. Any declared keys will be authorized for the TMOS root account.
-
-```yaml
-#cloud-config
-ssh_authorized_keys:
-  - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAGEA3FSyQwBI6Z+nCSjUUk8EEAnnkhXlukKoUPND/RRClWz2s5TCzIkd3Ou5+Cyz71X0XmazM3l5WgeErvtIwQMyT1KjNoMhoJMrJnWqQPOt5Q8zWd9qG7PBl9+eiH5qV7NZ mykey@host
-```
-
-## TMOS Cloudinit Modules Support for SSH Keys and Passwords
+## TMOS Cloudinit Modules Support for SSH Keys, Passwords, and Phone Home
 
 In addition to the declared elements, these modules also support `cloud-config` declarations for `ssh_authorized_keys` using the standard cloudinit `cloud-config` declaration syntax. Any declared keys will be authorized for the TMOS root account.
 
@@ -900,3 +808,26 @@ chpasswd:
     admin:f5str0ngPa$$word
   expire: False
 ```
+
+### Support for Phone Home
+
+Each of the cloudinit modules `cloud-config` declarations support `phone_home_url` and `phone_home_cli` references.
+
+The application listening at the `phone_home_url` must accept a `POST` reqeust. The `POST` body will be a JSON object with the following format:
+
+```json
+{
+  "id": "a67d1edb-0a4a-4101-afd1-2fbf04713cfa",
+  "version": "14.1.0.1-0.0.7.0",
+  "product": "BIGIP",
+  "hostname": "waf1primary.local",
+  "management": "192.168.245.119/24",
+  "installed_extensions": ["f5-service-discovery", "f5-declarative-onboarding", "f5-appsvcs", "f5-telemetry"],
+  "as3_enabled": true,
+  "do_enabled": true,
+  "ts_enabled": true,
+  "status": "SUCCESS"
+}
+```
+
+The `phone_home_cli` will only be called if the module runs successfully, to the degree the provisioning can be synchronized. The `phone_home_cli` command execution allows for OpenStack Heat and AWS CFT type wait condition resources to be used with their auto-generated curl CLI notifications.
