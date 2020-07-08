@@ -13,6 +13,8 @@ The script functionality is driven by environment variables. This makes it simpl
 | COS_RESOURCE_CRN | None | Yes | The COS resource CRN (id) |
 | COS_IMAGE_LOCATION | us-south | Yes | A single or comma-delimited list of regions to upload images |
 | COS_AUTH_ENDPOINT | <https://iam.cloud.ibm.com/identity/token> | No | Set the IBM Cloud auth resource (use for testing) |
+| IMAGE_CATALOG_PREFIX | f5-image-catalog | Yes | The unique IBM COS bucket name prefix for you iamge catalog |
+| IMAGE_MATCH | ^[a-zA-Z] | No | The regex match for the TMOS images to include in the catalog |
 | UPDATE_IMAGES | false | No | Delete and update COS object if they exist |
 | DELETE_ALL | false | No | Force delete all found COS objects and buckets |
 
@@ -69,11 +71,11 @@ After completion this process will create a `f5-image-catalog.json` image catalo
 The URL takes the format:
 
 ```bash
-https://f5-image-catalog-[region].s3.[region].cloud-object-storage.appdomain.cloud/f5-image-catalog.json
+https://[IAMGE_CATALOG_PREFIX]-[region].s3.[region].cloud-object-storage.appdomain.cloud/f5-image-catalog.json
 ```
 
-As an example, for the region `us-south` the URL would look like:
+As an example, for the region `us-south` with an `IMAGE_CATALOG_PREFIX` of `f5test` the URL would look like:
 
 ```bash
-https://f5-image-catalog-us-south.s3.us-south.cloud-object-storage.appdomain.cloud/f5-image-catalog.json
+https://f5test-us-south.s3.us-south.cloud-object-storage.appdomain.cloud/f5-image-catalog.json
 ```

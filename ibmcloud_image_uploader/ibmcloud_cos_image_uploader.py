@@ -44,6 +44,8 @@ COS_IMAGE_LOCATION = None
 COS_AUTH_ENDPOINT = None
 COS_ENDPOINT = None
 
+IMAGE_CATALOG_PREFIX = 'f5-image-catalog'
+
 IMAGE_MATCH = '^[a-zA-Z]'
 
 UPDATE_IMAGES = None
@@ -254,7 +256,7 @@ def inventory():
     if not DELETE_ALL:
         UPDATE_IMAGES = True
         for location in IBM_COS_REGIONS:
-            bucket_name = "f5-image-catalog-%s" % location
+            bucket_name = "%s-%s" % (IMAGE_CATALOG_PREFIX, location)
             public_url = "https://%s.s3.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (bucket_name, location)
             LOG.debug('writing image catalog to: %s', public_url)
             assure_bucket(bucket_name, location)
@@ -263,11 +265,12 @@ def inventory():
 
 def initialize():
     """initialize configuration from environment variables"""
-    global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL, IMAGE_MATCH
+    global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL, IMAGE_CATALOG_PREFIX, IMAGE_MATCH
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
     COS_RESOURCE_CRN = os.getenv('COS_RESOURCE_CRN', None)
     COS_IMAGE_LOCATION = os.getenv('COS_IMAGE_LOCATION', 'us-south')
+    IMAGE_CATALOG_PREFIX = os.getenv('IMAGE_CATALOG_PREFIX', 'f5-image-cataloeee')
     IMAGE_MATCH = os.getenv('IMAGE_MATCH', '^[a-zA-Z]')
     IBM_COS_REGIONS = [ x.strip() for x in COS_IMAGE_LOCATION.split(',') ]
     COS_AUTH_ENDPOINT = os.getenv(
