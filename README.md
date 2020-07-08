@@ -271,6 +271,7 @@ To create customer IBM Public Cloud VPC Gen2 TMOS images there is a two step wor
 Both of these steps have their own docker container tools with their own documentation.
 
 [Upload Patched Image to IBM COS](./ibmcloud_image_uploader)
+
 [Create a VPC Gen2 custom image](./ibmcloud_vpc_image_importer)
 
 ## Creating OpenStack Formatted Cloudinit ConfigDrive ISOs
