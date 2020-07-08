@@ -4,7 +4,7 @@
 
 - [Patching TMOS Virtual Edition Images to Install Cloudinit Modules](#patching-tmos-virtual-edition-images-to-install-cloudinit-modules)
 
-  * [Patched Image Uploaders](#patched-image-uploaders)
+  - [Patched Image Uploaders](#patched-image-uploaders)
 
 - [Creating OpenStack Formatted Cloudinit ConfigDrive ISOs (Optional)](#creating-openstack-formatted-cloudinit-configdrive-isos)
 
@@ -18,8 +18,7 @@
 
 [TMOS Cloudinit Modules Support for SSH Keys and Passwords](#tmos-cloudinit-modules-support-for-ssh-keys-and-passwords)
 
-
-## From TMOS Virtual Edition to a TMOS Cloud Virtual Machine ##
+## From TMOS Virtual Edition to a TMOS Cloud Virtual Machine
 
 F5 TMOS is a secured operating system designed for deployment as a network appliance. While TMOS utilizes a CentOS-based kernel and linux-based control processes to bootstrap and configure distributed networking micro-kernels, it is highly customized compared to generalized linux distributions.
 
@@ -53,7 +52,7 @@ The `tmos_declared` cloudinit module simply declares `f5-declarative-onboarding`
 
 The cloudinit modules included in this repository need to be file-injected into standard TMOS v13+ images before they can be used.
 
-## Patching TMOS Virtual Edition Images to Install Cloudinit Modules##
+## Patching TMOS Virtual Edition Images to Install Cloudinit Modules
 
 In order to use the cloudinit modules from this repository, standard TMOS Virtual Edition images need to be patched to include the modules and optionally include the installation packages for any F5 Automation and Orchestration iControl LX extensions.
 
@@ -61,7 +60,7 @@ This repository includes a Dockerfile and patch scripts that enable you to build
 
 From the F5 Downloads site, download all image(s) you wish to patch with these cloudinit modules to a directory available as a volume mount to your docker instance (see mounts below).
 
-```
+```bash
 ls /data/BIGIP-14.1
 BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-ide.ova
 BIGIP-14.1.0.5-0.0.5.ALL_1SLOT.qcow2.zip
@@ -75,25 +74,26 @@ BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.vhd.zip
 
 You can also prepare a directory that contains any iControl LX extension package `rpm` files that you wish to inject into your image. These packages are installed at boot time when any of the `tmos-cloudinit` modules are enabled.
 
-```
+```bash
 $ ls /data/iControlLXLatestBuild
 f5-appsvcs-3.11.0-3.noarch.rpm
 f5-declarative-onboarding-1.4.0-1.noarch.rpm
 ```
 
-#### Note: do not remove the disk images from their archive containers (zip or ova). The utilities in the container do that as part of the image patching process. ####
+### Note: do not remove the disk images from their archive containers (zip or ova). The utilities in the container do that as part of the image patching process
 
 Build the docker image from the `tmos_image_patcher` Dockerfile.
 
-```
+```bash
 $ docker build -t tmos_image_patcher:latest tmos_image_patcher
+....
 ```
 
 This will download a vanilla Ubuntu 18.04 container, install all the necessary open source utilities required to patch TMOS images, and designate the python script which performs the image patching as the execution entry point for the container image.
 
 After the build completes, a docker image will be available locally.
 
-```
+```bash
 $ docker images | grep tmos_image_patcher
 tmos_image_patcher    latest    3416ed456cfe    22 seconds ago    1.38GB
 ```
@@ -106,7 +106,7 @@ The `tmos_image_builder` container uses open source tools to:
 - bind the TMOS disk image partitions
 - mount the logical volumes for `/config`, `/usr`, `/var`, and `/shared` from the bound TMOS file systems
 - copies files specified in the `image_path_files` file directory structure into the TMOS image
-    - the `system_python_path` is a special designation which will resolve the correct TMOS version's python system path directory and inject files to the resolved directory
+  - the `system_python_path` is a special designation which will resolve the correct TMOS version's python system path directory and inject files to the resolved directory
 - copies all iControl LX extension `rpm` files mounted in the `/iControlLXPackages` volume mount (see mounts below) direcotry to the `/shared/rpms/icontrollx_installs` TMOS directory, ready for installation when any of the `tmos_cloudinit` modules are enabled
 - creates a distribution archive ready for upload to your virtualization image storage services
 
@@ -114,7 +114,7 @@ When you run the `tmos_image_patcher` container from this repository's root dire
 
 The open source tools used in the container are all user space utilities, thus the container requires no special privileges other then write access to the directory where your downloaded TMOS disk archives are mounted (`/TMOSImages` see below).
 
-#### Expected Docker Volume Mounts for the `tmos_image_builder` Container ####
+#### Expected Docker Volume Mounts for the `tmos_image_builder` Container
 
 The docker container uses the mount points listed below. Your TMOS image archives folder should be mounted as a volume to the container's `/TMOSImages` directory. Any iControl LX extensions `rpm` packages you want injected into your image should be mounted to the container's `/iControlLXPackages` directory.
 
@@ -123,7 +123,7 @@ The docker container uses the mount points listed below. Your TMOS image archive
 | /TMOSImages   | Yes | Path to the directory with the TMOS Virtual Edition archives to patch |
 | /iControlLXPackages   | No | Path to the directory with optional iControl LX RPM packages to inject into the images |
 
-#### Example Mounts ####
+#### Example Mounts
 
 `
 -v /data/BIGIP-14.1:/TMOSImages -v /data/iControlLXLatestBuild:/iControlLXPackages
@@ -131,7 +131,7 @@ The docker container uses the mount points listed below. Your TMOS image archive
 
 You can run the image patch script with the Docker `run` command.
 
-```
+```bash
 $ docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -v /data/iControlLXLatestBuild:/iControlLXPackages f5devcentral/tmos-image-patcher:latest
 
 2019-05-29 22:43:48,133 - tmos_image_patcher - DEBUG - process start time: Wednesday, May 29, 2019 10:43:48
@@ -150,7 +150,7 @@ Each TMOS image archive will be expanded into a folder containing the patched im
 
 MD5 checksum files will be produced for each image.
 
-<pre>
+```bash
 > $ tree /data/BIGIP-14.1
 /data/BIGIP-14.1
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-ide.ova
@@ -185,12 +185,11 @@ MD5 checksum files will be produced for each image.
 ├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.vhd
 │   └── <b>BIGIP-14.1.0.5-0.0.5.vhd</b>
 │   └── BIGIP-14.1.0.5-0.0.5.vhd.md5
-</pre>
-
+```
 
 A signed SHA384 digist file can optionally be generated for each patched image if you include a `/keys` volume mount to the directory containing your private signing key and an environment variable, `PRIVATE_PEM_KEY_FILE`, specifying the private key file.
 
-```
+```bash
 docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -v /data/iControlLXLatestBuild:/iControlLXPackages -v /data/safe/keys:/keys -e PRIVATE_PEM_KEY_FILE=j.gruber_f5.rsa.private f5devcentral/tmos-image-patcher:latest
 ```
 
@@ -198,7 +197,7 @@ Once patched, your TMOS images can be uploaded for use in your infrastructure en
 
 As an example, for an an OpenStack private cloud, the patched images can be uploaded with the `openstack` cli tool.
 
-```
+```bash
 $ openstack image create --disk-format qcow2 --container-format bare --file /data/BIGIP-14.1/BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.qcow2/BIGIP-14.1.0.5-0.0.5.qcow2 OpenStack_BIGIP-14.1.0.5-0.0.5.LTM_1SLOT
 +------------------+------------------------------------------------------+
 | Field            | Value                                                |
@@ -227,7 +226,7 @@ $ openstack image create --disk-format qcow2 --container-format bare --file /dat
 
 Once your patched images are deployed in your virtualized environment, you can use cloudinit userdata to handle initial device and service provisioning.
 
-## Patched Image Uploaders ##
+## Patched Image Uploaders
 
 Various uplaoders will be added to this project as infrastructure environments demand them.
 
@@ -235,23 +234,23 @@ All uploaders will take their required settings, such as login credentials and U
 
 An OpenStack Uploader in included.
 
-### Building the OpenStack Uploader ###
+### Building the OpenStack Uploader
 
-```
+```bash
 docker build --rm -t openstack_image_uploader:latest openstack_image_uploader
 ```
 
-### Uploading Patched Images to OpenStack ###
+### Uploading Patched Images to OpenStack
 
 Source your OpenStack RC file, putting the require environment variables into your shell environment. These environment variables are then presented as to the `openstack_image_uploader` container with Docker environment variables.
 
-```
+```bash
 docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -e OS_USERNAME=$OS_USERNAME -e OS_PASSWORD=$OS_PASSWORD -e OS_AUTH_URL=$OS_AUTH_URL openstack_image_uploader:latest
 ```
 
 The OpenStack uploader will find md5, and optionally image signatures, and add them with the appropriate image shade metadata.
 
-## Creating OpenStack Formatted Cloudinit ConfigDrive ISOs ##
+## Creating OpenStack Formatted Cloudinit ConfigDrive ISOs
 
 While IaaS clouds already support mechanisms to supply cloudinit userdata to declare guest instances configurations, some virtualization environments do not. For those environments, an ISO CDROM image can be attached to TMOS Virtual Edition guests prior to initial booting. If the ISO image is formatted as a cloudinit ConfigDrive data source, cloudinit modules can still be used, even when the virtualization environment does not directly support it.
 
@@ -259,7 +258,7 @@ As an example, VMWare Workstation can be use to deploy a TMOS Virtual Edition in
 
 TMOS supports cloudinit OpenStack ConfigDrive. The ISO CDROM attached needs to have a volume label of `config-2` and must follow a specific layout of files, containing a specific JSON file with a specific attribute defined.
 
-<pre>
+```bash
 /iso (volume label config-2)
 └── openstack
     └── latest
@@ -267,7 +266,7 @@ TMOS supports cloudinit OpenStack ConfigDrive. The ISO CDROM attached needs to h
         ├───────────────────> {"uuid": "a7481585-ee3f-432b-9f7e-ddc7e5b02c27"}
         ├── user_data
         └───────────────────> THIS CAN CONTAIN ANY USERDATA YOU WANT
-</pre>
+```
 
 If you generate an ISO9660 filesystem with Rock Ridge extensions to allow TMOS cloudinit to mount your device and act on your userdata, you can treat any virtualization environment like a properly declared IaaS. You can use any ISO9660 filesystem generation tool you want, as long as it conforms to the standard for the OpenStack ConfigDrive cloudinit data source.
 
@@ -275,15 +274,16 @@ This repository includes a Dockerfile and an ISO9660 generation script, called `
 
 You can build the docker image from the `tmos_configdrive_builder` Dockerfile.
 
-```
+```bash
 $ docker build -t tmos_configdrive_builder:latest tmos_configdrive_builder
+...
 ```
 
 This will use an generic Ubuntu 18.04 image, install all the necessary tools to create ISO image, and designate the python script which creates the ISO image as the execution entry point for the container image.
 
 After the build process completes, a docker image will be available locally.
 
-```
+```bash
 $ docker images|grep tmos_configdrive_builder
 tmos_configdrive_builder     latest     23c1d99efdd5     17 seconds ago     274MB
 ```
@@ -296,7 +296,7 @@ The CDROM is built to be used in two modes:
 
 2. Fully explicit mode - this mode builds a CDROM ISO from a fully defined set of `user_data`, and optionally `meta_data.json`, `vendor_data.json`, and `network_data.json` files. This allows for the construction of any settings in your `user_data` you want. This can be used to work with any of the modules defined in this repository.
 
-#### tmos_declared Mode Environment Variables and Files ####
+### tmos_declared Mode Environment Variables and Files
 
 The following environment variables determine how the CDROM ISO is built:
 
@@ -313,7 +313,7 @@ The files specified above must be available to the Docker instance, and need to 
 
 Example: If you have a local subfolder `declarations` directory containing both `do_declaration.json` and `as3_declaration.json`, you could create your basic CDROM ISO in the current directory using the following bash shell command.
 
-```
+```bash
 docker run --rm -it -v $(pwd)/declarations:/declarations -v $(pwd):/configdrives tmos_configdrive_builder
 2019-05-30 20:00:59,009 - tmos_image_patcher - INFO - building ISO9660 for tmos_declared module with declarations
 2019-05-30 20:00:59,029 - tmos_image_patcher - INFO - adding f5-declarative-onboarding declaration to user_data
@@ -326,7 +326,7 @@ configdrive.iso
 
 To define `phone_home_url` or `phone_home_cli` attributes in your `tmos_declared` declaration, specify them as Docker environment variables.
 
-#### Expected Docker Volume Mounts ####
+#### Expected Docker Volume Mounts
 
 The configdrive ISO builder script expects two mount points. One is a file path to your declarations, either default or explicitly defined by Docker environment variables. The other is the directory to write your ISO file.
 
@@ -337,12 +337,11 @@ The configdrive ISO builder script expects two mount points. One is a file path 
 
 Example: to create a `configdrive.iso` file in the current directory which would create metadata for the `tmos_declared` cloudint module, using declaration files from the `./declarations` directory, while explicitly defining a `phone_home_url`, the Docker `run` syntax would look like the following.
 
-
-```
+```bash
 docker run --rm -it -e PHONE_HOME_URL=https://webhook.site/5f8cd8a7-b051-4648-9296-8f6afad34c93 -v $(pwd)/declarations:/declarations -v $(pwd):/configdrives tmos_configdrive_builder
 ```
 
-#### Explicit Mode Environment Variables and Files ####
+#### Explicit Mode Environment Variables and Files
 
 If the script has a `USERDATA_FILE` or finds a `/declarations/user_data` file, it will automatically prefer explicit mode.
 
@@ -356,7 +355,7 @@ The other defined optional files `METADATA_FILE`, `VENDORDATA_FILE`, and `NETWOR
 | NETWORKDATA_FILE   | No | /declarations/network_data.json | Your fully defined instance network_data to include in JSON format. |
 | CONFIGDRIVE_FILE | Yes | /configdrives/configdrive.iso | The output ISO file. |
 
-```
+```bash
 docker run --rm -it -e USERDATA_FILE=/declarations/instance2224 -v $(pwd)/declarations:/declarations -v $(pwd):/configdrives tmos_configdrive_builder
 2019-05-30 20:04:12,158 - tmos_image_patcher - INFO - building ISO9660 configdrive user_data from /declarations/instance2224
 2019-05-30 20:04:12,158 - tmos_image_patcher - INFO - generating OpenStack mandatory ID
@@ -365,14 +364,13 @@ ls ./configdrive.iso
 configdrive.iso
 ```
 
-# Using F5 TMOS Cloudinit Modules #
+## Using F5 TMOS Cloudinit Modules
 
 F5 TMOS cloudinit modules each include an `enabled` attribute which must be set to `true` for any onboard configuration to take place. For the most part, these modules are mutually exclusive, meaning you should only use the one that fits your deployment environment.
 
 All modules log to the common `/var/log/f5-cloudinit.log` log file on the TMOS Virtual Edition instance.
 
-
-## Which Cloudinit Module Should You Use? ##
+### Which Cloudinit Module To Use
 
 Each module handles very specific use cases. Each use case aquires the per-instance configuration data from different resources.
 
@@ -385,7 +383,7 @@ Each module handles very specific use cases. Each use case aquires the per-insta
 
 You should use the module which matches your sources of per-instance configuration data.
 
-## The tmos_static_mgmt Cloudinit Module ##
+## The tmos_static_mgmt Cloudinit Module
 
 This cloudinit module extends TMOS Virtual Edition to allow for static address assignment provided through cloudinit userdata.
 
@@ -410,12 +408,11 @@ This modules create initialization scripts containing `tmsh` commands to fulfill
 | phone_home_url_verify_tls | true | If the phone_home_url uses TLS, verify the host certificate. |
 | phone_home_cli | cli command | CLI command to run when this modules completes successfully. |
 
-#### Note: The `tmos_static_mgmt` module can be used in conjunction with the `tmos_declared` module to add managment interface provisioning before iControl LX extension declarations are made. ####
+### Note: The `tmos_static_mgmt` module can be used in conjunction with the `tmos_declared` module to add managment interface provisioning before iControl LX extension declarations are made
 
+#### tmos_static_mgmt userdata usage
 
-### userdata usage ###
-
-```
+```yaml
 #cloud-config
 tmos_static_mgmt:
   enabled: true
@@ -442,11 +439,30 @@ tmos_static_mgmt:
   phone_home_cli: "curl -i -X POST -H 'X-Auth-Token: gAAAAABc5UscwS1py5XfC3yPcyN8KcgD7hYtEZ2-xHw95o4YIh0j5IDjAu9qId3JgMOp9hnHwP42mYA7oPPP0yl-OQXvCaCS3OezKlO7MsS-ZCTJzuS3sSysIMHTA78fGsXbMgCQZCi5G-evLG9xUNrYp5d3blhMnpHR0dlHPz6VMacNkPhyrQI' -H 'Content-Type: application/json' -H 'Accept: application/json' http://192.168.0.121:8004/v1/d3779c949b57403bb7f703016e91a425/stacks/demo_waf/3dd6ce45-bb8c-400d-a48c-87ac9e46e60e/resources/wait_handle/signal"
 ```
 
-## The tmos_declared Cloudinit Module ##
+The application listening at the `phone_home_url` must accept a `POST` reqeust. The `POST` body will be a JSON object with the following format:
+
+```json
+{
+  "id": "a67d1edb-0a4a-4101-afd1-2fbf04713cfa",
+  "version": "14.1.0.1-0.0.7.0",
+  "product": "BIGIP",
+  "hostname": "waf1primary.local",
+  "management": "192.168.245.119/24",
+  "installed_extensions": ["f5-service-discovery", "f5-declarative-onboarding", "f5-appsvcs", "f5-telemetry"],
+  "as3_enabled": true,
+  "do_enabled": true,
+  "ts_enabled": true,
+  "status": "SUCCESS"
+}
+```
+
+The `phone_home_cli` will only be called if the module runs successfully, to the degree the provisioning can be synchronized. The `phone_home_cli` command execution allows for OpenStack Heat and AWS CFT type wait condition resources to be used with their auto-generated curl CLI notifications.
+
+## The tmos_declared Cloudinit Module
 
 This module assumes the management interface provisioning completes via the default method (DHCPv4 or DHCPv6), but that all other onboard configurations should be handled through f5-declarative-onboarding and f5-appsvcs-extension declarations.
 
-#### Warning: DHCPv6 does not include interface-mtu support, meaning access to your management interface might not be reliable. IPv6 requires the mgmt interface be set to a minimum of 1280 bytes, but SDN tunnel types might limit it to below the standard 1500 bytes. Use the `tmos_static_mgmt` in your cloudinit YAML if you need to provision your management interface to make it accessible. ####
+### Warning: DHCPv6 does not include interface-mtu support, meaning access to your management interface might not be reliable. IPv6 requires the mgmt interface be set to a minimum of 1280 bytes, but SDN tunnel types might limit it to below the standard 1500 bytes. Use the `tmos_static_mgmt` in your cloudinit YAML if you need to provision your management interface to make it accessible
 
 The declarations must be coherent with the deployment environment. As an example, the f5-declarative-onboarding declaration would need to include the `internal` VLAN and the `self_1nic` SelfIP classes to properly declare a 1NIC deployment.
 
@@ -466,11 +482,11 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 | phone_home_url_verify_tls | true | If the phone_home_url uses TLS, verify the host certificate. |
 | phone_home_cli | cli command | CLI command to run when this modules completes successfully. |
 
-#### Note: It is often simplier to use the `set-password` cloudinit module (referenced below) to change the default `admin` and `root` passwords rather than the f5-declarative-onboarding declaration to change user passwords. Both ways work as designed. ####
+### Note: It is often simplier to use the `set-password` cloudinit module (referenced below) to change the default `admin` and `root` passwords rather than the f5-declarative-onboarding declaration to change user passwords. Both ways work as designed
 
-### userdata usage ###
+#### tmos_declared userdata usage
 
-```
+```yaml
 #cloud-config
 tmos_declared:
   enabled: true
@@ -633,8 +649,7 @@ tmos_declared:
 
 The application listening at the `phone_home_url` must accept a `POST` reqeust. The `POST` body will be a JSON object with the following format:
 
-
-```
+```json
 {
   "id": "a67d1edb-0a4a-4101-afd1-2fbf04713cfa",
   "version": "14.1.0.1-0.0.7.0",
@@ -651,7 +666,7 @@ The application listening at the `phone_home_url` must accept a `POST` reqeust. 
 
 The `phone_home_cli` will only be called if the module runs successfully, to the degree the provisioning can be synchronized. The `phone_home_cli` command execution allows for OpenStack Heat and AWS CFT type wait condition resources to be used with their auto-generated curl CLI notifications.
 
-## The tmos_configdrive_openstack Cloudinit Module ##
+## The tmos_configdrive_openstack Cloudinit Module
 
 This cloudinit module requries the use of a ConfigDrive data source and OpenStack file formatted meta_data.json and network_data.json metadata files. This module extends TMOS functionality to include static provisioning of all interfaces (management and TMM) via either network metadata or the use of DHCPv4. This interface includes the ability to augment the configuration data retrieved via metadata and DHCP with additional f5-declarative-onboarding and f5-appsvc-3 declarations. Any supplied f5-declarative-onboarding declarations will be overwritten or will be merged with configuration declarations defined via metadata resource resolution. This module supports both 1NIC and nNIC deployments.
 
@@ -664,7 +679,6 @@ This cloudinit module optionally composes f5-declarative-onboarding declarations
 Any attributes in the `do_declaration` attriute of the cloudinit YAML will be merged into the f5-declarative-onboarding declaration composed from OpenStack metadata. Any declaration attribute defined in the cloudinit YAML will overwrite the same attribute, if present, in the composed declaration.
 
 This cloudinit module optionally composes f5-appsvcs-extension declarations in the `/var/lib/cloud/f5-appsvcs-extension` directory. This declaration is in JSON format.
-
 
 | Module Attribute | Default | Description|
 | --------------------- | -----------| ---------------|
@@ -688,15 +702,15 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 | phone_home_url_verify_tls | true | If the phone_home_url uses TLS, verify the host certificate. |
 | phone_home_cli | cli command | CLI command to run when this modules completes successfully. |
 
-#### Warning: f5-declarative-onboarding and f5-appsvcs-extension do not support the use of route domains at this time. You should disable route domain support when attempting to use f5-declarative-onboarding and f5-appsvcs-extension declarations
+### Warning: f5-declarative-onboarding and f5-appsvcs-extension do not support the use of route domains at this time. You should disable route domain support when attempting to use f5-declarative-onboarding and f5-appsvcs-extension declarations when using tmos_configdrive_openstack
 
 SSH keys found in the OpenStack meta_data.json file will also be injected as authorized_keys for the root account.
 
 If f5-declarative-onboarding is disabled, done by setting `do_enabled` to false, the device onboarding configuration will continue as described in the OpenStack meta_data.json and network_data.json files. f5-appsvcs-extension declarations can be applied with or without f5-declarative-onboarding being enabled.
 
-### userdata usage ###
+#### tmos_configdrive_openstack userdata usage
 
-```
+```yaml
 #cloud-config
 tmos_configdrive_openstack:
   enabled: true
@@ -736,15 +750,34 @@ tmos_configdrive_openstack:
   phone_home_cli: "curl -i -X POST -H 'X-Auth-Token: gAAAAABc5UscwS1py5XfC3yPcyN8KcgD7hYtEZ2-xHw95o4YIh0j5IDjAu9qId3JgMOp9hnHwP42mYA7oPPP0yl-OQXvCaCS3OezKlO7MsS-ZCTJzuS3sSysIMHTA78fGsXbMgCQZCi5G-evLG9xUNrYp5d3blhMnpHR0dlHPz6VMacNkPhyrQI' -H 'Content-Type: application/json' -H 'Accept: application/json' http://192.168.0.121:8004/v1/d3779c949b57403bb7f703016e91a425/stacks/demo_waf/3dd6ce45-bb8c-400d-a48c-87ac9e46e60e/resources/wait_handle/signal"
 ```
 
+The application listening at the `phone_home_url` must accept a `POST` reqeust. The `POST` body will be a JSON object with the following format:
+
+```json
+{
+  "id": "a67d1edb-0a4a-4101-afd1-2fbf04713cfa",
+  "version": "14.1.0.1-0.0.7.0",
+  "product": "BIGIP",
+  "hostname": "waf1primary.local",
+  "management": "192.168.245.119/24",
+  "installed_extensions": ["f5-service-discovery", "f5-declarative-onboarding", "f5-appsvcs", "f5-telemetry"],
+  "as3_enabled": true,
+  "do_enabled": true,
+  "ts_enabled": true,
+  "status": "SUCCESS"
+}
+```
+
+The `phone_home_cli` will only be called if the module runs successfully, to the degree the provisioning can be synchronized. The `phone_home_cli` command execution allows for OpenStack Heat and AWS CFT type wait condition resources to be used with their auto-generated curl CLI notifications.
+
 In addition to the declared elements, this module also supports `cloud-config` declarations for `ssh_authorized_keys`. Any declared keys will be authorized for the TMOS root account.
 
-```
+```yaml
 #cloud-config
 ssh_authorized_keys:
   - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAGEA3FSyQwBI6Z+nCSjUUk8EEAnnkhXlukKoUPND/RRClWz2s5TCzIkd3Ou5+Cyz71X0XmazM3l5WgeErvtIwQMyT1KjNoMhoJMrJnWqQPOt5Q8zWd9qG7PBl9+eiH5qV7NZ mykey@host
 ```
 
-## The tmos_dhcpv4_tmm Cloudinit Module ##
+## The tmos_dhcpv4_tmm Cloudinit Module
 
 This cloudinit module resolves configuration data for all interfaces (management and TMM) through DHCPv4. All interfaces should be connected to networks with DHCPv4 services. This module supports both 1NIC and nNIC deployments.
 
@@ -780,13 +813,13 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 | phone_home_url_verify_tls | true | If the phone_home_url uses TLS, verify the host certificate. |
 | phone_home_cli | cli command | CLI command to run when this modules completes successfully. |
 
-#### Warning: f5-declarative-onboarding and f5-appsvcs-extension do not support the use of route domains at this time. You should disable route domain support when attempting to use f5-declarative-onboarding and f5-appsvcs-extension declarations
+### Warning: f5-declarative-onboarding and f5-appsvcs-extension do not support the use of route domains at this time. You should disable route domain support when attempting to use f5-declarative-onboarding and f5-appsvcs-extension declarations when using tmos_dhcpv4_tmm
 
 If f5-declarative-onboarding is disabled by setting `do_enabled` to false, the device onboarding configuration will continue as described in the OpenStack meta_data.json and network_data.json files. f5-appsvcs-extension declarations can be applied with or without f5-declarative-onboarding being enabled.
 
-### userdata usage ###
+#### tmos_dhcpv4_tmm userdata usage
 
-```
+```yaml
 #cloud-config
 tmos_dhcpv4_tmm:
   enabled: true
@@ -816,31 +849,50 @@ tmos_dhcpv4_tmm:
   phone_home_cli: "curl -i -X POST -H 'X-Auth-Token: gAAAAABc5UscwS1py5XfC3yPcyN8KcgD7hYtEZ2-xHw95o4YIh0j5IDjAu9qId3JgMOp9hnHwP42mYA7oPPP0yl-OQXvCaCS3OezKlO7MsS-ZCTJzuS3sSysIMHTA78fGsXbMgCQZCi5G-evLG9xUNrYp5d3blhMnpHR0dlHPz6VMacNkPhyrQI' -H 'Content-Type: application/json' -H 'Accept: application/json' http://192.168.0.121:8004/v1/d3779c949b57403bb7f703016e91a425/stacks/demo_waf/3dd6ce45-bb8c-400d-a48c-87ac9e46e60e/resources/wait_handle/signal"
 ```
 
+The application listening at the `phone_home_url` must accept a `POST` reqeust. The `POST` body will be a JSON object with the following format:
+
+```json
+{
+  "id": "a67d1edb-0a4a-4101-afd1-2fbf04713cfa",
+  "version": "14.1.0.1-0.0.7.0",
+  "product": "BIGIP",
+  "hostname": "waf1primary.local",
+  "management": "192.168.245.119/24",
+  "installed_extensions": ["f5-service-discovery", "f5-declarative-onboarding", "f5-appsvcs", "f5-telemetry"],
+  "as3_enabled": true,
+  "do_enabled": true,
+  "ts_enabled": true,
+  "status": "SUCCESS"
+}
+```
+
+The `phone_home_cli` will only be called if the module runs successfully, to the degree the provisioning can be synchronized. The `phone_home_cli` command execution allows for OpenStack Heat and AWS CFT type wait condition resources to be used with their auto-generated curl CLI notifications.
+
 In addition to the declared elements, this module also supports `cloud-config` declarations for `ssh_authorized_keys`. Any declared keys will be authorized for the TMOS root account.
 
-```
+```yaml
 #cloud-config
 ssh_authorized_keys:
   - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAGEA3FSyQwBI6Z+nCSjUUk8EEAnnkhXlukKoUPND/RRClWz2s5TCzIkd3Ou5+Cyz71X0XmazM3l5WgeErvtIwQMyT1KjNoMhoJMrJnWqQPOt5Q8zWd9qG7PBl9+eiH5qV7NZ mykey@host
 ```
 
-# TMOS Cloudinit Modules Support for SSH Keys and Passwords #
+## TMOS Cloudinit Modules Support for SSH Keys and Passwords
 
 In addition to the declared elements, these modules also support `cloud-config` declarations for `ssh_authorized_keys` using the standard cloudinit `cloud-config` declaration syntax. Any declared keys will be authorized for the TMOS root account.
 
-### additional userdata ###
+### additional userdata
 
-```
+```yaml
 #cloud-config
 ssh_authorized_keys:
   - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAGEA3FSyQwBI6Z+nCSjUUk8EEAnnkhXlukKoUPND/RRClWz2s5TCzIkd3Ou5+Cyz71X0XmazM3l5WgeErvtIwQMyT1KjNoMhoJMrJnWqQPOt5Q8zWd9qG7PBl9+eiH5qV7NZ mykey@host
 ```
 
-### Support Cloudinit set-password ###
+### Support Cloudinit set-password
 
 The patched VE image cloudinit configurations template has been altered to support the standard cloudinit `set_password` module as well. You can change the built-in TMOS `admin` and  `root` passwords using the following cloudinit `cloud-config` declarations.
 
-```
+```yaml
 #cloud-config
 chpasswd:
   list: |

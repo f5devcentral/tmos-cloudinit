@@ -16,13 +16,13 @@ The script functionality is driven by environment variables. This makes it simpl
 | UPDATE_IMAGES | false | No | Delete and update imported images if they exist |
 | DELETE_ALL | false | No | Force delete all found imported images matching the IMAGE_MATCH regex |
 
-## Using the Python Script ##
+## Using the Python Script
 
 The python 2 script uses only core elements, as it uses only IBM Cloud REST APIs through the `requests` module.
 
 Set environment variables in your shell (bash used in example)
 
-```
+```bash
 export TMOS_IMAGE_CATALOG_URL='https://f5-image-catalog-xxxxxxxxxxxxxx.s3.us-south.cloud-object-storage.appdomain.cloud/f5-image-catalog.json'
 export API_KEY='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 export IMAGE_MATCH='^bigip-14'
@@ -34,7 +34,7 @@ Run the python script
 ./ibmcloud_vpc_image_importer.py
 `
 
-## Using the Docker Container ##
+## Using the Docker Container
 
 Build the docker container
 
@@ -44,7 +44,7 @@ docker build -t ibmcloud_vpc_image_importer:latest .
 
 Set environment variables in your shell (bash used in example)
 
-```
+```bash
 export TMOS_IMAGE_CATALOG_URL='https://f5-image-catalog-xxxxxxxxxxxxxx.s3.us-south.cloud-object-storage.appdomain.cloud/f5-image-catalog.json'
 export API_KEY='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 export IMAGE_MATCH='^bigip-14'
@@ -52,6 +52,6 @@ export IMAGE_MATCH='^bigip-14'
 
 Run the container with the supplying environment variables.
 
-```
+```bash
 docker run --rm -it -e API_KEY="$API_KEY" -e TMOS_IMAGE_CATALOG_URL="$TMOS_IMAGE_CATALOG_URL" -e IMAGE_MATCH="$IMAGE_MATCH" ibmcloud_vpc_image_importer:latest
 ```
