@@ -75,7 +75,7 @@ BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.vhd.zip
 You can also prepare a directory that contains any iControl LX extension package `rpm` files that you wish to inject into your image. These packages are installed at boot time when any of the `tmos-cloudinit` modules are enabled.
 
 ```bash
-$ ls /data/iControlLXLatestBuild
+ls /data/iControlLXLatestBuild
 f5-appsvcs-3.11.0-3.noarch.rpm
 f5-declarative-onboarding-1.4.0-1.noarch.rpm
 ```
@@ -150,7 +150,7 @@ Each TMOS image archive will be expanded into a folder containing the patched im
 MD5 checksum files will be produced for each image.
 
 ```bash
-> $ tree /data/BIGIP-14.1
+tree /data/BIGIP-14.1
 /data/BIGIP-14.1
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-ide.ova
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-ide
@@ -197,7 +197,7 @@ Once patched, your TMOS images can be uploaded for use in your infrastructure en
 As an example, for an an OpenStack private cloud, the patched images can be uploaded with the `openstack` cli tool.
 
 ```bash
-$ openstack image create --disk-format qcow2 --container-format bare --file /data/BIGIP-14.1/BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.qcow2/BIGIP-14.1.0.5-0.0.5.qcow2 OpenStack_BIGIP-14.1.0.5-0.0.5.LTM_1SLOT
+openstack image create --disk-format qcow2 --container-format bare --file /data/BIGIP-14.1/BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.qcow2/BIGIP-14.1.0.5-0.0.5.qcow2 OpenStack_BIGIP-14.1.0.5-0.0.5.LTM_1SLOT
 +------------------+------------------------------------------------------+
 | Field            | Value                                                |
 +------------------+------------------------------------------------------+
