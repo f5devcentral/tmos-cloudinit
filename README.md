@@ -4,7 +4,7 @@
 
 - [Patching TMOS Virtual Edition Images to Install Cloudinit Modules](#patching-tmos-virtual-edition-images-to-install-cloudinit-modules)
 
-  - [Creating Custom Cloud Cloudinit Config Templates](#createing_custom_cloud_cloudinit_config_templates)
+  - [Creating Custom Cloud Cloudinit Config Templates](#creating-custom-cloud-cloudinit-config-templates)
   - [Patched Image Uploaders](#patched-image-uploaders)
 
 - [Creating OpenStack Formatted Cloudinit ConfigDrive ISOs (Optional)](#creating-openstack-formatted-cloudinit-configdrive-isos)
@@ -155,35 +155,35 @@ tree /data/BIGIP-14.1
 /data/BIGIP-14.1
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-ide.ova
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-ide
-│   └── <b>BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-ide.ova</b>
+│   └── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-ide.ova
 |   └── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-ide.ova.md5
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT.qcow2.zip
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT.qcow2
-│   └── <b>BIGIP-14.1.0.5-0.0.5.qcow2</b>
+│   └── BIGIP-14.1.0.5-0.0.5.qcow2
 |   └── BIGIP-14.1.0.5-0.0.5.qcow2.md5
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-scsi.ova
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-scsi
-│   └── <b>BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-scsi.ova</b>
+│   └── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-scsi.ova
 │   └── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT-scsi.ova.md5
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT.vhd.zip
 ├── BIGIP-14.1.0.5-0.0.5.ALL_1SLOT.vhd
-│   └── <b>BIGIP-14.1.0.5-0.0.5.vhd</b>
+│   └── BIGIP-14.1.0.5-0.0.5.vhd
 │   └── BIGIP-14.1.0.5-0.0.5.vhd.md5
 ├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-ide.ova
 ├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-ide
-│   └── <b>BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-ide.ova</b>
+│   └── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-ide.ova
 │   └── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-ide.ova.md5
 ├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.qcow2.zip
 ├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.qcow2
-│   └── <b>BIGIP-14.1.0.5-0.0.5.qcow2</b>
+│   └── BIGIP-14.1.0.5-0.0.5.qcow2
 │   └── BIGIP-14.1.0.5-0.0.5.qcow2.md5
 ├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-scsi.ova
 ├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-scsi
-│   └── <b>BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-scsi.ova</b>
+│   └── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-scsi.ova
 │   └── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT-scsi.ova.md5
 ├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.vhd.zip
 ├── BIGIP-14.1.0.5-0.0.5.LTM_1SLOT.vhd
-│   └── <b>BIGIP-14.1.0.5-0.0.5.vhd</b>
+│   └── BIGIP-14.1.0.5-0.0.5.vhd
 │   └── BIGIP-14.1.0.5-0.0.5.vhd.md5
 ```
 
@@ -260,6 +260,18 @@ docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -e OS_USERNAME=$OS_USERNAME 
 ```
 
 The OpenStack uploader will find md5, and optionally image signatures, and add them with the appropriate image shade metadata.
+
+### IBM Public Cloud
+
+To create customer IBM Public Cloud VPC Gen2 TMOS images there is a two step workflow:
+
+1. Upload the patched TMOS image to IBM COS (cloud object storage)
+2. Create a VPC Gen2 custom image from the IBM COS image SQL URL
+
+Both of these steps have their own docker container tools with their own documentation.
+
+[Upload Patched Image to IBM COS](./ibmcloud_image_uploader)
+[Create a VPC Gen2 custom image](./ibmcloud_vpc_image_importer)
 
 ## Creating OpenStack Formatted Cloudinit ConfigDrive ISOs
 
