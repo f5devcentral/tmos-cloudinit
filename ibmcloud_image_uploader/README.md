@@ -13,7 +13,7 @@ The script functionality is driven by environment variables. This makes it simpl
 | COS_RESOURCE_CRN | None | Yes | The COS resource CRN (id) |
 | COS_IMAGE_LOCATION | us-south | Yes | A single or comma-delimited list of regions to upload images |
 | COS_AUTH_ENDPOINT | <https://iam.cloud.ibm.com/identity/token> | No | Set the IBM Cloud auth resource (use for testing) |
-| IMAGE_CATALOG_PREFIX | f5-image-catalog | Yes | The unique IBM COS bucket name prefix for you iamge catalog |
+| IMAGE_CATALOG_PREFIX | f5-image-catalog | Yes | The unique IBM COS bucket name prefix for you image catalog |
 | IMAGE_MATCH | ^[a-zA-Z] | No | The regex match for the TMOS images to include in the catalog |
 | UPDATE_IMAGES | false | No | Delete and update COS object if they exist |
 | DELETE_ALL | false | No | Force delete all found COS objects and buckets |
