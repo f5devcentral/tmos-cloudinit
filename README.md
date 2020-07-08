@@ -4,6 +4,7 @@
 
 - [Patching TMOS Virtual Edition Images to Install Cloudinit Modules](#patching-tmos-virtual-edition-images-to-install-cloudinit-modules)
 
+  - [Creating Custom Cloud Cloudinit Config Templates](#createing_custom_cloud_cloudinit_config_templates)
   - [Patched Image Uploaders](#patched-image-uploaders)
 
 - [Creating OpenStack Formatted Cloudinit ConfigDrive ISOs (Optional)](#creating-openstack-formatted-cloudinit-configdrive-isos)
@@ -131,7 +132,7 @@ The docker container uses the mount points listed below. Your TMOS image archive
 You can run the image patch script with the Docker `run` command.
 
 ```bash
-docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -v /data/iControlLXLatestBuild:/iControlLXPackages f5devcentral/tmos-image-patcher:latest
+docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -v /data/iControlLXLatestBuild:/iControlLXPackages tmos_image_patcher:latest
 
 2019-05-29 22:43:48,133 - tmos_image_patcher - DEBUG - process start time: Wednesday, May 29, 2019 10:43:48
 2019-05-29 22:43:48,133 - tmos_image_patcher - INFO - Scanning for images in: /TMOSImages
@@ -189,7 +190,7 @@ tree /data/BIGIP-14.1
 A signed SHA384 digist file can optionally be generated for each patched image if you include a `/keys` volume mount to the directory containing your private signing key and an environment variable, `PRIVATE_PEM_KEY_FILE`, specifying the private key file.
 
 ```bash
-docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -v /data/iControlLXLatestBuild:/iControlLXPackages -v /data/safe/keys:/keys -e PRIVATE_PEM_KEY_FILE=j.gruber_f5.rsa.private f5devcentral/tmos-image-patcher:latest
+docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -v /data/iControlLXLatestBuild:/iControlLXPackages -v /data/safe/keys:/keys -e PRIVATE_PEM_KEY_FILE=j.gruber_f5.rsa.private tmos_image_patcher:latest
 ```
 
 Once patched, your TMOS images can be uploaded for use in your infrastructure environment by using the native client tools.
@@ -224,6 +225,17 @@ openstack image create --disk-format qcow2 --container-format bare --file /data/
 ```
 
 Once your patched images are deployed in your virtualized environment, you can use cloudinit userdata to handle initial device and service provisioning.
+
+## Creating Custom Cloud Cloudinit Config Templates
+
+By default the TMOS cloudinit config adds all the `tmos-cloudinit` modules required and allows TMOS to decide the cloudinit datasource. If you cloud does not work with the TMOS default datasources for your detected environment, the TMOS cloudinit config template can be changed to support your environments requirements. You should not attempt to do this if you are not familiar with your environment's cloudinit support or the way TMOS configures cloudinit.
+
+To specifiy a custom TMOS cloudinit config, specify the `TMOS_CLOUDINIT_CONFIG_TEMPLATE` environment variable for your container run. As an example, to specify the required TMOS cloudinit config for the IBM Public Cloud VPC Gen2, you would run you image patch container run including the environment variable `TMOS_CLOUDINIT_CONFIG_TEMPLATE` pointing to the containerized path of the `cloud-init.tmpl` file.
+
+```bash
+docker run --rm -it -v [local path to TMOS qcow.zip files]:/TMOSImages -v [local path to iControl LX rpm files]:/iControlLXPackages -e TMOS_CLOUDINIT_CONFIG_TEMPLATE=/tmos-cloudinit/image_patch_files/cloudinit_configs/ibmcloud_vpc_gen2/cloud-init.tmpl tmos_image_patcher:latest
+
+```
 
 ## Patched Image Uploaders
 
