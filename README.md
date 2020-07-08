@@ -10,7 +10,7 @@
 
 [Using F5 TMOS Cloudinit Modules](#using-f5-tmos-cloudinit-modules)
 
-- [Which Cloudinit Module Should You Use?](#which-cloudinit-module-should-you-use)
+- [Which Cloudinit Module To Use](#which-cloudinit-module-to-use)
 - [The `tmos_static_mgmt` Cloudinit Module](#the-tmos_static_mgmt-cloudinit-module)
 - [The `tmos_declared` Cloudinit Module](#the-tmos_declared-cloudinit-module)
 - [The `tmos_configdrive_openstack` Cloudinit Module](#the-tmos_configdrive_openstack-cloudinit-module)
