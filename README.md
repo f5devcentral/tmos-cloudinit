@@ -85,8 +85,7 @@ f5-declarative-onboarding-1.4.0-1.noarch.rpm
 Build the docker image from the `tmos_image_patcher` Dockerfile.
 
 ```bash
-$ docker build -t tmos_image_patcher:latest tmos_image_patcher
-....
+docker build -t tmos_image_patcher:latest tmos_image_patcher
 ```
 
 This will download a vanilla Ubuntu 18.04 container, install all the necessary open source utilities required to patch TMOS images, and designate the python script which performs the image patching as the execution entry point for the container image.
@@ -94,7 +93,7 @@ This will download a vanilla Ubuntu 18.04 container, install all the necessary o
 After the build completes, a docker image will be available locally.
 
 ```bash
-$ docker images | grep tmos_image_patcher
+docker images | grep tmos_image_patcher
 tmos_image_patcher    latest    3416ed456cfe    22 seconds ago    1.38GB
 ```
 
@@ -132,7 +131,7 @@ The docker container uses the mount points listed below. Your TMOS image archive
 You can run the image patch script with the Docker `run` command.
 
 ```bash
-$ docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -v /data/iControlLXLatestBuild:/iControlLXPackages f5devcentral/tmos-image-patcher:latest
+docker run --rm -it -v /data/BIGIP-14.1:/TMOSImages -v /data/iControlLXLatestBuild:/iControlLXPackages f5devcentral/tmos-image-patcher:latest
 
 2019-05-29 22:43:48,133 - tmos_image_patcher - DEBUG - process start time: Wednesday, May 29, 2019 10:43:48
 2019-05-29 22:43:48,133 - tmos_image_patcher - INFO - Scanning for images in: /TMOSImages
@@ -275,8 +274,7 @@ This repository includes a Dockerfile and an ISO9660 generation script, called `
 You can build the docker image from the `tmos_configdrive_builder` Dockerfile.
 
 ```bash
-$ docker build -t tmos_configdrive_builder:latest tmos_configdrive_builder
-...
+docker build -t tmos_configdrive_builder:latest tmos_configdrive_builder
 ```
 
 This will use an generic Ubuntu 18.04 image, install all the necessary tools to create ISO image, and designate the python script which creates the ISO image as the execution entry point for the container image.
@@ -284,7 +282,7 @@ This will use an generic Ubuntu 18.04 image, install all the necessary tools to 
 After the build process completes, a docker image will be available locally.
 
 ```bash
-$ docker images|grep tmos_configdrive_builder
+docker images|grep tmos_configdrive_builder
 tmos_configdrive_builder     latest     23c1d99efdd5     17 seconds ago     274MB
 ```
 
