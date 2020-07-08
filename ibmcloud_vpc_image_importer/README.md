@@ -10,7 +10,7 @@ The script functionality is driven by environment variables. This makes it simpl
 | :---------- | :------- | :-------- | :----------- |
 | TMOS_IMAGE_CATALOG_URL | None | Yes | The HTTP URL to download the F5 catalog of COS SQL URLS (get from F5) |
 | API_KEY | None | Yes | IAM API key with access to the VPC Gen2 IaaS |
-| IMAGE_MATCH | All images in the catalog will match | No | Regex to limit which images to import (i.e. '^bigip-15') |
+| IMAGE_MATCH | All images in the catalog will match | No | Regex to limit which images names from the catalog to import (i.e. '^bigip-15') |
 | REGION | us-south | Yes | Which regions in the catalog to import |
 | DRY_RUN | false | No | Perform a dry run an only report |
 | UPDATE_IMAGES | false | No | Delete and update imported images if they exist |
