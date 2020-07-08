@@ -61,3 +61,19 @@ Note: by default the docker container will make the `TMOS_IMAGE_DIR` to the `/TM
 ```bash
 docker run --rm -it -v $TMOS_IMAGE_DIR:/TMOSImages -e COS_API_KEY="$COS_API_KEY" -e COS_RESOURCE_CRN="$COS_RESOURCE_CRN" -e COS_IMAGE_LOCATION="$COS_IMAGE_LOCATION" ibmcloud_image_uploader:latest
 ```
+
+After completion this process will create a `f5-image-catalog.json` image catalog file in each specified region. The URL an `f5-image-catalog.json` file will be required to create a VPC Gen2 custom image step.
+
+[Create a VPC Gen2 custom image](../ibmcloud_vpc_image_importer)
+
+The URL takes the format:
+
+```bash
+https://f5-image-catalog-[region].s3.[region].cloud-object-storage.appdomain.cloud/f5-image-catalog.json
+```
+
+As an example, for the region `us-south` the URL would look like:
+
+```bash
+https://f5-image-catalog-us-south.s3.us-south.cloud-object-storage.appdomain.cloud/f5-image-catalog.json
+```
