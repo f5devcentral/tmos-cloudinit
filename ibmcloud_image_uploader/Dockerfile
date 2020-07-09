@@ -18,6 +18,7 @@ RUN pip install ibm-cos-sdk
 VOLUME ["/TMOSImages"]
 
 ENV TMOS_IMAGE_DIR '/TMOSImages'
+ENV COS_BUCKET_PREFIX 'f5'
 
 ENTRYPOINT [ "/tmos-cloudinit/ibmcloud_image_uploader/ibmcloud_cos_image_uploader.py" ]
 

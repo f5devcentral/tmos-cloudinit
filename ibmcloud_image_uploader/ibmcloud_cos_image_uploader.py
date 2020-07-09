@@ -44,7 +44,7 @@ COS_IMAGE_LOCATION = None
 COS_AUTH_ENDPOINT = None
 COS_ENDPOINT = None
 
-COS_BUCKET_PREFIX = 'f5-image-catalog'
+COS_BUCKET_PREFIX = 'f5'
 
 IMAGE_MATCH = '^[a-zA-Z]'
 
