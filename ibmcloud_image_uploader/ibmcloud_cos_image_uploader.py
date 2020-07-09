@@ -44,7 +44,7 @@ COS_IMAGE_LOCATION = None
 COS_AUTH_ENDPOINT = None
 COS_ENDPOINT = None
 
-IMAGE_CATALOG_PREFIX = 'f5-image-catalog'
+COS_BUCKET_PREFIX = 'f5-image-catalog'
 
 IMAGE_MATCH = '^[a-zA-Z]'
 
@@ -77,15 +77,21 @@ def get_patched_images(tmos_image_dir):
 
 def get_bucket_name(image_path, location):
     """Get bucket for this patched image"""
-    return "%s-%s" % (os.path.splitext(os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, ''))[0].replace('_', '-').lower(), location)
+    return "%s-%s-%s" % (
+        COS_BUCKET_PREFIX,
+        os.path.splitext(
+            os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(
+                os.path.sep, ''))[0].replace('_', '-').lower(), location)
 
 
 def get_object_name(image_path, location):
     """Get object name for this patched image"""
     if 'DATASTOR' in image_path:
-        return "%s_DATASTOR" % os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, '')
+        return "%s_DATASTOR" % os.path.dirname(
+            image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, '')
     else:
-        return os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(os.path.sep, '')
+        return os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(
+            os.path.sep, '')
 
 
 def get_cos_client(location):
@@ -118,13 +124,11 @@ def assure_bucket(bucket_name, location):
             if bucket.name == bucket_name:
                 return True
         LOG.debug('creating bucket %s', bucket_name)
-        cos_res.Bucket(bucket_name).create(
-            ACL='public-read'
-        )
+        cos_res.Bucket(bucket_name).create(ACL='public-read')
         return True
     except ClientError as client_error:
-        LOG.error('client error assuring bucket %s: %s',
-                  bucket_name, client_error)
+        LOG.error('client error assuring bucket %s: %s', bucket_name,
+                  client_error)
         return False
     except Exception as ex:
         LOG.error('exception occurred assuring bucket %s: %s', bucket_name, ex)
@@ -141,21 +145,22 @@ def assure_object(file_path, bucket_name, object_name, location):
                     obj.delete()
                 else:
                     return True
-        LOG.debug('starting upload of image %s to %s/%s',
-                  file_path, bucket_name, object_name)
+        LOG.debug('starting upload of image %s to %s/%s', file_path,
+                  bucket_name, object_name)
 
         part_size = 1024 * 1024 * 2
         file_threshold = 1024 * 1024 * 1024 * 10
 
         transfer_config = ibm_boto3.s3.transfer.TransferConfig(
-            multipart_threshold=file_threshold,
-            multipart_chunksize=part_size
-        )
+            multipart_threshold=file_threshold, multipart_chunksize=part_size)
 
         cos_client = get_cos_client(location)
         transfer_mgr = ibm_boto3.s3.transfer.TransferManager(
             cos_client, config=transfer_config)
-        upload = transfer_mgr.upload(file_path, bucket_name, object_name, extra_args={'ACL': 'public-read'})
+        upload = transfer_mgr.upload(file_path,
+                                     bucket_name,
+                                     object_name,
+                                     extra_args={'ACL': 'public-read'})
         upload.result()
 
         LOG.debug('upload complete for %s/%s', bucket_name, object_name)
@@ -163,12 +168,12 @@ def assure_object(file_path, bucket_name, object_name, location):
         return True
 
     except ClientError as ce:
-        LOG.error('client error assuring object %s/%s: %s',
-                  bucket_name, object_name, ce)
+        LOG.error('client error assuring object %s/%s: %s', bucket_name,
+                  object_name, ce)
         return False
     except Exception as ex:
-        LOG.error('exception occurred assuring object %s/%s: %s',
-                  bucket_name, object_name, ex)
+        LOG.error('exception occurred assuring object %s/%s: %s', bucket_name,
+                  object_name, ex)
         return False
 
 
@@ -177,8 +182,8 @@ def assure_cos_image(image_path, location):
     bucket_name = get_bucket_name(image_path, location)
     object_name = get_object_name(image_path, location)
     if re.search(IMAGE_MATCH, object_name):
-        LOG.debug('checking IBM COS Object: %s/%s exists',
-                bucket_name, object_name)
+        LOG.debug('checking IBM COS Object: %s/%s exists', bucket_name,
+                  object_name)
         if assure_bucket(bucket_name, location):
             assure_object(image_path, bucket_name, object_name, location)
         md5_path = "%s.md5" % image_path
@@ -240,13 +245,20 @@ def inventory():
                         LOG.debug('inventory add %s/%s', bucket.name, obj.key)
                         if os.path.splitext(obj.key)[1] in IMAGE_TYPES:
                             inv_obj = {
-                                'image_name': bucket.name.replace('.', '-'),
-                                'image_sql_url': "cos://%s/%s/%s" % (location, bucket.name, obj.key),
-                                'md5_sql_url': "cos://%s/%s/%s.md5" % (location, bucket.name, obj.key)
+                                'image_name':
+                                bucket.name.replace("%s-" % COS_BUCKET_PREFIX,
+                                                    '').replace('.', '-'),
+                                'image_sql_url':
+                                "cos://%s/%s/%s" %
+                                (location, bucket.name, obj.key),
+                                'md5_sql_url':
+                                "cos://%s/%s/%s.md5" %
+                                (location, bucket.name, obj.key)
                             }
                             inventory[location].append(inv_obj)
         except ClientError as client_error:
-            LOG.error('client error creating inventory of resources: %s', client_error)
+            LOG.error('client error creating inventory of resources: %s',
+                      client_error)
         except Exception as ex:
             LOG.error('exception creating inventory of resources: %s', ex)
     # write it locally
@@ -256,25 +268,27 @@ def inventory():
     if not DELETE_ALL:
         UPDATE_IMAGES = True
         for location in IBM_COS_REGIONS:
-            bucket_name = "%s-%s" % (IMAGE_CATALOG_PREFIX, location)
-            public_url = "https://%s.s3.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (bucket_name, location)
+            bucket_name = "%s-%s" % (COS_BUCKET_PREFIX, location)
+            public_url = "https://%s.s3.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (
+                bucket_name, location)
             LOG.debug('writing image catalog to: %s', public_url)
             assure_bucket(bucket_name, location)
-            assure_object(inventory_file, bucket_name, "f5-image-catalog.json", location)
+            assure_object(inventory_file, bucket_name, "f5-image-catalog.json",
+                          location)
 
 
 def initialize():
     """initialize configuration from environment variables"""
-    global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL, IMAGE_CATALOG_PREFIX, IMAGE_MATCH
+    global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL, COS_BUCKET_PREFIX, IMAGE_MATCH
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
     COS_RESOURCE_CRN = os.getenv('COS_RESOURCE_CRN', None)
     COS_IMAGE_LOCATION = os.getenv('COS_IMAGE_LOCATION', 'us-south')
-    IMAGE_CATALOG_PREFIX = os.getenv('IMAGE_CATALOG_PREFIX', 'f5-image-cataloeee')
+    COS_BUCKET_PREFIX = os.getenv('COS_BUCKET_PREFIX', 'f5-image-catalog')
     IMAGE_MATCH = os.getenv('IMAGE_MATCH', '^[a-zA-Z]')
-    IBM_COS_REGIONS = [ x.strip() for x in COS_IMAGE_LOCATION.split(',') ]
-    COS_AUTH_ENDPOINT = os.getenv(
-        'COS_AUTH_ENDPOINT', 'https://iam.cloud.ibm.com/identity/token')
+    IBM_COS_REGIONS = [x.strip() for x in COS_IMAGE_LOCATION.split(',')]
+    COS_AUTH_ENDPOINT = os.getenv('COS_AUTH_ENDPOINT',
+                                  'https://iam.cloud.ibm.com/identity/token')
     UPDATE_IMAGES = os.getenv('UPDATE_IMAGES', 'false')
     if UPDATE_IMAGES.lower() == 'true':
         UPDATE_IMAGES = True
@@ -289,8 +303,10 @@ def initialize():
 
 if __name__ == "__main__":
     START_TIME = time.time()
-    LOG.debug('process start time: %s', datetime.datetime.fromtimestamp(
-        START_TIME).strftime("%A, %B %d, %Y %I:%M:%S"))
+    LOG.debug(
+        'process start time: %s',
+        datetime.datetime.fromtimestamp(START_TIME).strftime(
+            "%A, %B %d, %Y %I:%M:%S"))
     initialize()
     ERROR_MESSAGE = ''
     ERROR = False
@@ -303,11 +319,11 @@ if __name__ == "__main__":
     if not TMOS_IMAGE_DIR and not DELETE_ALL:
         ERROR = True
         ERROR_MESSAGE += "please set env TMOS_IMAGE_DIR to scan for patched TMOS images\n"
-    
+
     if ERROR:
         LOG.error('\n\n%s\n', ERROR_MESSAGE)
         sys.exit(1)
-    
+
     if DELETE_ALL:
         delete_all()
     else:
@@ -317,7 +333,5 @@ if __name__ == "__main__":
     DURATION = STOP_TIME - START_TIME
     LOG.debug(
         'process end time: %s - ran %s (seconds)',
-        datetime.datetime.fromtimestamp(
-            STOP_TIME).strftime("%A, %B %d, %Y %I:%M:%S"),
-        DURATION
-    )
+        datetime.datetime.fromtimestamp(STOP_TIME).strftime(
+            "%A, %B %d, %Y %I:%M:%S"), DURATION)
