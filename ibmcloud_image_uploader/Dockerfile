@@ -13,7 +13,7 @@ RUN apt-get update && \
 
 ## INJECT_PATCH_INSTRUCTION ##
 RUN git clone https://github.com/f5devcentral/tmos-cloudinit.git
-RUN pip install ibm-cos-sdk
+RUN pip install -r /tmos-cloudinit/ibmcloud_image_uploader/requirements.txt
 
 VOLUME ["/TMOSImages"]
 
