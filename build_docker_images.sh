@@ -11,7 +11,7 @@ else
 fi
 
 CACHE_OPTION=''
-if ! [ -z "$USE_CACHED_IMAGES" ]
+if [ -z "$USE_CACHED_IMAGES" ]
 then
     CACHE_OPTION='--no-cache'
 fi
@@ -22,6 +22,8 @@ echo "building TMOS config drive builder"
 docker build --rm ${CACHE_OPTION} -t ${DOCKER_REPO}tmos_configdrive_builder:latest tmos_configdrive_builder
 echo "building IBM public cloud object storage uploader"
 docker build --rm ${CACHE_OPTION} -t ${DOCKER_REPO}ibmcloud_image_uploader:latest ibmcloud_image_uploader
+echo "building IBM public cloud vpc iamge importer"
+docker build --rm ${CACHE_OPTION} -t ${DOCKER_REPO}ibmcloud_vpc_image_importer:latest ibmcloud_vpc_image_importer
 echo "building OpenStack glance image uploader"
 docker build --rm ${CACHE_OPTION} -t ${DOCKER_REPO}openstack_image_uploader:latest openstack_image_uploader
 echo "building Demonostration setup container"
