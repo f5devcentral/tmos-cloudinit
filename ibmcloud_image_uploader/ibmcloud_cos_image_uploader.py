@@ -81,7 +81,9 @@ def get_bucket_name(image_path, location):
         COS_BUCKET_PREFIX,
         os.path.splitext(
             os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(
-                os.path.sep, ''))[0].replace('_', '-').lower(), location)
+                os.path.sep, ''))[0].replace('_', '-').lower(),
+        location
+    )
 
 
 def get_object_name(image_path, location):
@@ -323,7 +325,7 @@ if __name__ == "__main__":
     if ERROR:
         LOG.error('\n\n%s\n', ERROR_MESSAGE)
         sys.exit(1)
-
+    LOG.info('uploading images into %s with COS_BUCKET_PREFIX %s', COS_RESOURCE_CRN, COS_BUCKET_PREFIX)
     if DELETE_ALL:
         delete_all()
     else:
