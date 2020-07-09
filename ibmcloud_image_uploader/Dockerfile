@@ -12,8 +12,8 @@ RUN apt-get update && \
     git
 
 ## INJECT_PATCH_INSTRUCTION ##
-RUN git clone https://github.com/f5devcentral/tmos-cloudinit.git
-RUN pip install -r /tmos-cloudinit/ibmcloud_image_uploader/requirements.txt
+RUN git clone https://github.com/f5devcentral/tmos-cloudinit.git && \
+    pip install -r /tmos-cloudinit/ibmcloud_image_uploader/requirements.txt
 
 VOLUME ["/TMOSImages"]
 
