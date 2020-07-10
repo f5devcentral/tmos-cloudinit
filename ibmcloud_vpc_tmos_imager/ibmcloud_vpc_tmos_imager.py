@@ -216,7 +216,7 @@ def scan_for_disk_images():
     for image_file in os.listdir(tmos_image_dir):
         filepath = "%s/%s" % (tmos_image_dir, image_file)
         if os.path.isfile(filepath):
-            image_name = os.path.splitext(image_file).replace(
+            image_name = os.path.splitext(image_file)[0].replace(
                 '.qcow2', '').replace('.', '-').replace('_', '-').lower()
             images_names.append(image_name)
     return images_names
