@@ -209,6 +209,53 @@ def delete_resource_group():
     requests.delete(rg_url, headers=headers)
 
 
+def scan_for_disk_images():
+    """Scan for TMOS disk images"""
+    tmos_image_dir = os.getenv('TMOS_IMAGE_DIR', '/TMOSImages')
+    images_names = []
+    for image_file in os.listdir(tmos_image_dir):
+        filepath = "%s/%s" % (tmos_image_dir, image_file)
+        if os.path.isfile(filepath):
+            image_name = os.path.splitext(
+                os.path.splitext(image_file)[0])[0].replace('.', '-').replace(
+                    '_', '-').lower()
+            images_names.append(image_name)
+    return images_names
+
+
+def get_images(region):
+    token = get_iam_token()
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2020-04-07&generation=2&visibility=private" % region
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer %s" % token
+    }
+    response = requests.get(image_url, headers=headers)
+    image_names = []
+    if response.status_code < 300:
+        images = response.json()
+        for image in images:
+            image_names.append(image['name'])
+    return image_names
+
+
+def get_required_regions():
+    global REGION
+    image_names = scan_for_disk_images()
+    regions = [x.strip() for x in REGION.split(',')]
+    regions_needed = []
+    for region in regions:
+        existing_images = get_images(region)
+        for image_name in image_names:
+            regional_name = "%s-%s" % (image_name, region)
+            if regional_name in existing_images:
+                LOG.debug('%s already exists', regional_name)
+            else:    
+                regions_needed.append(region)
+    REGION = ','.regions_needed
+
+
 def patch_images():
     s_env = os.environ.copy()
     s_env['TMOS_CLOUDINIT_CONFIG_TEMPLATE'] = os.path.join(
@@ -241,10 +288,11 @@ def upload_images():
                             stdout=sys.stdout,
                             stderr=sys.stderr)
     proc.wait()
-    region = [x.strip() for x in REGION.split(',')]
+    regions = [x.strip() for x in REGION.split(',')]
     TMOS_IMAGE_CATALOG_URL = "https://%s-%s.s3.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (
-        COS_BUCKET_PREFIX, region[0], region[0])
-    LOG.info('populating TMOS_IMAGE_CATALOG_URL for import phase as: %s', TMOS_IMAGE_CATALOG_URL)
+        COS_BUCKET_PREFIX, regions[0], regions[0])
+    LOG.info('populating TMOS_IMAGE_CATALOG_URL for import phase as: %s',
+             TMOS_IMAGE_CATALOG_URL)
 
 
 def import_images():
@@ -297,13 +345,15 @@ if __name__ == "__main__":
             "%A, %B %d, %Y %I:%M:%S"))
     initialize()
     try:
-        create_cos_api_key()
-        LOG.info('patching TMOS Images')
-        patch_images()
-        LOG.info('uploading TMOS images to IBM COS')
-        upload_images()
-        LOG.info('importing COS images to VPC custom images')
-        import_images()
+        get_required_regions()
+        if REGION:
+            create_cos_api_key()
+            LOG.info('patching TMOS Images')
+            patch_images()
+            LOG.info('uploading TMOS images to IBM COS')
+            upload_images()
+            LOG.info('importing COS images to VPC custom images')
+            import_images()
     except Exception as ex:
         LOG.error('could not continue: %s', ex)
     clean_up()
