@@ -243,10 +243,11 @@ def get_required_regions():
     global REGION
     image_names = scan_for_disk_images()
     if image_names:
+        regions_needed = []
         LOG.debug('searching for regional images for %s', image_names)
         regions = [x.strip() for x in REGION.split(',')]
         LOG.debug('searching regions %s', regions)
-        regions_needed = []
+        
         for region in regions:
             existing_images = get_images(region)
             LOG.debug('found %s in region %s', existing_images, region)
