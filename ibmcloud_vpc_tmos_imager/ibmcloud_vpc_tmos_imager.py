@@ -234,7 +234,7 @@ def get_images(region):
     image_names = []
     if response.status_code < 300:
         images = response.json()
-        for image in images:
+        for image in images['images']:
             image_names.append(image['name'])
     return image_names
 
@@ -245,7 +245,7 @@ def get_required_regions():
     if image_names:
         LOG.debug('searching for regional images for %s', image_names)
         regions = [x.strip() for x in REGION.split(',')]
-        LOG.debug('searching regions')
+        LOG.debug('searching regions %s', regions)
         regions_needed = []
         for region in regions:
             existing_images = get_images(region)
