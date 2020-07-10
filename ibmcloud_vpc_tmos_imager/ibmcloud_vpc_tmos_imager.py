@@ -258,7 +258,7 @@ def get_required_regions():
                 else:
                     LOG.debug('need to create VPC image %s', regional_name)
                     regions_needed.append(region)
-        REGION = ','.regions_needed
+        REGION = ','.join(regions_needed)
     else:
         REGION = ''
 
