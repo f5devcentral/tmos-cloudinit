@@ -351,6 +351,7 @@ if __name__ == "__main__":
             "%A, %B %d, %Y %I:%M:%S"))
     initialize()
     try:
+        LOG.info('checking for existing VPC custom images')
         get_required_regions()
         if REGION:
             create_cos_api_key()
