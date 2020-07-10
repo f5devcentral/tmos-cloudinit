@@ -244,7 +244,7 @@ def upload_images():
     region = [x.strip() for x in REGION.split(',')]
     TMOS_IMAGE_CATALOG_URL = "https://%s-%s.s3.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (
         COS_BUCKET_PREFIX, region[0], region[0])
-    LOG.info('populating TMOS_IMAGE_CATALOG_URL for import phase as: ', TMOS_IMAGE_CATALOG_URL)
+    LOG.info('populating TMOS_IMAGE_CATALOG_URL for import phase as: %s', TMOS_IMAGE_CATALOG_URL)
 
 
 def import_images():
