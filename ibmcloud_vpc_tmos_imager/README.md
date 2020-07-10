@@ -1,8 +1,6 @@
 # TMOS Image IBM Public Cloud VPC Imager
 
-IBM VPC Generation 2 Cloud supports the integration of custom appliance virtual machine images sourced from IBM Public Cloud Cloud Object Storage (COS) SQL URLs.
-
-This containerized solution performs the necessary workflow to integrating `tmos_image_patcher`,`ibmcloud_image_uploader`, and `ibmcloud_vpc_image_importer` into a single invocation. The intent is to reduce the complexity of creating IBM VPC Gen2 custom TMOS images. This is accomplished by removing much of the flexibility of the individual elements and enforcing a simplified pattern.
+This containerized solution performs the necessary workflow integrating `tmos_image_patcher`,`ibmcloud_image_uploader`, and `ibmcloud_vpc_image_importer` into a single invocation. The intent is to reduce the complexity of creating IBM VPC Gen2 custom TMOS images. This is accomplished by removing much of the flexibility of the individual elements and enforcing a simplified use pattern.
 
 All IBM COS resources are considered ephemeral for this process. They are created and destroyed. The image catalog will not be available when the container run is complete.
 
