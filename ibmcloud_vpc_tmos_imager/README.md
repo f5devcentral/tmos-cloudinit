@@ -4,7 +4,7 @@ This containerized solution performs the necessary workflow integrating `tmos_im
 
 All IBM COS resources are considered ephemeral for this process. They are created and destroyed. The image catalog will not be available when the container run is complete.
 
-The container functionality is driven by environment variables. The following environment variable are supported:
+The container functionality is driven by environment variables. The following environment variables are supported:
 
 | ENV Variable | Default | Required | Description |
 | :---------- | :------- | :-------- | :----------- |
