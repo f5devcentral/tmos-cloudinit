@@ -285,7 +285,7 @@ def upload_images():
     s_env = os.environ.copy()
     s_env['COS_RESOURCE_CRN'] = COS_RESOURCE_CRN
     s_env['COS_API_KEY'] = COS_API_KEY
-    s_env['COS_IMAGE_LOCATION'] = s_env['REGION']
+    s_env['COS_IMAGE_LOCATION'] = REGION
     s_env['COS_BUCKET_PREFIX'] = COS_BUCKET_PREFIX
     cmd = os.path.join(os.path.dirname(__file__), '..',
                        'ibmcloud_image_uploader',
