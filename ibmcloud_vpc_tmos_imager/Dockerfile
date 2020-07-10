@@ -14,6 +14,9 @@ RUN apt-get update && \
     python-crypto \
     python-jsonschema \
     python-yaml \
+    python-setuptools \
+    python-pip \
+    python-wheel \
     git
 
 ## INJECT_PATCH_INSTRUCTION ##

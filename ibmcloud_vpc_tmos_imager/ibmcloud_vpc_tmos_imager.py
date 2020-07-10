@@ -33,6 +33,7 @@ import subprocess
 import uuid
 
 API_KEY = None
+REGION = None
 
 COS_RESOURCE_NAME = 'custom-tmos-images'
 COS_BUCKET_PREFIX = "c%s" % str(uuid.uuid4())[0:8]
@@ -61,6 +62,7 @@ COS_API_KEY_UUID = None
 COS_API_KEY = None
 
 COS_STANDARD_PLAN_ID = '744bfc56-d12c-4866-88d5-dac9139e0e5d'
+
 
 def get_iam_token():
     global SESSION_TOKEN, SESSION_TIMESTAMP
@@ -265,8 +267,22 @@ def clean_up():
 
 
 def initialize():
-    global API_KEY
+    global API_KEY, REGION
+    error = False
     API_KEY = os.getenv('API_KEY', None)
+    if not API_KEY:
+        LOG.error(
+            'please specify an API_KEY evironment variable to use to create IBM Cloud resources'
+        )
+        error = True
+    REGION = os.getenv('REGION', None)
+    if not REGION:
+        LOG.error(
+            'please specify a REGION enivornment varibale to use to create IBM Cloud resources'
+        )
+        error = True
+    if error:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
@@ -279,13 +295,16 @@ if __name__ == "__main__":
         datetime.datetime.fromtimestamp(START_TIME).strftime(
             "%A, %B %d, %Y %I:%M:%S"))
     initialize()
-    create_cos_api_key()
-    LOG.info('patching TMOS Images')
-    patch_images()
-    LOG.info('uploading TMOS images to IBM COS')
-    upload_images()
-    LOG.info('importing COS images to VPC custom images')
-    import_images()
+    try:
+        create_cos_api_key()
+        LOG.info('patching TMOS Images')
+        patch_images()
+        LOG.info('uploading TMOS images to IBM COS')
+        upload_images()
+        LOG.info('importing COS images to VPC custom images')
+        import_images()
+    except Exception as ex:
+        LOG.error('could not continue: %s', ex)
     clean_up()
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
