@@ -351,11 +351,13 @@ if __name__ == "__main__":
         datetime.datetime.fromtimestamp(START_TIME).strftime(
             "%A, %B %d, %Y %I:%M:%S"))
     initialize()
+    cos_resources_created = False
     try:
         LOG.info('checking for existing VPC custom images')
         get_required_regions()
         if REGION:
             create_cos_api_key()
+            cos_resources_created = True
             LOG.info('patching TMOS Images')
             patch_images()
             LOG.info('uploading TMOS images to IBM COS')
@@ -364,7 +366,8 @@ if __name__ == "__main__":
             import_images()
     except Exception as ex:
         LOG.error('could not continue: %s', ex)
-    clean_up()
+    if cos_resources_created:
+        clean_up()
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
     LOG.debug(
