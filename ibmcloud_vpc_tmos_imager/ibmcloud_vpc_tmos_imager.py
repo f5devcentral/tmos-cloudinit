@@ -241,15 +241,16 @@ def upload_images():
                             stdout=sys.stdout,
                             stderr=sys.stderr)
     proc.wait()
-    region = s_env('REGION')
-    region = [x.strip() for x in region.split(',')]
+    region = [x.strip() for x in REGION.split(',')]
     TMOS_IMAGE_CATALOG_URL = "https://%s-%s.s3.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (
         COS_BUCKET_PREFIX, region[0], region[0])
+    LOG.info('populating TMOS_IMAGE_CATALOG_URL for import phase as: ', TMOS_IMAGE_CATALOG_URL)
 
 
 def import_images():
     s_env = os.environ.copy()
     s_env['TMOS_IMAGE_CATALOG_URL'] = TMOS_IMAGE_CATALOG_URL
+    s_env['REGION'] = REGION
     cmd = os.path.join(os.path.dirname(__file__), '..',
                        'ibmcloud_vpc_image_importer',
                        'ibmcloud_vpc_image_importer.py')
