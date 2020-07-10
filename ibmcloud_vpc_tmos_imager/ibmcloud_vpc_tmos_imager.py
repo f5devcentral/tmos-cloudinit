@@ -216,9 +216,8 @@ def scan_for_disk_images():
     for image_file in os.listdir(tmos_image_dir):
         filepath = "%s/%s" % (tmos_image_dir, image_file)
         if os.path.isfile(filepath):
-            image_name = os.path.splitext(
-                os.path.splitext(image_file)[0])[0].replace('.', '-').replace(
-                    '_', '-').lower()
+            image_name = os.path.splitext(image_file).replace(
+                '.qcow2', '').replace('.', '-').replace('_', '-').lower()
             images_names.append(image_name)
     return images_names
 
@@ -243,17 +242,24 @@ def get_images(region):
 def get_required_regions():
     global REGION
     image_names = scan_for_disk_images()
-    regions = [x.strip() for x in REGION.split(',')]
-    regions_needed = []
-    for region in regions:
-        existing_images = get_images(region)
-        for image_name in image_names:
-            regional_name = "%s-%s" % (image_name, region)
-            if regional_name in existing_images:
-                LOG.debug('%s already exists', regional_name)
-            else:    
-                regions_needed.append(region)
-    REGION = ','.regions_needed
+    if image_names:
+        LOG.debug('searching for regional images for %s', image_names)
+        regions = [x.strip() for x in REGION.split(',')]
+        LOG.debug('searching regions')
+        regions_needed = []
+        for region in regions:
+            existing_images = get_images(region)
+            LOG.debug('found %s in region %s', existing_images, region)
+            for image_name in image_names:
+                regional_name = "%s-%s" % (image_name, region)
+                if regional_name in existing_images:
+                    LOG.debug('%s already exists', regional_name)
+                else:
+                    LOG.debug('need to create VPC image %s', regional_name)
+                    regions_needed.append(region)
+        REGION = ','.regions_needed
+    else:
+        REGION = ''
 
 
 def patch_images():
