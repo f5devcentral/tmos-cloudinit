@@ -32,16 +32,20 @@ import re
 import subprocess
 import uuid
 
+# ENV INPUTS
 API_KEY = None
 REGION = None
+UPDATE_IMAGES = False
+DELETE_ALL = False
+DELETE_VPC_IMAGE = True
 
+# CONSTANTS AND CONVENTIONS
+COS_STANDARD_PLAN_ID = '744bfc56-d12c-4866-88d5-dac9139e0e5d'  # standard plan ID
 COS_RESOURCE_NAME = 'custom-tmos-images'
 COS_BUCKET_PREFIX = "c%s" % str(uuid.uuid4())[0:8]
-
-TMOS_IMAGE_CATALOG_URL = None
-
 AUTH_ENDPOINT = 'https://iam.cloud.ibm.com/identity/token'
 
+# LOGGING
 LOG = logging.getLogger('ibmcloud_vpc_image_importer')
 LOG.setLevel(logging.DEBUG)
 FORMATTER = logging.Formatter(
@@ -50,21 +54,22 @@ LOGSTREAM = logging.StreamHandler(sys.stdout)
 LOGSTREAM.setFormatter(FORMATTER)
 LOG.addHandler(LOGSTREAM)
 
+# REQUEST SESSION AND RETRIES
 SESSION_TOKEN = None
 SESSION_TIMESTAMP = 0
 SESSION_SECONDS = 1800
+REQUEST_RETRIES = 10
+REQUEST_DELAY = 10
 
+# STATE
+IBM_ACCOUNT_ID = None
 RG_UUID = None
 RG_CRN = None
 COS_RESOURCE_UUID = None
 COS_RESOURCE_CRN = None
 COS_API_KEY_UUID = None
 COS_API_KEY = None
-
-DELETE_ALL = False
-UPDATE_IMAGES = False
-
-COS_STANDARD_PLAN_ID = '744bfc56-d12c-4866-88d5-dac9139e0e5d'
+TMOS_IMAGE_CATALOG_URL = None
 
 
 def get_iam_token():
@@ -83,11 +88,13 @@ def get_iam_token():
         SESSION_TOKEN = response.json()['access_token']
         return SESSION_TOKEN
     else:
+        LOG.error('could not get an access token %d - %s',
+                  response.status_code, response.content)
         return None
 
 
-def get_account_id():
-    token = get_iam_token()
+def get_account_id(token):
+    global IBM_ACCOUNT_ID
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -97,23 +104,24 @@ def get_account_id():
     ac_url = 'https://iam.cloud.ibm.com/v1/apikeys/details'
     response = requests.get(ac_url, headers=headers)
     if response.status_code < 300:
-        return response.json()['account_id']
+        IBM_ACCOUNT_ID = response.json()['account_id']
+        return True
     else:
-        return None
+        LOG.error('could not retrieve account id: %d - %s',
+                  response.status_code, response.content)
+        return False
 
 
-def create_resource_group():
+def create_resource_group(token):
     LOG.info('creating resource group for COS resources')
     global RG_UUID, RG_CRN
-    token = get_iam_token()
-    account_id = get_account_id()
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "Authorization": "Bearer %s" % token
     }
     rg_url = 'https://resource-controller.cloud.ibm.com/v2/resource_groups'
-    data = {"name": "rg%s" % COS_BUCKET_PREFIX, "acount_id": account_id}
+    data = {"name": "rg%s" % COS_BUCKET_PREFIX, "acount_id": IBM_ACCOUNT_ID}
     response = requests.post(rg_url, headers=headers, data=json.dumps(data))
     LOG.info('resource_groups create returned %d' % response.status_code)
     if response.status_code < 300:
@@ -121,12 +129,14 @@ def create_resource_group():
         RG_UUID = rj['id']
         RG_CRN = rj['crn']
         LOG.info('resource group crn: %s', RG_CRN)
+        return True
+    else:
+        LOG.info('error creating resource group %d - %s', response.status_code,
+                 response.content)
+        return False
 
 
-def create_cos_resource():
-    LOG.info('createing COS resource instance')
-    if not RG_UUID:
-        create_resource_group()
+def create_cos_resource(token):
     global COS_RESOURCE_CRN, COS_RESOURCE_UUID
     token = get_iam_token()
     headers = {
@@ -148,14 +158,16 @@ def create_cos_resource():
         COS_RESOURCE_CRN = rj['id']
         COS_RESOURCE_UUID = rj['guid']
         LOG.info('resource crn: %s', COS_RESOURCE_CRN)
+        return True
+    else:
+        LOG.error('error creating COS resource %d - %s', response.status_code,
+                  response.content)
+        return False
 
 
-def create_cos_api_key():
-    LOG.info('creating COS API key')
+def create_cos_api_key(token):
+    LOG.info('creating COS resources')
     global COS_API_KEY, COS_API_KEY_UUID
-    if not COS_RESOURCE_UUID:
-        create_cos_resource()
-    token = get_iam_token()
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -174,42 +186,98 @@ def create_cos_api_key():
         COS_API_KEY = rj['credentials']['apikey']
         COS_API_KEY_UUID = rj['guid']
         LOG.info('COS API KEY guid: %s', COS_API_KEY_UUID)
+        return True
+    else:
+        LOG.error('error creating COS API KEY %d - %s', response.status_code,
+                  response.content)
+        return False
 
 
-def delete_cos_api_key():
+def delete_cos_api_key(token):
     LOG.info('deleting COS API key %s', COS_API_KEY_UUID)
-    token = get_iam_token()
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "Authorization": "Bearer %s" % token
     }
     rg_url = "https://resource-controller.cloud.ibm.com/v2/resource_keys/%s" % COS_API_KEY_UUID
-    requests.delete(rg_url, headers=headers)
+    response = requests.delete(rg_url, headers=headers)
+    if response.status_code < 300:
+        return True
+    else:
+        LOG.error('error deleting COS API KEY %d - %s', response.status_code,
+                  response.content)
+        return False
 
 
-def delete_cos_resource():
+def delete_cos_resource(token):
     LOG.info('deleting COS resource %s', COS_RESOURCE_CRN)
-    token = get_iam_token()
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "Authorization": "Bearer %s" % token
     }
     rg_url = "https://resource-controller.cloud.ibm.com/v2/resource_instances/%s" % COS_RESOURCE_UUID
-    requests.delete(rg_url, headers=headers)
+    response = requests.delete(rg_url, headers=headers)
+    if response.status_code < 300:
+        return True
+    else:
+        LOG.error('error deleting COS resource %d - %s', response.status_code,
+                  response.content)
+        return False
 
 
-def delete_resource_group():
+def delete_resource_group(token):
     LOG.info('deleting resource group %s', RG_CRN)
-    token = get_iam_token()
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "Authorization": "Bearer %s" % token
     }
     rg_url = "https://resource-controller.cloud.ibm.com/v2/resource_groups/%s" % RG_UUID
-    requests.delete(rg_url, headers=headers)
+    response = requests.delete(rg_url, headers=headers)
+    if response.status_code < 300:
+        return True
+    else:
+        LOG.error('error deleting COS resource group %d - %s',
+                  response.status_code, response.content)
+        return False
+
+
+def make_request(func, token):
+    for i in range(REQUEST_RETRIES):
+        if func(token):
+            return True
+        time.sleep(REQUEST_DELAY)
+    return False
+
+
+def create_cos():
+    token = get_iam_token()
+    if not token:
+        return False
+    if not make_request(get_account_id, token):
+        return False
+    if not make_request(create_resource_group, token):
+        return False
+    if not make_request(create_cos_resource, token):
+        return False
+    if not make_request(create_cos_api_key, token):
+        return False
+    return True
+
+
+def clean_up_cos():
+    token = get_iam_token()
+    if not token:
+        return False
+    if COS_API_KEY_UUID and not make_request(delete_cos_api_key, token):
+        return False
+    if COS_RESOURCE_UUID and not make_request(delete_cos_resource, token):
+        return False
+    if RG_UUID and not make_request(delete_resource_group, token):
+        return False
+    return True
 
 
 def scan_for_disk_images():
@@ -239,6 +307,9 @@ def get_images(region):
         images = response.json()
         for image in images['images']:
             image_names.append(image['name'])
+    else:
+        LOG.error('could not retrieve existing VPC custom images %d - %s',
+                  response.status_code, response.content)
     return image_names
 
 
@@ -267,31 +338,61 @@ def delete_image_by_name(region, image_name):
 
 def get_required_regions():
     global REGION
-    image_names = scan_for_disk_images()
-    if image_names:
-        regions_needed = []
-        regions = [x.strip() for x in REGION.split(',')]
-        for region in regions:
-            existing_images = get_images(region)
-            for image_name in image_names:
-                regional_name = "%s-%s" % (image_name, region)
-                if regional_name in existing_images:
-                    if DELETE_ALL or UPDATE_IMAGES:
-                        if DELETE_ALL:
-                            LOG.info('deleting images %s', regional_name)
-                        elif UPDATE_IMAGES:
-                            LOG.info('deleteing before updating %s',
-                                     regional_name)
-                            regions_needed.append(region)
-                        delete_image_by_name(region, regional_name)
-                    else:
-                        LOG.debug('%s already exists', regional_name)
-                else:
-                    LOG.debug('need to create VPC image %s', regional_name)
-                    regions_needed.append(region)
-        REGION = ','.join(regions_needed)
-    else:
-        REGION = ''
+
+    # parse regions from environment
+    regions = [x.strip() for x in REGION.split(',')]
+    # lookup for region from either source (disk or existing)
+    name_to_region = {}
+
+    # populate what is need based on TMOS disk images
+    required_image_names = []
+    for region in regions:
+        for image_name in scan_for_disk_images():
+            regional_name = "%s-%s" % (image_name, region)
+            name_to_region[regional_name] = region
+            required_image_names.append(regional_name)
+
+    # populate what VPC images exist in VPCs
+    existing_image_names = []
+    for region in regions:
+        for image_name in get_images(region):
+            name_to_region[image_name] = region
+            existing_image_names.append(image_name)
+
+    # delete any existing images which are not on disk
+    for image_name in existing_image_names:
+        if image_name.startswith(
+                'bigip') and image_name not in required_image_names:
+            if DELETE_VPC_IMAGE:
+                LOG.info('image %s in VPC, but not on disk, deleting',
+                         image_name)
+                delete_image_by_name(name_to_region[image_name], image_name)
+
+    # determine which regions need syncrhonization from disk images
+    regions_needed = []
+    for image_name in required_image_names:
+        # add region to import if disk image does not exist
+        if image_name not in existing_image_names:
+            LOG.info('adding region %s to COS upload and VPC import',
+                     name_to_region[image_name])
+            regions_needed.append(name_to_region[image_name])
+        # if UPDATE_IMAGE, delete the existing image and add region to update
+        elif UPDATE_IMAGES:
+            LOG.info('deleting %s to update image', image_name)
+            delete_image_by_name(name_to_region[image_name], image_name)
+            LOG.info('adding region %s to COS upload and VPC import',
+                     name_to_region[image_name])
+            regions_needed.append(name_to_region[image_name])
+    REGION = ','.join(regions_needed)
+
+
+def delete_all_images():
+    # simply delete all images starting wtih 'bigip' in specified region(s)
+    regions = [x.strip() for x in REGION.split(',')]
+    for region in regions:
+        for image_name in get_images(region):
+            if image_name.startswith('bigip'):
+                delete_image_by_name(region, image_name)
 
 
 def patch_images():
@@ -347,14 +448,8 @@ def import_images():
     proc.wait()
 
 
-def clean_up():
-    delete_cos_api_key()
-    delete_cos_resource()
-    delete_resource_group()
-
-
 def initialize():
-    global API_KEY, REGION, DELETE_ALL, UPDATE_IMAGES
+    global API_KEY, REGION, UPDATE_IMAGES, DELETE_ALL, DELETE_VPC_IMAGE
     error = False
     API_KEY = os.getenv('API_KEY', None)
     if not API_KEY:
@@ -368,16 +463,22 @@ def initialize():
             'please specify a REGION enivornment varibale to use to create IBM Cloud resources'
         )
         error = True
-    UPDATE_IMAGES = os.getenv('UPDATE_IMAGES', 'false')
-    if UPDATE_IMAGES.lower() == 'true':
-        UPDATE_IMAGES = True
-    else:
-        UPDATE_IMAGES = False
+
     DELETE_ALL = os.getenv('DELETE_ALL', 'false')
     if DELETE_ALL.lower() == 'true':
         DELETE_ALL = True
     else:
         DELETE_ALL = False
+    DELETE_VPC_IMAGE = os.getenv('DELETE_VPC_IMAGE', 'true')
+    if DELETE_VPC_IMAGE.lower() == 'true':
+        DELETE_VPC_IMAGE = True
+    else:
+        DELETE_VPC_IMAGE = False
+    UPDATE_IMAGES = os.getenv('UPDATE_IMAGES', 'false')
+    if UPDATE_IMAGES.lower() == 'true':
+        UPDATE_IMAGES = True
+    else:
+        UPDATE_IMAGES = False
     if error:
         sys.exit(1)
 
@@ -392,23 +493,27 @@ if __name__ == "__main__":
         datetime.datetime.fromtimestamp(START_TIME).strftime(
             "%A, %B %d, %Y %I:%M:%S"))
     initialize()
-    cos_resources_created = False
-    try:
-        LOG.info('checking for existing VPC custom images')
-        get_required_regions()
-        if REGION and not DELETE_ALL:
-            create_cos_api_key()
-            cos_resources_created = True
-            LOG.info('patching TMOS Images')
-            patch_images()
-            LOG.info('uploading TMOS images to IBM COS')
-            upload_images()
-            LOG.info('importing COS images to VPC custom images')
-            import_images()
-    except Exception as ex:
-        LOG.error('could not continue: %s', ex)
-    if cos_resources_created:
-        clean_up()
+    if DELETE_ALL:
+        delete_all_images()
+    else:
+        cos_resources_created = False
+        try:
+            LOG.info('checking for existing VPC custom images')
+            get_required_regions()
+            cos_resources_created = create_cos()
+            if REGION and cos_resources_created:
+                LOG.info('patching TMOS Images')
+                patch_images()
+                LOG.info('uploading TMOS images to IBM COS')
+                upload_images()
+                LOG.info('importing COS images to VPC custom images')
+                import_images()
+        except Exception as ex:
+            LOG.error('could not continue: %s', ex)
+        if cos_resources_created:
+            if not clean_up_cos():
+                LOG.error(
+                    'could not assue COS resources were deleted properly')
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
     LOG.debug(
