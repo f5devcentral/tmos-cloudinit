@@ -500,14 +500,15 @@ if __name__ == "__main__":
         try:
             LOG.info('checking for existing VPC custom images')
             get_required_regions()
-            cos_resources_created = create_cos()
-            if REGION and cos_resources_created:
-                LOG.info('patching TMOS Images')
-                patch_images()
-                LOG.info('uploading TMOS images to IBM COS')
-                upload_images()
-                LOG.info('importing COS images to VPC custom images')
-                import_images()
+            if REGION:
+                cos_resources_created = create_cos()
+                if cos_resources_created:
+                    LOG.info('patching TMOS Images')
+                    patch_images()
+                    LOG.info('uploading TMOS images to IBM COS')
+                    upload_images()
+                    LOG.info('importing COS images to VPC custom images')
+                    import_images()
         except Exception as ex:
             LOG.error('could not continue: %s', ex)
         if cos_resources_created:
