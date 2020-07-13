@@ -10,6 +10,8 @@ The container functionality is driven by environment variables. The following en
 | :---------- | :------- | :-------- | :----------- |
 | API_KEY | None | Yes | IAM API key with access to the VPC Gen2 IaaS |
 | REGION | us-south | Yes | Which regions in the catalog to import |
+| DELETE_ALL | false | No | Delete all custom images matching TMOSImages directory |
+| UPDATE_IMAGES | false | No | Force update all custom images matching TMOSImages directory |
 
 The same container volume mounts used for `tmos_image_patcher` are required.
 

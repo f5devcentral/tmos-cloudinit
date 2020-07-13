@@ -61,6 +61,9 @@ COS_RESOURCE_CRN = None
 COS_API_KEY_UUID = None
 COS_API_KEY = None
 
+DELETE_ALL = False
+UPDATE_IMAGES = False
+
 COS_STANDARD_PLAN_ID = '744bfc56-d12c-4866-88d5-dac9139e0e5d'
 
 
@@ -239,22 +242,50 @@ def get_images(region):
     return image_names
 
 
+def delete_image_by_name(region, image_name):
+    token = get_iam_token()
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2020-04-07&generation=2&visibility=private" % region
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer %s" % token
+    }
+    response = requests.get(image_url, headers=headers)
+    if response.status_code < 300:
+        images = response.json()
+        for image in images['images']:
+            if image['name'] == image_name:
+                del_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2020-04-07&generation=2" % (
+                    region, image['id'])
+                response = requests.delete(del_url, headers=headers)
+                if response.status_code < 400:
+                    return True
+                else:
+                    LOG.error('error deleting image %d:%s',
+                              response.status_code, response.content)
+
+
 def get_required_regions():
     global REGION
     image_names = scan_for_disk_images()
     if image_names:
         regions_needed = []
-        LOG.debug('searching for regional images for %s', image_names)
         regions = [x.strip() for x in REGION.split(',')]
-        LOG.debug('searching regions %s', regions)
-        
         for region in regions:
             existing_images = get_images(region)
-            LOG.debug('found %s in region %s', existing_images, region)
             for image_name in image_names:
                 regional_name = "%s-%s" % (image_name, region)
                 if regional_name in existing_images:
-                    LOG.debug('%s already exists', regional_name)
+                    if DELETE_ALL or UPDATE_IMAGES:
+                        if DELETE_ALL:
+                            LOG.info('deleting images %s', regional_name)
+                        elif UPDATE_IMAGES:
+                            LOG.info('deleteing before updating %s',
+                                     regional_name)
+                            regions_needed.append(region)
+                        delete_image_by_name(region, regional_name)
+                    else:
+                        LOG.debug('%s already exists', regional_name)
                 else:
                     LOG.debug('need to create VPC image %s', regional_name)
                     regions_needed.append(region)
@@ -323,7 +354,7 @@ def clean_up():
 
 
 def initialize():
-    global API_KEY, REGION
+    global API_KEY, REGION, DELETE_ALL, UPDATE_IMAGES
     error = False
     API_KEY = os.getenv('API_KEY', None)
     if not API_KEY:
@@ -337,6 +368,16 @@ def initialize():
             'please specify a REGION enivornment varibale to use to create IBM Cloud resources'
         )
         error = True
+    UPDATE_IMAGES = os.getenv('UPDATE_IMAGES', 'false')
+    if UPDATE_IMAGES.lower() == 'true':
+        UPDATE_IMAGES = True
+    else:
+        UPDATE_IMAGES = False
+    DELETE_ALL = os.getenv('DELETE_ALL', 'false')
+    if DELETE_ALL.lower() == 'true':
+        DELETE_ALL = True
+    else:
+        DELETE_ALL = False
     if error:
         sys.exit(1)
 
@@ -355,7 +396,7 @@ if __name__ == "__main__":
     try:
         LOG.info('checking for existing VPC custom images')
         get_required_regions()
-        if REGION:
+        if REGION and not DELETE_ALL:
             create_cos_api_key()
             cos_resources_created = True
             LOG.info('patching TMOS Images')
