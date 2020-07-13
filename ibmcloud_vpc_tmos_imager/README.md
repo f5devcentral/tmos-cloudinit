@@ -6,11 +6,11 @@ This container assumes association between BIG-IP qcow2.zip files from downloads
 
 ```BIGIP.x.y.z-n.n.nnn.type-1SLOT.qcow2.zip``` -> ```bigip-x-y-z-n-n-nnn-type-1slot-region```
 
-By default, the discovered BIG-IP images found in the TMOSImages volume will be synchronized to the region(s) specified in the REGION environment variable. If a IBM VPC custom starting with ```bigip``` is found in a region without a corresponding disk image in TMOSImages, the IBM VPC image will be delete. This can be alterred by changing the default behavior using the ```DELETE_VPC_IMAGE``` environment variable.
+By default, the discovered BIG-IP images found in the TMOSImages volume will be synchronized to the region(s) specified in the REGION environment variable. If a IBM VPC custom image starting with ```bigip``` is found in a region without a corresponding disk image in TMOSImages, the IBM VPC image will be delete. This default behavior can be alterred by changing the ```DELETE_VPC_IMAGE``` environment variable to ```false```.
 
-There is also a convience ```DELETE_ALL``` environment variable which will simply delete all VPC custom images starting ```bigip``` and exit.
+There is also a convenience ```DELETE_ALL``` environment variable which will simply delete all VPC custom images starting ```bigip``` and exit.
 
-All IBM COS resources are considered ephemeral for this process. They are created and destroyed. The image catalog will not be available when the container run is complete. The IBM COS resources are named randomly to assue uniquness.
+All IBM COS resources are considered ephemeral for this process. They are created and destroyed dynamically. No image catalog COS URL will be available when the container run is complete. The IBM COS resources are named randomly to assue uniquness in the resource and bucket naming.
 
 The container functionality is driven by environment variables. The following environment variables are supported:
 
