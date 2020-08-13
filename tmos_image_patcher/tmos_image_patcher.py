@@ -69,7 +69,7 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
             (is_tmos, config_dev, usr_dev, var_dev, shared_dev) = \
                 validate_tmos_device(disk_image)
             if is_tmos:
-                manifest_file_path = "%s.manifest.json" % disk_image
+                manifest_file_path = "%s.manifest" % disk_image
                 if os.path.exists(manifest_file_path):
                     LOG.info('deleting previous manifest file %s', manifest_file_path)
                     os.unlink(manifest_file_path)
@@ -241,7 +241,7 @@ def clean_ovf(ovf_file_path):
 
 
 def add_to_manifest(filepath, disk_image):
-    manifest_file_path = "%s.manifest.json" % disk_image
+    manifest_file_path = "%s.manifest" % disk_image
     disk_name = os.path.basename(disk_image)
     if not os.path.exists(manifest_file_path):
         LOG.info('creating manifest file for %s as %s', disk_name, manifest_file_path)
