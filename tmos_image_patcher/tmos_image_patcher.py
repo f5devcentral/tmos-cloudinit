@@ -69,6 +69,10 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
             (is_tmos, config_dev, usr_dev, var_dev, shared_dev) = \
                 validate_tmos_device(disk_image)
             if is_tmos:
+                manifest_file_path = "%s.manifest.json" % disk_image
+                if os.path.exists(manifest_file_path):
+                    LOG.info('deleting previous manifest file %s', manifest_file_path)
+                    os.unlink(manifest_file_path)
                 if usr_dev and tmos_cloudinit_dir:
                     update_cloudinit = os.getenv(
                         'UPDATE_CLOUDINIT', default="true")
@@ -236,6 +240,16 @@ def clean_ovf(ovf_file_path):
     os.remove(os.path.join(working_dir, "%s.backup" % file_name))
 
 
+def add_to_manifest(filepath, disk_image):
+    manifest_file_path = "%s.manifest.json" % disk_image
+    disk_name = os.path.basename(disk_image)
+    if not os.path.exists(manifest_file_path):
+        LOG.info('creating manifest file for %s as %s', disk_name, manifest_file_path)
+    with open(manifest_file_path, 'a+') as mf:
+        LOG.info('adding %s to %s', filepath, manifest_file_path)
+        mf.write("%s\n" % filepath)
+
+
 def generate_md5sum(disk_image):
     """Create MD5 sum file for the disk image"""
     md5_file_path = "%s.md5" % disk_image
@@ -345,6 +359,7 @@ def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, dev):
         mkdir_path = os.path.dirname(remote)
         gfs.mkdir_p(mkdir_path)
         gfs.upload(local, remote)
+        add_to_manifest(remote, disk_image)
     gfs.sync()
     gfs.shutdown()
     gfs.close()
@@ -362,6 +377,7 @@ def inject_cloudinit_config_template(disk_image, tmos_cloudinit_dir, cloud_templ
     dest_template_file = "%s/cloud-init.tmpl" % mkdir_path
     gfs.mkdir_p(mkdir_path)
     gfs.upload(cloud_template_file, dest_template_file)
+    add_to_manifest(dest_template_file, disk_image)
     gfs.sync()
     gfs.shutdown()
     gfs.close()
@@ -389,6 +405,7 @@ def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
             mkdir_path = os.path.dirname(remote)
             gfs.mkdir_p(mkdir_path)
             gfs.upload(local, remote)
+            add_to_manifest(remote, disk_image)
     gfs.sync()
     gfs.shutdown()
     gfs.close()
@@ -412,6 +429,7 @@ def inject_usr_files(disk_image, usr_dir, dev):
         mkdir_path = os.path.dirname(usr_file)
         gfs.mkdir_p(mkdir_path)
         gfs.upload(local, usr_file)
+        add_to_manifest(usr_file, disk_image)
     gfs.sync()
     gfs.shutdown()
     gfs.close()
@@ -435,6 +453,7 @@ def inject_var_files(disk_image, var_dir, dev):
         mkdir_path = os.path.dirname(var_file)
         gfs.mkdir_p(mkdir_path)
         gfs.upload(local, var_file)
+        add_to_manifest(var_file, disk_image)
     gfs.sync()
     gfs.shutdown()
     gfs.close()
@@ -458,6 +477,7 @@ def inject_shared_files(disk_image, shared_dir, dev):
         mkdir_path = os.path.dirname(shared_file)
         gfs.mkdir_p(mkdir_path)
         gfs.upload(local, shared_file)
+        add_to_manifest(shared_file, disk_image)
     gfs.sync()
     gfs.shutdown()
     gfs.close()
@@ -483,6 +503,7 @@ def inject_config_files(disk_image, config_dir, dev):
         mkdir_path = os.path.dirname(config_file)
         gfs.mkdir_p(mkdir_path)
         gfs.upload(local, config_file)
+        add_to_manifest(config_file, disk_image)
     gfs.sync()
     gfs.shutdown()
     gfs.close()
