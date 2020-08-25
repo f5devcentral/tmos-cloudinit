@@ -37,7 +37,6 @@ from Crypto.Hash import SHA384
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.PublicKey import RSA
 
-
 ARCHIVE_EXTS = {'.zip': 'zipfile', '.ova': 'tarfile'}
 IMAGE_TYPES = ['.qcow2', '.vhd', '.vmdk']
 
@@ -57,11 +56,10 @@ LOGSTREAM.setFormatter(FORMATTER)
 LOG.addHandler(LOGSTREAM)
 
 
-def patch_images(tmos_image_dir, tmos_cloudinit_dir,
-                 tmos_usr_inject_dir, tmos_var_inject_dir,
-                 tmos_config_inject_dir, tmos_shared_inject_dir,
-                 tmos_icontrollx_dir, private_pem_key_path,
-                 cloud_template_file, image_overwrite):
+def patch_images(tmos_image_dir, tmos_cloudinit_dir, tmos_usr_inject_dir,
+                 tmos_var_inject_dir, tmos_config_inject_dir,
+                 tmos_shared_inject_dir, tmos_icontrollx_dir,
+                 private_pem_key_path, cloud_template_file, image_overwrite):
     """Patch TMOS classic disk image"""
     if tmos_image_dir and os.path.exists(tmos_image_dir):
         for disk_image in scan_for_images(tmos_image_dir, image_overwrite):
@@ -71,41 +69,51 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir,
             if is_tmos:
                 manifest_file_path = "%s.manifest" % disk_image
                 if os.path.exists(manifest_file_path):
-                    LOG.info('deleting previous manifest file %s', manifest_file_path)
+                    LOG.info('deleting previous manifest file %s',
+                             manifest_file_path)
                     os.unlink(manifest_file_path)
                 if usr_dev and tmos_cloudinit_dir:
-                    update_cloudinit = os.getenv(
-                        'UPDATE_CLOUDINIT', default="true")
+                    update_cloudinit = os.getenv('UPDATE_CLOUDINIT',
+                                                 default="true")
                     if update_cloudinit == "true":
                         update_cloudinit_modules(tmos_cloudinit_dir)
-                    inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, usr_dev)
+                    inject_cloudinit_modules(disk_image, tmos_cloudinit_dir,
+                                             usr_dev)
                 if usr_dev and cloud_template_file:
-                    inject_cloudinit_config_template(disk_image, tmos_cloudinit_dir, cloud_template_file, usr_dev)
+                    inject_cloudinit_config_template(disk_image,
+                                                     tmos_cloudinit_dir,
+                                                     cloud_template_file,
+                                                     usr_dev)
                 if usr_dev and tmos_usr_inject_dir:
                     inject_usr_files(disk_image, tmos_usr_inject_dir, usr_dev)
                 if var_dev and tmos_var_inject_dir:
                     inject_var_files(disk_image, tmos_var_inject_dir, var_dev)
                 if var_dev and tmos_icontrollx_dir:
-                    inject_icontrollx_packages(
-                        disk_image, tmos_icontrollx_dir, var_dev)
+                    inject_icontrollx_packages(disk_image, tmos_icontrollx_dir,
+                                               var_dev)
                 if shared_dev and tmos_shared_inject_dir:
-                    inject_shared_files(
-                        disk_image, tmos_shared_inject_dir, shared_dev)
+                    inject_shared_files(disk_image, tmos_shared_inject_dir,
+                                        shared_dev)
                 if config_dev and tmos_config_inject_dir:
-                    inject_config_files(
-                        disk_image, tmos_config_inject_dir, config_dev)
+                    inject_config_files(disk_image, tmos_config_inject_dir,
+                                        config_dev)
                 if os.path.splitext(disk_image)[1] == '.vmdk':
                     clean_up_vmdk(disk_image)
-                    disk_image = "%s/%s.ova" % (os.path.dirname(disk_image), os.path.basename(os.path.dirname(disk_image)))
+                    disk_image = "%s/%s.ova" % (
+                        os.path.dirname(disk_image),
+                        os.path.basename(os.path.dirname(disk_image)))
             generate_md5sum(disk_image)
             if private_pem_key_path:
                 try:
                     sign_image(disk_image, private_pem_key_path)
                 except Exception as ex:
-                    LOG.error("could not sign %s with private key %s: %s", disk_image, private_pem_key_path, ex)
+                    LOG.error("could not sign %s with private key %s: %s",
+                              disk_image, private_pem_key_path, ex)
     else:
         LOG.error("TMOS image directory %s does not exist.", tmos_image_dir)
-        LOG.error("Set environment variable TMOS_IMAGE_DIR or supply as the first argument to the script.")
+        LOG.error(
+            "Set environment variable TMOS_IMAGE_DIR or supply as the first argument to the script."
+        )
         sys.exit(1)
 
 
@@ -119,13 +127,17 @@ def scan_for_images(tmos_image_dir, image_overwrite):
                                      os.path.splitext(image_file)[0])
             if os.path.exists(extract_dir):
                 found_sum_files = False
-                LOG.debug('examining existing patching directory %s' % extract_dir)
+                LOG.debug('examining existing patching directory %s' %
+                          extract_dir)
                 for existing_file in os.listdir(extract_dir):
                     if os.path.splitext(existing_file)[1] == '.md5':
-                        LOG.debug('found previous patching artifact file %s' % existing_file)
+                        LOG.debug('found previous patching artifact file %s' %
+                                  existing_file)
                         found_sum_files = True
                 if not image_overwrite and found_sum_files:
-                    LOG.info('previous patch artifacts found in %s.. skipping patching.' % extract_dir)
+                    LOG.info(
+                        'previous patch artifacts found in %s.. skipping patching.'
+                        % extract_dir)
                     continue
             else:
                 LOG.debug('creating patching directory %s' % extract_dir)
@@ -170,16 +182,15 @@ def convert_vmdk(image_file, variant):
     LOG.warn('converting VMDK format to %s format', variant)
     os.chdir(convert_dir)
     FNULL = open(os.devnull, 'w')
-    subprocess.call(
-        [
+    subprocess.call([
             VBOXMANAGE_CLI,
             'clonemedium',
             '--format',
             VBOXMANAGE_CLI_FORMAT,
             '--variant',
-            variant,
-            image_file,
-            'converted.vmdk',
+             variant,
+             image_file,
+             'converted.vmdk',
         ],
         stdout=FNULL,
         stderr=subprocess.STDOUT
@@ -223,10 +234,10 @@ def clean_ovf(ovf_file_path):
     """Remove OVF references to proprietary image"""
     working_dir = os.path.dirname(ovf_file_path)
     file_name = os.path.basename(ovf_file_path)
-    os.rename(ovf_file_path, os.path.join(
-        working_dir, "%s.backup" % file_name))
-    original_ovf = open(os.path.join(
-        working_dir, "%s.backup" % file_name), 'r')
+    os.rename(ovf_file_path, os.path.join(working_dir,
+                                          "%s.backup" % file_name))
+    original_ovf = open(os.path.join(working_dir, "%s.backup" % file_name),
+                        'r')
     new_ovf = open(ovf_file_path, 'w')
     for line in original_ovf:
         if 'ovf:size' in line:
@@ -244,7 +255,8 @@ def add_to_manifest(filepath, disk_image):
     manifest_file_path = "%s.manifest" % disk_image
     disk_name = os.path.basename(disk_image)
     if not os.path.exists(manifest_file_path):
-        LOG.info('creating manifest file for %s as %s', disk_name, manifest_file_path)
+        LOG.info('creating manifest file for %s as %s', disk_name,
+                 manifest_file_path)
     with open(manifest_file_path, 'a+') as mf:
         LOG.info('adding %s to %s', filepath, manifest_file_path)
         mf.write("%s\n" % filepath)
@@ -256,7 +268,7 @@ def generate_md5sum(disk_image):
     LOG.info('creating md5sum file for %s as %s', disk_image, md5_file_path)
     md5_hash = hashlib.md5()
     with open(disk_image, 'rb') as di:
-        for block in iter(lambda: di.read(4096),b''):
+        for block in iter(lambda: di.read(4096), b''):
             md5_hash.update(block)
         with open(md5_file_path, 'w+') as md5sum:
             md5sum.write(md5_hash.hexdigest())
@@ -268,7 +280,7 @@ def sign_image(disk_image, private_key):
     LOG.info('signing image %s with private key %s', disk_image, private_key)
     sha384_hash = SHA384.new()
     with open(disk_image, 'rb') as di:
-        for block in iter(lambda: di.read(4096),b''):
+        for block in iter(lambda: di.read(4096), b''):
             sha384_hash.update(block)
         pk = False
         with open(private_key, 'r') as key_file:
@@ -305,7 +317,8 @@ def validate_tmos_device(disk_image):
         if 'share' in file_system:
             shared_dev = file_system
     if not is_tmos:
-        LOG.warn('%s is not a TMOS image file.. skipping file injection..', disk_image)
+        LOG.warn('%s is not a TMOS image file.. skipping file injection..',
+                 disk_image)
     gfs.sync()
     gfs.shutdown()
     gfs.close()
@@ -318,22 +331,20 @@ def update_cloudinit_modules(tmos_cloudinit_dir):
     LOG.info('pulling latest cloudinit modules')
     start_directory = os.getcwd()
     os.chdir(tmos_cloudinit_dir)
-    gitout = subprocess.Popen(
-        "git pull",
-        stdout=subprocess.PIPE, shell=True
-    ).communicate()[0].split('\n')
+    gitout = subprocess.Popen("git pull", stdout=subprocess.PIPE,
+                              shell=True).communicate()[0].split('\n')
     LOG.debug('git returned: %s', gitout)
     os.chdir(start_directory)
 
 
-def replace_in_file( filePath, text, subs, flags=0 ):
-    with open( filePath, "r+" ) as file:
+def replace_in_file(filePath, text, subs, flags=0):
+    with open(filePath, "r+") as file:
         fileContents = file.read()
-        textPattern = re.compile( re.escape( text ), flags )
-        fileContents = textPattern.sub( subs, fileContents )
-        file.seek( 0 )
+        textPattern = re.compile(re.escape(text), flags)
+        fileContents = textPattern.sub(subs, fileContents)
+        file.seek(0)
         file.truncate()
-        file.write( fileContents )
+        file.write(fileContents)
 
 
 def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, dev):
@@ -366,14 +377,16 @@ def inject_cloudinit_modules(disk_image, tmos_cloudinit_dir, dev):
     wait_for_gfs(gfs)
 
 
-def inject_cloudinit_config_template(disk_image, tmos_cloudinit_dir, cloud_template_file, dev):
+def inject_cloudinit_config_template(disk_image, tmos_cloudinit_dir,
+                                     cloud_template_file, dev):
     """Inject cloudinit configuration template into TMOS disk image"""
-    LOG.debug('injecting cloudinit configuration template %s' % cloud_template_file)
+    LOG.debug('injecting cloudinit configuration template %s' %
+              cloud_template_file)
     gfs = guestfs.GuestFS(python_return_dict=True)
     gfs.add_drive_opts(disk_image)
     gfs.launch()
     gfs.mount(dev, '/')
-    mkdir_path='/share/defaults/config/templates'
+    mkdir_path = '/share/defaults/config/templates'
     dest_template_file = "%s/cloud-init.tmpl" % mkdir_path
     gfs.mkdir_p(mkdir_path)
     gfs.upload(cloud_template_file, dest_template_file)
@@ -386,7 +399,9 @@ def inject_cloudinit_config_template(disk_image, tmos_cloudinit_dir, cloud_templ
 
 def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
     """Inject iControl LX install packages into TMOS disk image"""
-    LOG.debug('injecting files from %s into /var/lib/cloud/icontrollx_installs' % icontrollx_dir)
+    LOG.debug(
+        'injecting files from %s into /var/lib/cloud/icontrollx_installs' %
+        icontrollx_dir)
     gfs = guestfs.GuestFS(python_return_dict=True)
     gfs.add_drive_opts(disk_image)
     gfs.launch()
@@ -394,14 +409,14 @@ def inject_icontrollx_packages(disk_image, icontrollx_dir, dev):
     package_files = []
     for root, dirs, files in os.walk(icontrollx_dir):
         for file_name in files:
-            package_files.append(os.path.join(
-                root, file_name)[len(icontrollx_dir):])
+            package_files.append(
+                os.path.join(root, file_name)[len(icontrollx_dir):])
     for package_file in package_files:
         if not package_file.startswith('/.'):
             local = "%s%s" % (icontrollx_dir, package_file)
             remote = "/lib/cloud/icontrollx_installs%s" % package_file
-            LOG.debug('injecting %s to /var%s',
-                      os.path.basename(local), remote)
+            LOG.debug('injecting %s to /var%s', os.path.basename(local),
+                      remote)
             mkdir_path = os.path.dirname(remote)
             gfs.mkdir_p(mkdir_path)
             gfs.upload(local, remote)
@@ -470,10 +485,12 @@ def inject_shared_files(disk_image, shared_dir, dev):
     shared_files = []
     for root, dirs, files in os.walk(shared_dir):
         for file_name in files:
-            shared_files.append(os.path.join(root, file_name)[len(shared_dir):])
+            shared_files.append(
+                os.path.join(root, file_name)[len(shared_dir):])
     for shared_file in shared_files:
         local = "%s%s" % (shared_dir, shared_file)
-        LOG.debug('injecting %s to /shared%s', os.path.basename(local), shared_file)
+        LOG.debug('injecting %s to /shared%s', os.path.basename(local),
+                  shared_file)
         mkdir_path = os.path.dirname(shared_file)
         gfs.mkdir_p(mkdir_path)
         gfs.upload(local, shared_file)
@@ -494,12 +511,12 @@ def inject_config_files(disk_image, config_dir, dev):
     config_files = []
     for root, dirs, files in os.walk(config_dir):
         for file_name in files:
-            config_files.append(os.path.join(
-                root, file_name)[len(config_dir):])
+            config_files.append(
+                os.path.join(root, file_name)[len(config_dir):])
     for config_file in config_files:
         local = "%s%s" % (config_dir, config_file)
-        LOG.debug('injecting %s to /config%s',
-                  os.path.basename(local), config_file)
+        LOG.debug('injecting %s to /config%s', os.path.basename(local),
+                  config_file)
         mkdir_path = os.path.dirname(config_file)
         gfs.mkdir_p(mkdir_path)
         gfs.upload(local, config_file)
@@ -515,20 +532,23 @@ if __name__ == "__main__":
         print "Please run this script as sudo"
         sys.exit(1)
     START_TIME = time.time()
-    LOG.debug('process start time: %s', datetime.datetime.fromtimestamp(
-        START_TIME).strftime("%A, %B %d, %Y %I:%M:%S"))
+    LOG.debug(
+        'process start time: %s',
+        datetime.datetime.fromtimestamp(START_TIME).strftime(
+            "%A, %B %d, %Y %I:%M:%S"))
     IMAGE_OVERWRITE = os.getenv('IMAGE_OVERWRITE', '0')
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     TMOS_CLOUDINIT_DIR = os.getenv('TMOS_CLOUDINIT_DIR', '/tmos-cloudinit')
-    TMOS_ICONTROLLX_DIR = os.getenv(
-        'TMOS_ICONTROLLX_DIR', '/icontrollx_installs')
+    TMOS_ICONTROLLX_DIR = os.getenv('TMOS_ICONTROLLX_DIR',
+                                    '/icontrollx_installs')
     TMOS_USR_INJECT_DIR = os.getenv('TMOS_USR_INJECT_DIR', None)
     TMOS_VAR_INJECT_DIR = os.getenv('TMOS_VAR_INJECT_DIR', None)
     TMOS_SHARED_INJECT_DIR = os.getenv('TMOS_SHARED_INJECT_DIR', None)
     TMOS_CONFIG_INJECT_DIR = os.getenv('TMOS_CONFIG_INJECT_DIR', None)
     PRIVATE_PEM_KEY_DIR = os.getenv('PRIVATE_PEM_KEY_PATH', '/keys')
     PRIVATE_PEM_KEY_FILE = os.getenv('PRIVATE_PEM_KEY_FILE', None)
-    TMOS_CLOUDINIT_CONFIG_TEMPLATE = os.getenv('TMOS_CLOUDINIT_CONFIG_TEMPLATE', None)
+    TMOS_CLOUDINIT_CONFIG_TEMPLATE = os.getenv(
+        'TMOS_CLOUDINIT_CONFIG_TEMPLATE', None)
     if len(sys.argv) > 1:
         TMOS_IMAGE_DIR = sys.argv[1]
     if len(sys.argv) > 2:
@@ -541,34 +561,38 @@ if __name__ == "__main__":
         LOG.info("Copying iControl LX install packages from: %s",
                  TMOS_ICONTROLLX_DIR)
     if TMOS_USR_INJECT_DIR:
-        LOG.info("Patching TMOS /usr file system from: %s", TMOS_USR_INJECT_DIR)
+        LOG.info("Patching TMOS /usr file system from: %s",
+                 TMOS_USR_INJECT_DIR)
     if TMOS_VAR_INJECT_DIR:
-        LOG.info("Patching TMOS /var file system from: %s", TMOS_VAR_INJECT_DIR)
+        LOG.info("Patching TMOS /var file system from: %s",
+                 TMOS_VAR_INJECT_DIR)
     if TMOS_SHARED_INJECT_DIR:
-        LOG.info("Patching TMOS /shared file system from: %s", TMOS_SHARED_INJECT_DIR)
+        LOG.info("Patching TMOS /shared file system from: %s",
+                 TMOS_SHARED_INJECT_DIR)
     if TMOS_CONFIG_INJECT_DIR:
         LOG.info("Patching TMOS /config file system from: %s",
                  TMOS_CONFIG_INJECT_DIR)
     PRIVATE_KEY_PATH = None
-    if PRIVATE_PEM_KEY_FILE and os.path.exists("%s/%s" % (PRIVATE_PEM_KEY_DIR, PRIVATE_PEM_KEY_FILE)):
-        PRIVATE_KEY_PATH = "%s/%s" % (PRIVATE_PEM_KEY_DIR, PRIVATE_PEM_KEY_FILE)
-    if IMAGE_OVERWRITE == "1" or IMAGE_OVERWRITE.lower() == 'yes' or IMAGE_OVERWRITE.lower() == 'true':
+    if PRIVATE_PEM_KEY_FILE and os.path.exists(
+            "%s/%s" % (PRIVATE_PEM_KEY_DIR, PRIVATE_PEM_KEY_FILE)):
+        PRIVATE_KEY_PATH = "%s/%s" % (PRIVATE_PEM_KEY_DIR,
+                                      PRIVATE_PEM_KEY_FILE)
+    if IMAGE_OVERWRITE == "1" or IMAGE_OVERWRITE.lower(
+    ) == 'yes' or IMAGE_OVERWRITE.lower() == 'true':
         IMAGE_OVERWRITE = True
         LOG.info('force overwrite of existing patch file artifacts')
     else:
         IMAGE_OVERWRITE = False
     if TMOS_CLOUDINIT_CONFIG_TEMPLATE:
-        LOG.info('cloudinit configuration template: %s' % TMOS_CLOUDINIT_CONFIG_TEMPLATE)
-    patch_images(TMOS_IMAGE_DIR, TMOS_CLOUDINIT_DIR,
-                 TMOS_USR_INJECT_DIR, TMOS_VAR_INJECT_DIR,
-                 TMOS_CONFIG_INJECT_DIR, TMOS_SHARED_INJECT_DIR,
-                 TMOS_ICONTROLLX_DIR, PRIVATE_KEY_PATH, TMOS_CLOUDINIT_CONFIG_TEMPLATE,
-                 IMAGE_OVERWRITE)
+        LOG.info('cloudinit configuration template: %s' %
+                 TMOS_CLOUDINIT_CONFIG_TEMPLATE)
+    patch_images(TMOS_IMAGE_DIR, TMOS_CLOUDINIT_DIR, TMOS_USR_INJECT_DIR,
+                 TMOS_VAR_INJECT_DIR, TMOS_CONFIG_INJECT_DIR,
+                 TMOS_SHARED_INJECT_DIR, TMOS_ICONTROLLX_DIR, PRIVATE_KEY_PATH,
+                 TMOS_CLOUDINIT_CONFIG_TEMPLATE, IMAGE_OVERWRITE)
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
     LOG.debug(
         'process end time: %s - ran %s (seconds)',
-        datetime.datetime.fromtimestamp(
-            STOP_TIME).strftime("%A, %B %d, %Y %I:%M:%S"),
-        DURATION
-    )
+        datetime.datetime.fromtimestamp(STOP_TIME).strftime(
+            "%A, %B %d, %Y %I:%M:%S"), DURATION)
