@@ -32,7 +32,7 @@ import re
 
 TMOS_IMAGE_CATALOG_URL = None
 API_KEY = None
-IMAGE_MATCH = '^[a-zA-Z]'
+IMAGE_MATCH = '^big.*i[pq]'
 REGION = 'us-south'
 UPDATE_IMAGES = None
 DRY_RUN = None
@@ -249,7 +249,7 @@ def initialize():
         'https://f5-image-catalog-us-south.s3.us-south.cloud-object-storage.appdomain.cloud/f5-image-catalog.json'
     )
     API_KEY = os.getenv('API_KEY', None)
-    IMAGE_MATCH = os.getenv('IMAGE_MATCH', '^[a-zA-Z]')
+    IMAGE_MATCH = os.getenv('IMAGE_MATCH', '^big.*i[pq]')
     REGION = os.getenv('REGION', 'us-south')
     REGION = [ x.strip() for x in REGION.split(',') ]
     DRY_RUN = os.getenv('DRY_RUN', 'false')

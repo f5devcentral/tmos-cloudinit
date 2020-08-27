@@ -18,6 +18,7 @@ The container functionality is driven by environment variables. The following en
 | :---------- | :------- | :-------- | :----------- |
 | API_KEY | None | Yes | IAM API key with access to the VPC Gen2 IaaS |
 | REGION | us-south | Yes | Which regions in the catalog to import, either a single or comma separated list |
+| IMAGE_MATCH | ^big.*i[pq] | Regex match to delete or include images |
 | DELETE_ALL | false | No | Delete all custom images in the specified region only |
 | DELETE_VPC_IMAGE | true | No | Delete any VPC images which are not present in the TMOSImages directory |
 | UPDATE_IMAGES | false | No | Force update all custom images matching images in the TMOSImages directory |

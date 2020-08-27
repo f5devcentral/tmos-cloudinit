@@ -70,6 +70,7 @@ COS_RESOURCE_CRN = None
 COS_API_KEY_UUID = None
 COS_API_KEY = None
 TMOS_IMAGE_CATALOG_URL = None
+IMAGE_MATCH = '^big.*i[pq]'
 
 
 def get_iam_token():
@@ -361,8 +362,7 @@ def get_required_regions():
 
     # delete any existing images which are not on disk
     for image_name in existing_image_names:
-        if image_name.startswith(
-                'bigip') and image_name not in required_image_names:
+        if re.search(IMAGE_MATCH, image_name) and image_name not in required_image_names:
             if DELETE_VPC_IMAGE:
                 LOG.info('image %s in VPC, but not on disk, deleting',
                          image_name)
@@ -387,11 +387,11 @@ def get_required_regions():
 
 
 def delete_all_images():
-    # simply delete all images starting wtih 'bigip' in specified region(s)
+    # simply delete all images matching IMAGE_MATCH in specified region(s)
     regions = [x.strip() for x in REGION.split(',')]
     for region in regions:
         for image_name in get_images(region):
-            if image_name.startswith('bigip'):
+            if re.search(IMAGE_MATCH, image_name):
                 delete_image_by_name(region, image_name)
 
 
@@ -449,7 +449,7 @@ def import_images():
 
 
 def initialize():
-    global API_KEY, REGION, UPDATE_IMAGES, DELETE_ALL, DELETE_VPC_IMAGE
+    global API_KEY, REGION, UPDATE_IMAGES, DELETE_ALL, DELETE_VPC_IMAGE, IMAGE_MATCH
     error = False
     API_KEY = os.getenv('API_KEY', None)
     if not API_KEY:
@@ -463,7 +463,7 @@ def initialize():
             'please specify a REGION enivornment varibale to use to create IBM Cloud resources'
         )
         error = True
-
+    IMAGE_MATCH = os.getenv('IMAGE_MATCH', '^[a-zA-Z]')
     DELETE_ALL = os.getenv('DELETE_ALL', 'false')
     if DELETE_ALL.lower() == 'true':
         DELETE_ALL = True
