@@ -207,15 +207,16 @@ def delete_all():
         try:
             for bucket in cos_res.buckets.all():
                 if location in bucket.name:
-                    delete_bucket = False
-                    for obj in cos_res.Bucket(bucket.name).objects.all():
-                        if re.search(IMAGE_MATCH, obj.key):
-                            LOG.debug('deleting object: %s', obj.key)
-                            obj.delete()
-                            delete_bucket = True
-                    if delete_bucket:
-                        LOG.debug('deleting bucket: %s', bucket.name)
-                        bucket.delete()
+                    if bucket.name.startswith(COS_BUCKET_PREFIX):
+                        delete_bucket = False
+                        for obj in cos_res.Bucket(bucket.name).objects.all():
+                            if re.search(IMAGE_MATCH, obj.key):
+                                LOG.debug('deleting object: %s', obj.key)
+                                obj.delete()
+                                delete_bucket = True
+                        if delete_bucket:
+                            LOG.debug('deleting bucket: %s', bucket.name)
+                            bucket.delete()
         except ClientError as client_error:
             LOG.error('client error deleting all resources: %s', client_error)
         except Exception as ex:
