@@ -91,23 +91,24 @@ The POST body will be JSON encoded and supply basic instance information:
 
 ```json
 {
-	"status": "SUCCESS",
-	"product": "BIG-IP",
-	"version": "14.1.2.6-0.0.2.0",
-	"hostname": "f5-test-ve-01.local",
-	"id": "27096838-e85f-11ea-ac1c-feff0b2c5217",
-	"management": "10.243.0.7/24",
-	"installed_extensions": ["f5-service-discovery", "f5-declarative-onboarding", "f5-appsvcs", "f5-telemetry", "f5-appsvcs-templates"],
-	"do_enabled": true,
-	"as3_enabled": false,
+    "status": "SUCCESS",
+    "product": "BIG-IP",
+    "version": "14.1.2.6-0.0.2.0",
+    "hostname": "f5-test-ve-01.local",
+    "id": "27096838-e85f-11ea-ac1c-feff0b2c5217",
+    "management": "10.243.0.7/24",
+    "installed_extensions": ["f5-service-discovery", "f5-declarative-onboarding", "f5-appsvcs", "f5-telemetry", "f5-appsvcs-templates"],
+    "do_enabled": true,
+    "as3_enabled": false,
     "ts_enabled": false,
-	"metadata": {
-		"template_source": "f5devcentral/tmos-cloudinit/demo/ibmcloud_vpc_gen2/schematics/tmos_multi_nic",
-		"template_version": 20200825,
+    "metadata": {
+        "template_source": "f5devcentral/tmos-cloudinit/demo/ibmcloud_vpc_gen2/schematics/tmos_multi_nic",
+        "template_version": 20200825,
         "zone": "eu-de-1",
         "vpc": "r010-e27c516a-22ff-41f5-96b8-e8ea833fd39f",
         "app_id": "undefined"
-	}
+    }
+}
 ```
 
 The user can optionally defined an ```app_id``` variable to tie this instnace for reference.
