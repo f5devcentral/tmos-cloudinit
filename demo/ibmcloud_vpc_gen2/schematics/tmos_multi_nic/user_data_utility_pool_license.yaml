@@ -1,0 +1,38 @@
+#cloud-config
+chpasswd:
+  expire: false
+  list: |
+    admin:${tmos_admin_password}
+tmos_dhcpv4_tmm:
+  enabled: true
+  rd_enabled: false
+  inject_routes: true
+  icontrollx_trusted_sources: false
+  do_enabled: true
+  do_declaration:
+    schemaVersion: 1.0.0
+    class: Device
+    async: true
+    label: Cloudinit Onboarding
+    Common:
+      class: Tenant
+      utilityLicense:
+        class: License
+        licenseType: licensePool
+        bigIqHost: ${license_host}
+        bigIqUsername: ${license_username}
+        bigIqPassword: ${license_password}
+        licensePool: ${license_pool}
+        skuKeyword1: ${license_sku_keyword_1}
+        skuKeyword2: ${license_sku_keyword_2}
+        unitOfMeasure: ${license_unit_of_measure}
+        reachable: false
+        hypervisor: kvm
+  phone_home_url: ${phone_home_url}
+  phone_home_url_verify_tls: false
+  phone_home_url_metadata:
+    template_source: ${template_source}
+    template_version: ${template_version}
+    zone: ${zone}
+    vpc: ${vpc}
+    app_id: ${app_id}

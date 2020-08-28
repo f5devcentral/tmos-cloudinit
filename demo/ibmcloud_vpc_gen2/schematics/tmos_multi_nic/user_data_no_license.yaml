@@ -1,0 +1,18 @@
+#cloud-config
+chpasswd:
+  expire: false
+  list: |
+    admin:${tmos_admin_password}
+tmos_dhcpv4_tmm:
+  enabled: true
+  rd_enabled: false
+  inject_routes: true
+  icontrollx_trusted_sources: false
+  phone_home_url: ${phone_home_url}
+  phone_home_url_verify_tls: false
+  phone_home_url_metadata:
+    template_source: ${template_source}
+    template_version: ${template_version}
+    zone: ${zone}
+    vpc: ${vpc}
+    app_id: ${app_id}
