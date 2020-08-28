@@ -117,7 +117,7 @@ The user can optionally defined an ```app_id``` variable to tie this instnace fo
 
 ```app_id```
 
-Once onboarding is complete, the user can than access the TMOS Web UI™, use iControl™ REST API endpoints, or utilize the [F5 BIG-IP™ Extensibility Extensions](https://clouddocs.f5.com/) installed.
+Once onboarding is complete, the user can than access the TMOS™ Web UI, use iControl™ REST API endpoints, or utilize the [F5 BIG-IP™ Extensibility Extensions](https://clouddocs.f5.com/) installed.
 
 ## Costs
 
@@ -146,18 +146,39 @@ Create a schematics workspace and provide the github repository url (https://git
 Fill in the following values, based on the steps that you completed before you began.
 
 | Key | Definition | Value Example |
-| --- | ---------- | ------------- | 
-| `generation` | The VPC Generation 1 (classic) or Generation 2 that you want your VPC virtual servers to be provisioned.  | 2  |
-| `region` | The VPC region that you want your VPC virtual servers to be provisioned. | us-south |
+| --- | ---------- | ------------- |
+| `region` | The VPC region that you want your BIG-IP™ to be provisioned. | us-south |
+| `instance_name` | The name of the VNF instance to be provisioned. | f5-ve-01 |
+| `tmos_image_name` | The name of the VNF image  | bigip-14-1-2-6-0-0-2-all-1slot |
+| `instance_profile` | The profile of compute CPU and memory resources to be used when provisioning the BIG-IP™ instance. To list available profiles, run `ibmcloud is instance-profiles`. | cx2-4x8 |
 | `ssh_key_name` | The name of your public SSH key to be used. Follow [Public SSH Key Doc](https://cloud.ibm.com/docs/vpc-on-classic-vsi?topic=vpc-on-classic-vsi-ssh-keys) for creating and managing ssh key. | linux-ssh-key |
-| `instance_profile` | The profile of compute CPU and memory resources to be used when provisioning the vnf instance. To list available profiles, run `ibmcloud is instance-profiles`. | bx2-2x8 |
-| `instance_name` | The name of the VNF instance to be provisioned. | ubuntu18-04-vsi |
-| `management_subnet_id` | The ID of the primary subnet where the VNF instance will be deployed. Click on the subnet details in the VPC Subnet Listing to determine this value | 0717-xxxxxx-xxxx-xxxxx-8fae-xxxxx |
-| `tmos_image_name` | The name of the VNF image  | ubuntu-18-04-amd64 |
+| `management_subnet_id` | The ID of the management subnet where the instance will be deployed. Click on the subnet details in the VPC Subnet Listing to determine this value | 0717-xxxxxx-xxxx-xxxxx-8fae-xxxxx |
+
+### Optional values
+Fill in the following values, based on the steps that you completed before you began.
+
+| Key | Definition | Value Example |
+| --- | ---------- | ------------- |
+| `tmos_admin_password` | The password to set for the BIG-IP™ admin user. | valid TMOS password |
+| `license_type` | What type of license activation to follow. Can be `none`,`byol`,`regkeypool`,`utilitypool` | byol |
+| `byol_license_basekey` | The emailed license basekey from F5 for this BIG-IP™ instance. | XXXXX-XXXXX-XXXXX-XXXXX-XXXXXXX |
+| `license_host` | The name or IP address of the BIG-IQ™ hosting the pool license. | bigiqlicensor.mydomain.com |
+| `license_username` | The name of the BIG-IQ™ user to use for license activation. | admin |
+| `license_password` | The password of the BIG-IQ™ user to use for license activation. | admin |
+| `license_pool` | The name of the BIG-IQ™ license pool. | BIGIPREGKEYS |
+| `license_sku_keyword_1` | The base SKU from BIG-IQ™ utility pool. | XXXXX-XXXXX-XXXXX-XXXXX-XXXXXXX |
+| `license_sku_keyword_2` | The product SKU from BIG-IQ™ utility pool. | XXXXX-XXXXX-XXXXX-XXXXX-XXXXXXX |
+| `license_unit_of_measure` | The measurement for BIG-IQ™ utility pool. | hourly |
+| `data_1_1_subnet_id` | The ID of the first data subnet where the instance will be deployed. Click on the subnet details in the VPC Subnet Listing to determine this value | 0717-xxxxxx-xxxx-xxxxx-8fae-xxxxx |
+| `data_1_2_subnet_id` | The ID of the first data subnet where the instance will be deployed. Click on the subnet details in the VPC Subnet Listing to determine this value | 0717-xxxxxx-xxxx-xxxxx-8fae-xxxxx |
+| `data_1_3_subnet_id` | The ID of the first data subnet where the instance will be deployed. Click on the subnet details in the VPC Subnet Listing to determine this value | 0717-xxxxxx-xxxx-xxxxx-8fae-xxxxx |
+| `data_1_4_subnet_id` | The ID of the first data subnet where the instance will be deployed. Click on the subnet details in the VPC Subnet Listing to determine this value | 0717-xxxxxx-xxxx-xxxxx-8fae-xxxxx |
+| `phone_home_url` | The URL for post onboarding web hook  | https://webhook.site/#!/8c71ed42-da62-48ea-a2a5-265caf420a3b |
+| `app_id` | Application ID used for CI integration | a044b708-66c4-4f50-a5c8-2b54eff5f9b5 |
 
 ## Notes
 
-If there is any failure during VSI creation, the created resources must be destroyed before attempting to instantiate again. To destroy resources go to `Schematics -> Workspaces -> [Your Workspace] -> Actions -> Delete` to delete  all associated resources. <br/>
+If there is any failure during VPC instance creation, the created resources must be destroyed before attempting to instantiate again. To destroy resources go to `Schematics -> Workspaces -> [Your Workspace] -> Actions -> Delete` to delete  all associated resources.
 
 ## Post F5 BIG-IP™ Virtual Edition Onboarding
 
