@@ -128,7 +128,6 @@ When you apply template, the infrastructure resources that you create incur char
 
 Before you can apply the template in IBM Cloud, complete the following steps.
 
-
 1.  Ensure that you have the following permissions in IBM Cloud Identity and Access Management:
     * `Manager` service access role for IBM Cloud Schematics
     * `Operator` platform role for VPC Infrastructure
