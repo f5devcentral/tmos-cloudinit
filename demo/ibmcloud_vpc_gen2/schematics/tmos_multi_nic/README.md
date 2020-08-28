@@ -150,15 +150,10 @@ Fill in the following values, based on the steps that you completed before you b
 | `generation` | The VPC Generation 1 (classic) or Generation 2 that you want your VPC virtual servers to be provisioned.  | 2  |
 | `region` | The VPC region that you want your VPC virtual servers to be provisioned. | us-south |
 | `ssh_key_name` | The name of your public SSH key to be used for VSI. Follow [Public SSH Key Doc](https://cloud.ibm.com/docs/vpc-on-classic-vsi?topic=vpc-on-classic-vsi-ssh-keys) for creating and managing ssh key. | linux-ssh-key |
-| `vnf_profile` | The profile of compute CPU and memory resources to be used when provisioning the vnf instance. To list available profiles, run `ibmcloud is instance-profiles`. | bx2-2x8 |
-| `vnf_instance_name` | The name of the VNF instance to be provisioned. | ubuntu18-04-vsi |
-| `primary_subnet_id` | The ID of the primary subnet where the VNF instance will be deployed. Click on the subnet details in the VPC Subnet Listing to determine this value | 0717-xxxxxx-xxxx-xxxxx-8fae-xxxxx |
-| `secondary_subnet_id_1` | The ID of the secondary subnet where the VNF instance will be deployed. Click on the subnet details in the VPC Subnet Listing to determine this value | 0717-xxxxxx-xxxx-xxxxx-8fae-xxxxx |
-| `secondary_subnet_id_2` | The ID of the secondary subnet where the VNF instance will be deployed. Click on the subnet details in the VPC Subnet Listing to determine this value | 0717-xxxxxx-xxxx-xxxxx-8fae-xxxxx |
-| `secondary_subnet_id_3` | The ID of the secondary subnet where the VNF instance will be deployed. Click on the subnet details in the VPC Subnet Listing to determine this value | 0717-xxxxxx-xxxx-xxxxx-8fae-xxxxx |
-| `secondary_subnet_id_4` | The ID of the secondary subnet where the VNF instance will be deployed. Click on the subnet details in the VPC Subnet Listing to determine this value | 0717-xxxxxx-xxxx-xxxxx-8fae-xxxxx |
-| `vnf_security_group` | The name of the security group to which the VNF Instance's interface belong to | ubuntu-security-group |
-| `vnf_vpc_image_name` | The name of the VNF image  | ubuntu-18-04-amd64 |
+| `instance_profile` | The profile of compute CPU and memory resources to be used when provisioning the vnf instance. To list available profiles, run `ibmcloud is instance-profiles`. | bx2-2x8 |
+| `instance_name` | The name of the VNF instance to be provisioned. | ubuntu18-04-vsi |
+| `management_subnet_id` | The ID of the primary subnet where the VNF instance will be deployed. Click on the subnet details in the VPC Subnet Listing to determine this value | 0717-xxxxxx-xxxx-xxxxx-8fae-xxxxx |
+| `tmos_image_name` | The name of the VNF image  | ubuntu-18-04-amd64 |
 
 ## Notes
 
