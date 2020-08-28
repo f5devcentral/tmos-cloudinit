@@ -7,11 +7,11 @@ variable "region" {
   description = "The VPC region to instatiate the F5 BIG-IP instance"
 }
 # Present for CLI testng
-variable "api_key" {
-  type        = string
-  default     = ""
-  description = "IBM Public Cloud API KEY"
-}
+#variable "api_key" {
+#  type        = string
+#  default     = ""
+#  description = "IBM Public Cloud API KEY"
+#}
 
 ##################################################################################
 # instance_name - The name of the F5 BIG-IP instance
