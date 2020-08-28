@@ -140,7 +140,7 @@ Before you can apply the template in IBM Cloud, complete the following steps.
 
 ## Configuring your deployment values
 
-Create a schematics workspace and provide the github repository url (https://github.com/IBM-Cloud/vnf-samples/catalog_img_vsi_sample) under settings to pull the latest code, so that you can set up your deployment variables from the `Create` page. Once the template is applied, IBM Cloud Schematics  provisions the resources based on the values that were specified for the deployment variables.
+Create a schematics workspace and provide the github repository url (https://github.com/f5devcentral/tmos-cloudinit/tree/master/demo/ibmcloud_vpc_gen2/schematics/tmos_multi_nic) under settings to pull the latest code, so that you can set up your deployment variables from the `Create` page. Once the template is applied, IBM Cloud Schematics  provisions the resources based on the values that were specified for the deployment variables.
 
 ### Required values
 Fill in the following values, based on the steps that you completed before you began.
@@ -149,7 +149,7 @@ Fill in the following values, based on the steps that you completed before you b
 | --- | ---------- | ------------- | 
 | `generation` | The VPC Generation 1 (classic) or Generation 2 that you want your VPC virtual servers to be provisioned.  | 2  |
 | `region` | The VPC region that you want your VPC virtual servers to be provisioned. | us-south |
-| `ssh_key_name` | The name of your public SSH key to be used. Follow [Public SSH Key Doc](https://github.com/f5devcentral/tmos-cloudinit/tree/master/demo/ibmcloud_vpc_gen2/schematics/tmos_multi_nic) for creating and managing ssh key. | linux-ssh-key |
+| `ssh_key_name` | The name of your public SSH key to be used. Follow [Public SSH Key Doc](https://cloud.ibm.com/docs/vpc-on-classic-vsi?topic=vpc-on-classic-vsi-ssh-keys) for creating and managing ssh key. | linux-ssh-key |
 | `instance_profile` | The profile of compute CPU and memory resources to be used when provisioning the vnf instance. To list available profiles, run `ibmcloud is instance-profiles`. | bx2-2x8 |
 | `instance_name` | The name of the VNF instance to be provisioned. | ubuntu18-04-vsi |
 | `management_subnet_id` | The ID of the primary subnet where the VNF instance will be deployed. Click on the subnet details in the VPC Subnet Listing to determine this value | 0717-xxxxxx-xxxx-xxxxx-8fae-xxxxx |
