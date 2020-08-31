@@ -27,7 +27,7 @@ variable "instance_name" {
 ##################################################################################
 variable "tmos_image_name" {
   type        = string
-  default     = ""
+  default     = "bigip-15-1-0-4-0-0-6-ltm-1slot"
   description = "The image to be used when provisioning the F5 BIG-IP instance"
 }
 
