@@ -182,7 +182,7 @@ def assure_object(file_path, bucket_name, object_name, location):
         return False
 
 
-def assure_cos_image(image_path, location, executor):
+def assure_cos_image(image_path, location):
     """assure patch image object"""
     bucket_name = get_bucket_name(image_path, location)
     object_name = get_object_name(image_path, location)
@@ -190,18 +190,15 @@ def assure_cos_image(image_path, location, executor):
         LOG.debug('checking IBM COS Object: %s/%s exists', bucket_name,
                   object_name)
         if assure_bucket(bucket_name, location):
-            executor.submit(assure_object, file_path=image_path, bucket_name=bucket_name, object_name=object_name, location=location)
-            # assure_object(image_path, bucket_name, object_name, location)
+            assure_object(image_path, bucket_name, object_name, location)
         md5_path = "%s.md5" % image_path
         if os.path.exists(md5_path):
             md5_object_name = "%s.md5" % object_name
-            executor.submit(assure_object, file_path=md5_path, bucket_name=bucket_name, object_name=object_name, location=location)
-            #assure_object(md5_path, bucket_name, md5_object_name, location)
+            assure_object(md5_path, bucket_name, md5_object_name, location)
         sig_path = "%s.384.sig" % image_path
         if os.path.exists(sig_path):
             sig_object_name = "%s.384.sig" % object_name
-            executor.submit(assure_object, file_path=sig_path, bucket_name=bucket_name, object_name=object_name, location=location)
-            #assure_object(sig_path, bucket_name, sig_object_name, location)
+            assure_object(sig_path, bucket_name, sig_object_name, location)
 
 
 def delete_all():
@@ -229,6 +226,10 @@ def delete_all():
             LOG.error('exception occurred deleting all resources: %s', ex)
 
 
+def upload_image_to_location(image_path, location):
+    assure_cos_image(image_path, location)
+
+
 def upload_patched_images():
     """check for iamges and assure upload to IBM COS"""
     LOG.debug('uploading images in %s', IBM_COS_REGIONS)
@@ -236,7 +237,7 @@ def upload_patched_images():
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(patched_images*len(IBM_COS_REGIONS))) as executor:
         for image_path in get_patched_images(TMOS_IMAGE_DIR):
             for location in IBM_COS_REGIONS:
-                assure_cos_image(image_path, location, executor)
+                executor.submit(upload_image_to_location, image_path=image_path, location=location)
 
 
 def inventory():
