@@ -32,6 +32,9 @@ import urlparse
 import requests
 import re
 
+import concurrent.futures
+import threading
+
 from ibm_botocore.client import Config, ClientError
 
 IMAGE_TYPES = ['.qcow2', '.vhd', '.vmdk']
@@ -226,9 +229,11 @@ def delete_all():
 def upload_patched_images():
     """check for iamges and assure upload to IBM COS"""
     LOG.debug('uploading images in %s', IBM_COS_REGIONS)
-    for image_path in get_patched_images(TMOS_IMAGE_DIR):
-        for location in IBM_COS_REGIONS:
-            assure_cos_image(image_path, location)
+    patched_images = get_patched_images(TMOS_IMAGE_DIR)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(patched_images*len(IBM_COS_REGIONS))) as executor:
+        for image_path in get_patched_images(TMOS_IMAGE_DIR):
+            for location in IBM_COS_REGIONS:
+                executor.submit(assure_cos_image, image_path=image_path, location=location)
 
 
 def inventory():
