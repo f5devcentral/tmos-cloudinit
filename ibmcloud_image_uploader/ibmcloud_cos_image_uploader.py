@@ -41,6 +41,7 @@ IMAGE_TYPES = ['.qcow2', '.vhd', '.vmdk']
 IBM_COS_REGIONS = []
 
 TMOS_IMAGE_DIR = None
+COS_UPLOAD_THREADS = 1
 COS_API_KEY = None
 COS_RESOURCE_CRN = None
 COS_IMAGE_LOCATION = None
@@ -84,9 +85,7 @@ def get_bucket_name(image_path, location):
         COS_BUCKET_PREFIX,
         os.path.splitext(
             os.path.dirname(image_path.replace(TMOS_IMAGE_DIR, '')).replace(
-                os.path.sep, ''))[0].replace('_', '-').lower(),
-        location
-    )
+                os.path.sep, ''))[0].replace('_', '-').lower(), location)
 
 
 def get_object_name(image_path, location):
@@ -132,9 +131,14 @@ def assure_bucket(bucket_name, location):
         cos_res.Bucket(bucket_name).create(ACL='public-read')
         return True
     except ClientError as client_error:
-        LOG.error('client error assuring bucket %s: %s', bucket_name,
-                  client_error)
-        return False
+        # bucket was created, but didn't show up in the list fast
+        # enough for the next upload task to see it
+        if str(client_error).find('BucketAlreadyExists') > 0:
+            return True
+        else:
+            LOG.error('client error assuring bucket %s: %s', bucket_name,
+                      client_error)
+            return False
     except Exception as ex:
         LOG.error('exception occurred assuring bucket %s: %s', bucket_name, ex)
         return False
@@ -234,10 +238,12 @@ def upload_patched_images():
     """check for iamges and assure upload to IBM COS"""
     LOG.debug('uploading images in %s', IBM_COS_REGIONS)
     patched_images = get_patched_images(TMOS_IMAGE_DIR)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(patched_images*len(IBM_COS_REGIONS))) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=COS_UPLOAD_THREADS) as executor:
         for image_path in get_patched_images(TMOS_IMAGE_DIR):
             for location in IBM_COS_REGIONS:
-                executor.submit(upload_image_to_location, image_path=image_path, location=location)
+                executor.submit(upload_image_to_location,
+                                image_path=image_path,
+                                location=location)
 
 
 def inventory():
@@ -291,8 +297,12 @@ def inventory():
 
 def initialize():
     """initialize configuration from environment variables"""
-    global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL, COS_BUCKET_PREFIX, IMAGE_MATCH
+    global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_UPLOAD_THREADS, \
+           COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, \
+           COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL, \
+           COS_BUCKET_PREFIX, IMAGE_MATCH
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
+    COS_UPLOAD_THREADS = os.getenv('COS_UPLOAD_THREADS', 1)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
     COS_RESOURCE_CRN = os.getenv('COS_RESOURCE_CRN', None)
     COS_IMAGE_LOCATION = os.getenv('COS_IMAGE_LOCATION', 'us-south')
@@ -335,7 +345,8 @@ if __name__ == "__main__":
     if ERROR:
         LOG.error('\n\n%s\n', ERROR_MESSAGE)
         sys.exit(1)
-    LOG.info('uploading images into %s with COS_BUCKET_PREFIX %s', COS_RESOURCE_CRN, COS_BUCKET_PREFIX)
+    LOG.info('uploading images into %s with COS_BUCKET_PREFIX %s',
+             COS_RESOURCE_CRN, COS_BUCKET_PREFIX)
     if DELETE_ALL:
         delete_all()
     else:
