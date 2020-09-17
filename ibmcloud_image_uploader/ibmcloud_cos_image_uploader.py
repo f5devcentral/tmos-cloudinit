@@ -239,12 +239,15 @@ def upload_patched_images():
     """check for iamges and assure upload to IBM COS"""
     LOG.debug('uploading images in %s', IBM_COS_REGIONS)
     patched_images = get_patched_images(TMOS_IMAGE_DIR)
-    uploader = concurrent.futures.ThreadPoolExecutor(
-        max_workers=COS_UPLOAD_THREADS)
+    cos_objects = {}
     for image_path in get_patched_images(TMOS_IMAGE_DIR):
         for location in IBM_COS_REGIONS:
             if assure_cos_bucket(image_path, location):
-                uploader.submit(assure_cos_object, image_path, location)
+                cos_objects[image_path] = location
+    uploader = concurrent.futures.ThreadPoolExecutor(
+        max_workers=COS_UPLOAD_THREADS)
+    for co in cos_objects:
+        uploader.submit(assure_cos_object, co, cos_objects[co])
     for t in uploader._threads:
         t.join()
  
