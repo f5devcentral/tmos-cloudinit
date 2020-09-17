@@ -245,7 +245,9 @@ def upload_patched_images():
         for location in IBM_COS_REGIONS:
             if assure_cos_bucket(image_path, location):
                 uploader.submit(assure_cos_object, image_path, location)
-
+    for t in uploader._threads:
+        t.join()
+ 
 
 def inventory():
     """create inventory JSON"""
