@@ -247,7 +247,7 @@ def upload_patched_images():
     with concurrent.futures.ThreadPoolExecutor(max_workers=COS_UPLOAD_THREADS) as uploader:
         for co in cos_objects:
             uploader.submit(assure_cos_object, co, cos_objects[co])
-    
+        uploader.shutdown(wait=True)
 
 def inventory():
     """create inventory JSON"""
