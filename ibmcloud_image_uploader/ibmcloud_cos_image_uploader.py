@@ -129,6 +129,7 @@ def assure_bucket(bucket_name, location):
                 return True
         LOG.debug('creating bucket %s', bucket_name)
         cos_res.Bucket(bucket_name).create(ACL='public-read')
+        time.sleep(10)
         return True
     except ClientError as client_error:
         # bucket was created, but didn't show up in the list fast
