@@ -244,13 +244,10 @@ def upload_patched_images():
         for location in IBM_COS_REGIONS:
             if assure_cos_bucket(image_path, location):
                 cos_objects[image_path] = location
-    uploader = concurrent.futures.ThreadPoolExecutor(
-        max_workers=COS_UPLOAD_THREADS)
-    for co in cos_objects:
-        uploader.submit(assure_cos_object, co, cos_objects[co])
-    for t in uploader._threads:
-        t.join()
- 
+    with concurrent.futures.ThreadPoolExecutor(max_workers=COS_UPLOAD_THREADS) as uploader:
+        for co in cos_objects:
+            uploader.submit(assure_cos_object, co, cos_objects[co])
+    
 
 def inventory():
     """create inventory JSON"""
