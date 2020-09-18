@@ -242,7 +242,7 @@ def upload_patched_images():
     for image_path in get_patched_images(TMOS_IMAGE_DIR):
         for location in IBM_COS_REGIONS:
             if assure_cos_bucket(image_path, location):
-                assure_cos_object(ibm_boto3, location)
+                assure_cos_object(image_path, location)
 
 def inventory():
     """create inventory JSON"""
