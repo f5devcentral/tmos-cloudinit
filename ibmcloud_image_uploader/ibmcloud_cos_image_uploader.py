@@ -126,6 +126,7 @@ def assure_bucket(bucket_name, location):
     try:
         for bucket in cos_res.buckets.all():
             if bucket.name == bucket_name:
+                LOG.debug('bucket: %s exists', bucket_name)
                 return True
         LOG.debug('creating bucket %s', bucket_name)
         cos_res.Bucket(bucket_name).create(ACL='public-read')
@@ -154,6 +155,7 @@ def assure_object(file_path, bucket_name, object_name, location):
                 if UPDATE_IMAGES:
                     obj.delete()
                 else:
+                    LOG.debug('object: %s/%s exists', bucket_name, object_name)
                     return True
         LOG.debug('starting upload of image %s to %s/%s', file_path,
                   bucket_name, object_name)
@@ -240,10 +242,17 @@ def upload_patched_images():
     """check for iamges and assure upload to IBM COS"""
     LOG.debug('uploading images to %s', IBM_COS_REGIONS)
     # Just do an interation to serially create buckets
-    for image_path in get_patched_images(TMOS_IMAGE_DIR):
+    image_paths = get_patched_images(TMOS_IMAGE_DIR)
+    number_of_uploades = len(image_paths) * len(IBM_COS_REGIONS)
+    current_image = 1
+    for image_path in image_paths:
         for location in IBM_COS_REGIONS:
+            LOG.debug('Processing image %d of %d', current_image,
+                      number_of_uploades)
             if assure_cos_bucket(image_path, location):
                 assure_cos_object(image_path, location)
+            current_image += 1
+
 
 def inventory():
     """create inventory JSON"""
