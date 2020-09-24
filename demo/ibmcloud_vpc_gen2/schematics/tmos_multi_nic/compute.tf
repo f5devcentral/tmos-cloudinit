@@ -129,12 +129,20 @@ resource "ibm_is_instance" "f5_ve_instance" {
   keys       = [data.ibm_is_ssh_key.ssh_pub_key.id]
   user_data  = data.template_file.user_data.rendered
   depends_on = [ibm_is_security_group_rule.f5_allow_outbound]
+  timeouts {
+    create = "60m"
+    delete = "120m"
+  }
 }
 
 # create floating IP for management access
 resource "ibm_is_floating_ip" "f5_management_floating_ip" {
   name   = "f0-${random_uuid.namer.result}"
   target = ibm_is_instance.f5_ve_instance.primary_network_interface.0.id
+  timeouts {
+    create = "60m"
+    delete = "60m"
+  }
 }
 
 # create 1:1 floating IPs to vNICs - Not supported by IBM yet
