@@ -26,8 +26,9 @@ echo "building IBM public cloud vpc iamge importer"
 docker build --rm ${CACHE_OPTION} -t ${DOCKER_REPO}ibmcloud_vpc_image_importer:latest ibmcloud_vpc_image_importer
 echo "building OpenStack glance image uploader"
 docker build --rm ${CACHE_OPTION} -t ${DOCKER_REPO}openstack_image_uploader:latest openstack_image_uploader
-echo "building Demonostration setup container"
-docker build --rm ${CACHE_OPTION} -t ${DOCKER_REPO}tmos_demo_setup:latest demo
+# removed demo container until complete
+# echo "building Demonostration setup container"
+# docker build --rm ${CACHE_OPTION} -t ${DOCKER_REPO}tmos_demo_setup:latest demo
 cwd=$(pwd)
 echo "building OpenStack neutron port license revocation container"
 cd ${cwd}/demo/openstack/bigiq_regkey_pool_cleaner_neutron_port
