@@ -290,15 +290,14 @@ def inventory():
     with open(inventory_file, 'w') as ivf:
         ivf.write(json.dumps(inventory))
     # store in each location
-    if not DELETE_ALL:
-        for location in IBM_COS_REGIONS:
-            bucket_name = "%s-%s" % (COS_BUCKET_PREFIX, location)
-            public_url = "https://%s.s3.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (
-                bucket_name, location)
-            LOG.debug('writing image catalog to: %s', public_url)
-            assure_bucket(bucket_name, location)
-            assure_object(inventory_file, bucket_name, "f5-image-catalog.json",
-                          location)
+    for location in IBM_COS_REGIONS:
+        bucket_name = "%s-%s" % (COS_BUCKET_PREFIX, location)
+        public_url = "https://%s.s3.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (
+            bucket_name, location)
+        LOG.debug('writing image catalog to: %s', public_url)
+        assure_bucket(bucket_name, location)
+        assure_object(inventory_file, bucket_name, "f5-image-catalog.json",
+                      location)
 
 
 def initialize():
