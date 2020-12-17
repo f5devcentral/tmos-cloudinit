@@ -34,10 +34,13 @@ TMOS_IMAGE_CATALOG_URL = None
 API_KEY = None
 IMAGE_MATCH = '^big.*i[pq]'
 REGION = 'us-south'
+RESOURCE_GROUP = 'default'
 UPDATE_IMAGES = None
 DRY_RUN = None
 DELETE_ALL = None
 AUTH_ENDPOINT = 'https://iam.cloud.ibm.com/identity/token'
+
+ACCOUNT_ID = None
 
 LOG = logging.getLogger('ibmcloud_vpc_image_importer')
 LOG.setLevel(logging.DEBUG)
@@ -51,6 +54,7 @@ SESSION_TOKEN = None
 SESSION_TIMESTAMP = 0
 SESSION_SECONDS = 1800
 
+RESOURCE_GORUP = None
 
 def get_iam_token():
     global SESSION_TOKEN, SESSION_TIMESTAMP
@@ -67,6 +71,26 @@ def get_iam_token():
         SESSION_TIMESTAMP = int(time.time())
         SESSION_TOKEN = response.json()['access_token']
         return SESSION_TOKEN
+    else:
+        return None
+
+
+def get_resource_group_id(token=None):
+    if not token:
+        token = get_iam_token()
+    rg_url = "https://resource-controller.cloud.ibm.com/v2/resource_groups"
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer %s" % token
+    }
+    response = requests.get(rg_url, headers=headers)
+    if response.status_code < 300:
+        rgs = response.json()['resources']
+        for rg in rgs:
+            if rg['name'] == RESOURCE_GROUP:
+                return rg['id']
+        return None
     else:
         return None
 
@@ -113,6 +137,9 @@ def import_image(token, region, name, cos_url):
         },
         "operating_system": {
             "name": "centos-7-amd64"
+        },
+        "resource_group": {
+            "id": get_resource_group_id(token)
         }
     }
     response = requests.post(image_url, headers=headers, data=json.dumps(data))
@@ -173,6 +200,12 @@ def delete_all_images():
                     LOG.error('image deletion failed for image %s', image['name'])
 
 
+def poll_until_image_gone(image_name, region):
+    while image_exists(image_name, region):
+        LOG.info("waiting on %s in %s to delete", image_name, region)
+        time.sleep(2);
+
+
 def import_images(catalog_db):
     token = get_iam_token()
     for region in REGION:
@@ -183,8 +216,7 @@ def import_images(catalog_db):
                     if exists and UPDATE_IMAGES:
                         LOG.info('deleting image %s to force update', image['image_name'])
                         if delete_image(image['image_name'], region):
-                            # allow time for delete to take place
-                            time.sleep(10)
+                            poll_until_image_gone(image['image_name'], region)
                             exists = False
                     if exists:
                         LOG.info('image %s already exists', image['image_name'])
@@ -243,7 +275,7 @@ def create_inventory(f5_image_catalog):
 
 def initialize():
     """initialize configuration from environment variables"""
-    global TMOS_IMAGE_CATALOG_URL, API_KEY, IMAGE_MATCH, REGION, UPDATE_IMAGES, DRY_RUN, DELETE_ALL, AUTH_ENDPOINT
+    global TMOS_IMAGE_CATALOG_URL, API_KEY, IMAGE_MATCH, REGION, UPDATE_IMAGES, DRY_RUN, DELETE_ALL, AUTH_ENDPOINT, RESOURCE_GROUP
     TMOS_IMAGE_CATALOG_URL = os.getenv(
         'TMOS_IMAGE_CATALOG_URL',
         'https://f5-image-catalog-us-south.s3.us-south.cloud-object-storage.appdomain.cloud/f5-image-catalog.json'
@@ -252,6 +284,7 @@ def initialize():
     IMAGE_MATCH = os.getenv('IMAGE_MATCH', '^big.*i[pq]')
     REGION = os.getenv('REGION', 'us-south')
     REGION = [ x.strip() for x in REGION.split(',') ]
+    RESOURCE_GROUP = os.getenv('RESOURCE_GROUP', 'default')
     DRY_RUN = os.getenv('DRY_RUN', 'false')
     if DRY_RUN.lower() == 'true':
         DRY_RUN = True
