@@ -256,6 +256,7 @@ def upload_patched_images():
 
 def inventory():
     """create inventory JSON"""
+    global UPDATE_IMAGES
     inventory_file = "%s/ibmcos_images.json" % (TMOS_IMAGE_DIR)
     if os.path.exists(inventory_file):
         os.unlink(inventory_file)
@@ -290,6 +291,8 @@ def inventory():
     with open(inventory_file, 'w') as ivf:
         ivf.write(json.dumps(inventory))
     # store in each location
+    old_update_images = UPDATE_IMAGES
+    UPDATE_IMAGES = True
     for location in IBM_COS_REGIONS:
         bucket_name = "%s-%s" % (COS_BUCKET_PREFIX, location)
         public_url = "https://%s.s3.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (
@@ -298,6 +301,7 @@ def inventory():
         assure_bucket(bucket_name, location)
         assure_object(inventory_file, bucket_name, "f5-image-catalog.json",
                       location)
+    UPDATE_IMAGES = old_update_images
 
 
 def initialize():
