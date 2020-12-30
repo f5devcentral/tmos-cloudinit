@@ -21,7 +21,7 @@ RUN git clone https://github.com/f5devcentral/tmos-cloudinit.git
 
 ENV LIBGUESTFS_BACKEND=direct
 
-VOLUME ["/TMOSImages", "/iControlLXPackages", "/TMOS_usr", "/TMOS_config"]
+VOLUME ["/TMOSImages", "/iControlLXPackages", "/TMOS_usr", "/TMOS_config", "/TMOS_var", "/TMOS_shared"]
 
 ENV TMOS_IMAGE_DIR '/TMOSImages'
 ENV TMOS_ICONTROLLX_DIR '/iControlLXPackages'
