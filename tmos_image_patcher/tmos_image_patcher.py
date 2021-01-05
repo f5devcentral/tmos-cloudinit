@@ -529,7 +529,7 @@ def inject_config_files(disk_image, config_dir, dev):
 
 if __name__ == "__main__":
     if not os.environ['USER'] == 'root':
-        print "Please run this script as sudo"
+        print("Please run this script as sudo")
         sys.exit(1)
     START_TIME = time.time()
     LOG.debug(

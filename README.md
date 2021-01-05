@@ -480,8 +480,11 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 | icontrollx_trusted_sources | true | Only install iControl LX RPMs which are signed by TMOS trusted keys |
 | icontrollx_package_urls | none | List of URLs to download and install iControl LX extension packages before onboarding |
 | do_declaration | none |  YAML formatted f5-declarative-onboarding declaration. This declaration will augment or overwrite the declaration created by resource discovery |
-| as3_declaration | none | The f5-appsvcs-extension declaration to declare if enabled |
+| do_declaration_url | none | Download URL for f5-declarative-onboarding declaration in YAML or JSON format. This declaration will augment or overwrite the declaration created by resource discovery |
+| as3_declaration | none | YAML formatted f5-appsvcs-extension declaration to declare if enabled |
+| as3_declaration_url | none | Download URL for f5-appsvcs-extension declaration in YAML or JSON format to declared if enabled |
 | ts_declaration | none | The f5-telemetry-streaming declaration to decare if enabled |
+| ts_declaration_url | none | Download URL for f5-telemetry-streaming declaration in YAML or JSON format to declared if enabled |
 | phone_home_url | url | Reachable URL to report completion of this modules onboarding. |
 | phone_home_url_verify_tls | true | If the phone_home_url uses TLS, verify the host certificate. |
 | phone_home_cli | cli command | CLI command to run when this modules completes successfully. |
@@ -677,10 +680,13 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 | icontrollx_package_urls | none | List of URLs to download and install iControl LX extension packages before onboarding |
 | do_enable | true | Enables an attempt to create a f5-declarative-onboarding declaration from discovered resources. If enabled, an asynchronous attempt to declare resouces via f5-declarative-onboarding will be made. If the initial request fails, non-declarative onboarding will resumse |
 | do_declaration | none |  YAML formatted f5-declarative-onboarding declaration. This declaration will augment or overwrite the declaration created by resource discovery |
+| do_declaration_url | none | Download URL for f5-declarative-onboarding declaration in YAML or JSON format. This declaration will augment or overwrite the declaration created by resource discovery |
 | ts_enabled | true | Enables attempt to declare telemetry streaming configuration with f5-telemetry-streaming|
 | ts_declaration | true | The f5-telemetry-streaming declaration to declare if enabled |
+| ts_declaration_url | none | Download URL for f5-telemetry-streaming declaration in YAML or JSON format to declared if enabled |
 | as3_enabled | true | Enables attempt to declare an application services configuration with f5-appsvcs-extension|
 | as3_declaration | none | The f5-appsvcs-extension declaration to declare if enabled |
+| as3_declaration_url | none | Download URL for f5-appsvcs-extension declaration in YAML or JSON format to declared if enabled |
 | post_onboard_enabled | false | Enable the attempt to run a list of commands after onboarding completes |
 | post_onboard_commands | list | List of CLI commands to run in order. Execution will halt at the point a CLI command fails. |
 | phone_home_url | url | Reachable URL to report completion of this modules onboarding. |
@@ -761,10 +767,13 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 | icontrollx_package_urls | none | List of URLs to download and install iControl LX extension packages before onboarding |
 | do_enable | true | Enables attempt to create a f5-declarative-onboarding declaration from discovered resources. If enabled, an asynchronous attempt to declare resouces via f5-declarative-onboarding will be made. If the initial request fails, non-declarative onboarding will resumse |
 | do_declaration | none |  YAML formatted f5-declarative-onboarding declaration. This declaration will augment or overwrite the declaration created by resource discovery |
+| do_declaration_url | none | Download URL for f5-declarative-onboarding declaration in YAML or JSON format. This declaration will augment or overwrite the declaration created by resource discovery |
 | ts_enabled | true | Enables attempt to declare telemetry streaming configuration with f5-telemetry-streaming|
 | ts_declaration | true | The f5-telemetry-streaming declaration to declare if enabled |
+| ts_declaration_url | none | Download URL for f5-telemetry-streaming declaration in YAML or JSON format to declared if enabled |
 | as3_enabled | true | Enables attempt to declare an application services configuration with f5-appsvcs-extension|
 | as3_declaration | none | The f5-appsvcs-extension declaration to declare if enabled |
+| as3_declaration_url | none | Download URL for f5-appsvcs-extension declaration in YAML or JSON format to declared if enabled |
 | post_onboard_enabled | false | Enable the attempt to run a list of commands after onboarding completes |
 | post_onboard_commands | list | List of CLI commands to run in order. Execution will halt at the point a CLI command fails. |
 | phone_home_url | url | Reachable URL to report completion of this modules onboarding. |
