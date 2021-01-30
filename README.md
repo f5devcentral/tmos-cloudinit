@@ -900,3 +900,48 @@ The application listening at the `phone_home_url` must accept a `POST` reqeust. 
 ```
 
 The `phone_home_cli` will only be called if the module runs successfully, to the degree the provisioning can be synchronized. The `phone_home_cli` command execution allows for OpenStack Heat and AWS CFT type wait condition resources to be used with their auto-generated curl CLI notifications.
+
+### Support for Failover Notification
+
+Each of the cloudinit modules `cloud-config` declarations support `tgactive_url`, `tgstandby_url` and `tgrefresh_url` webhook URL references. These optional references are webhook destination URLs that will be called whenever the TMOS sod services call the `/config/failover/tgactive`, `/config/failover/tgstandby`, or `/config/failover/tgrefresh` script respecitively. Please see the TMOS support documentation for details on when these scripts are called based on sod detection of a system failover condition.
+
+When each assoicated script is called the webhook POST requests will be made with the following content body.
+
+```json
+{
+  "action": "active",
+  "device_id": "8ddf7a2c-77d4-40d7-af8c-7de3c134c953",
+  "instance_id": "0737_9eec5062-2903-4487-bccb-58441f73f877",
+  "traffic_group": "/Common/traffic-group-1",
+  "selfips": [
+    "10.240.128.30/24"
+  ],
+  "virtual_addresses": [
+    {
+      "mask": "255.255.255.255",
+      "address": "192.168.12.10"
+    }
+  ],
+  "nat_originating_addresses": [
+    "192.168.24.100"
+  ],  
+  "snat_translation_addresses": [
+    "10.20.40.40"
+  ]
+}
+```
+
+The content body descriptions are as follows:
+
+| Body attribute | Description|
+| --------------------- | ---------------|
+| action         | The action triggering the notification. One of `active`,`standby` or `refresh` |
+| device_id      | TMOS device ID which is relivent to the Device Group failover |
+| instance_id    | cloud-init instance ID, which is typically the SaaS instance ID |
+| traffic_group  | TMOS traffic group triggering the webhook |
+| selfips        | List of all device SelfIP CIDR |
+| virtual_addresses | List of objects show all virtual addresses and masks for the traffic group |
+| nat_originating_addresses   | List of all NAT originating addresses for the traffic group |
+| snat_translation_addresses  | List of all SNAT translation addresses for the traffic group |
+
+The service receiving the webhook can then calculate any L3 routing changes required by infrastructure services to properly accomodate the failover and change any necessary L3 routes.
