@@ -937,7 +937,7 @@ The content body descriptions are as follows:
 | --------------------- | ---------------|
 | action         | The action triggering the notification. One of `active`,`standby` or `refresh` |
 | device_id      | TMOS device ID which is relivent to the Device Group failover |
-| instance_id    | cloud-init instance ID, which is typically the SaaS instance ID |
+| instance_id    | cloud-init instance ID, which is typically the IaaS instance ID |
 | traffic_group  | TMOS traffic group triggering the webhook |
 | selfips        | List of all device SelfIP CIDR |
 | virtual_addresses | List of objects show all virtual addresses and masks for the traffic group |
