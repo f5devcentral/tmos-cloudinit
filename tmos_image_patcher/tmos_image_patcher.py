@@ -59,10 +59,12 @@ LOG.addHandler(LOGSTREAM)
 def patch_images(tmos_image_dir, tmos_cloudinit_dir, tmos_usr_inject_dir,
                  tmos_var_inject_dir, tmos_config_inject_dir,
                  tmos_shared_inject_dir, tmos_icontrollx_dir,
-                 private_pem_key_path, cloud_template_file, image_overwrite):
+                 private_pem_key_path, cloud_template_file, image_overwrite,
+                 image_build_id):
     """Patch TMOS classic disk image"""
     if tmos_image_dir and os.path.exists(tmos_image_dir):
-        for disk_image in scan_for_images(tmos_image_dir, image_overwrite):
+        for disk_image in scan_for_images(tmos_image_dir, image_overwrite,
+                                          image_build_id):
             LOG.info('processing disk image: %s' % disk_image)
             (is_tmos, config_dev, usr_dev, var_dev, shared_dev) = \
                 validate_tmos_device(disk_image)
@@ -109,6 +111,15 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir, tmos_usr_inject_dir,
                 except Exception as ex:
                     LOG.error("could not sign %s with private key %s: %s",
                               disk_image, private_pem_key_path, ex)
+            if image_build_id:
+                build_split = os.path.splitext(disk_image)
+                build_name = "%s-%s%s" % (build_split[0], image_build_id, build_split[1])
+                os.rename(disk_image, build_name)
+                os.rename("%s.md5" % disk_image, "%s.md5" % build_name)
+                os.rename("%s.manifest" % disk_image, "%s.manifest" % build_name)
+                sig_file = "%s.384.sig" % disk_image
+                if os.path.exists(sig_file):
+                    os.rename(sig_file, "%s.384.sig" % build_name)
     else:
         LOG.error("TMOS image directory %s does not exist.", tmos_image_dir)
         LOG.error(
@@ -117,7 +128,7 @@ def patch_images(tmos_image_dir, tmos_cloudinit_dir, tmos_usr_inject_dir,
         sys.exit(1)
 
 
-def scan_for_images(tmos_image_dir, image_overwrite):
+def scan_for_images(tmos_image_dir, image_overwrite, image_build_id):
     """Scan for TMOS disk images"""
     return_image_files = []
     for image_file in os.listdir(tmos_image_dir):
@@ -125,6 +136,12 @@ def scan_for_images(tmos_image_dir, image_overwrite):
         if os.path.isfile(filepath):
             extract_dir = "%s/%s" % (tmos_image_dir,
                                      os.path.splitext(image_file)[0])
+            if image_build_id:
+                build_split = os.path.splitext(os.path.splitext(image_file)[0])
+                extract_dir = "%s/%s-%s%s" % (tmos_image_dir,
+                                               build_split[0],
+                                               image_build_id,
+                                               build_split[1])
             if os.path.exists(extract_dir):
                 found_sum_files = False
                 LOG.debug('examining existing patching directory %s' %
@@ -183,18 +200,17 @@ def convert_vmdk(image_file, variant):
     os.chdir(convert_dir)
     FNULL = open(os.devnull, 'w')
     subprocess.call([
-            VBOXMANAGE_CLI,
-            'clonemedium',
-            '--format',
-            VBOXMANAGE_CLI_FORMAT,
-            '--variant',
-             variant,
-             image_file,
-             'converted.vmdk',
-        ],
-        stdout=FNULL,
-        stderr=subprocess.STDOUT
-    )
+        VBOXMANAGE_CLI,
+        'clonemedium',
+        '--format',
+        VBOXMANAGE_CLI_FORMAT,
+        '--variant',
+        variant,
+        image_file,
+        'converted.vmdk',
+    ],
+                    stdout=FNULL,
+                    stderr=subprocess.STDOUT)
     subprocess.call(['/bin/mv', '-f', 'converted.vmdk', image_file])
     os.chdir(start_directory)
 
@@ -538,6 +554,7 @@ if __name__ == "__main__":
             "%A, %B %d, %Y %I:%M:%S"))
     IMAGE_OVERWRITE = os.getenv('IMAGE_OVERWRITE', '0')
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
+    IMAGE_BUILD_ID = os.getenv('IMAGE_BUILD_ID', None)
     TMOS_CLOUDINIT_DIR = os.getenv('TMOS_CLOUDINIT_DIR', '/tmos-cloudinit')
     TMOS_ICONTROLLX_DIR = os.getenv('TMOS_ICONTROLLX_DIR',
                                     '/icontrollx_installs')
@@ -589,7 +606,8 @@ if __name__ == "__main__":
     patch_images(TMOS_IMAGE_DIR, TMOS_CLOUDINIT_DIR, TMOS_USR_INJECT_DIR,
                  TMOS_VAR_INJECT_DIR, TMOS_CONFIG_INJECT_DIR,
                  TMOS_SHARED_INJECT_DIR, TMOS_ICONTROLLX_DIR, PRIVATE_KEY_PATH,
-                 TMOS_CLOUDINIT_CONFIG_TEMPLATE, IMAGE_OVERWRITE)
+                 TMOS_CLOUDINIT_CONFIG_TEMPLATE, IMAGE_OVERWRITE,
+                 IMAGE_BUILD_ID)
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
     LOG.debug(
