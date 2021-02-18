@@ -481,13 +481,20 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 | icontrollx_package_urls | none | List of URLs to download and install iControl LX extension packages before onboarding |
 | do_declaration | none |  YAML formatted f5-declarative-onboarding declaration. This declaration will augment or overwrite the declaration created by resource discovery |
 | do_declaration_url | none | Download URL for f5-declarative-onboarding declaration in YAML or JSON format. This declaration will augment or overwrite the declaration created by resource discovery |
+| do_template_variables | none | A dictionary of variable names and values which will be used as jinja2 template variable replacements in the downloaded document found in the do_declaration_url. |
 | as3_declaration | none | YAML formatted f5-appsvcs-extension declaration to declare if enabled |
 | as3_declaration_url | none | Download URL for f5-appsvcs-extension declaration in YAML or JSON format to declared if enabled |
+| as3_template_variables | none | A dictionary of variable names and values which will be used as jinja2 template variable replacements in the downloaded document found in the as3_declaration_url. |
 | ts_declaration | none | The f5-telemetry-streaming declaration to decare if enabled |
 | ts_declaration_url | none | Download URL for f5-telemetry-streaming declaration in YAML or JSON format to declared if enabled |
+| ts_template_variables | none | A dictionary of variable names and values which will be used as jinja2 template variable replacements in the downloaded document found in the ts_declaration_url. |
 | phone_home_url | url | Reachable URL to report completion of this modules onboarding. |
 | phone_home_url_verify_tls | true | If the phone_home_url uses TLS, verify the host certificate. |
 | phone_home_cli | cli command | CLI command to run when this modules completes successfully. |
+
+When both `do_declaration` and `do_declaration_url` are defined, the JSON document at `do_declaration_url` will be downloaded then the entries in the `do_declaration` will overwrite entries in downloaded document. This enables generalized onboarding entries to used from the downloaded document and instance specific entries to be use from the instance declaration.
+
+The `do_template_variables`, `as3_template_variables`, and `ts_template_variables` dictionaries will on work on TMOS version 15.1 and higher.
 
 ### Note: It is often simplier to use the `set-password` cloudinit module (referenced below) to change the default `admin` and `root` passwords rather than the f5-declarative-onboarding declaration to change user passwords. Both ways work as designed
 
@@ -681,17 +688,24 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 | do_enable | true | Enables an attempt to create a f5-declarative-onboarding declaration from discovered resources. If enabled, an asynchronous attempt to declare resouces via f5-declarative-onboarding will be made. If the initial request fails, non-declarative onboarding will resumse |
 | do_declaration | none |  YAML formatted f5-declarative-onboarding declaration. This declaration will augment or overwrite the declaration created by resource discovery |
 | do_declaration_url | none | Download URL for f5-declarative-onboarding declaration in YAML or JSON format. This declaration will augment or overwrite the declaration created by resource discovery |
+| do_template_variables | none | A dictionary of variable names and values which will be used as jinja2 template variable replacements in the downloaded document found in the do_declaration_url. |
 | ts_enabled | true | Enables attempt to declare telemetry streaming configuration with f5-telemetry-streaming|
 | ts_declaration | true | The f5-telemetry-streaming declaration to declare if enabled |
 | ts_declaration_url | none | Download URL for f5-telemetry-streaming declaration in YAML or JSON format to declared if enabled |
+| ts_template_variables | none | A dictionary of variable names and values which will be used as jinja2 template variable replacements in the downloaded document found in the ts_declaration_url. |
 | as3_enabled | true | Enables attempt to declare an application services configuration with f5-appsvcs-extension|
 | as3_declaration | none | The f5-appsvcs-extension declaration to declare if enabled |
 | as3_declaration_url | none | Download URL for f5-appsvcs-extension declaration in YAML or JSON format to declared if enabled |
+| as3_template_variables | none | A dictionary of variable names and values which will be used as jinja2 template variable replacements in the downloaded document found in the as3_declaration_url. |
 | post_onboard_enabled | false | Enable the attempt to run a list of commands after onboarding completes |
 | post_onboard_commands | list | List of CLI commands to run in order. Execution will halt at the point a CLI command fails. |
 | phone_home_url | url | Reachable URL to report completion of this modules onboarding. |
 | phone_home_url_verify_tls | true | If the phone_home_url uses TLS, verify the host certificate. |
 | phone_home_cli | cli command | CLI command to run when this modules completes successfully. |
+
+When both `do_declaration` and `do_declaration_url` are defined, the JSON document at `do_declaration_url` will be downloaded then the entries in the `do_declaration` will overwrite entries in downloaded document. This enables generalized onboarding entries to used from the downloaded document and instance specific entries to be use from the instance declaration.
+
+The `do_template_variables`, `as3_template_variables`, and `ts_template_variables` dictionaries will on work on TMOS version 15.1 and higher.
 
 ### Warning: f5-declarative-onboarding and f5-appsvcs-extension do not support the use of route domains at this time. You should disable route domain support when attempting to use f5-declarative-onboarding and f5-appsvcs-extension declarations when using tmos_configdrive_openstack
 
@@ -769,17 +783,24 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 | do_enable | true | Enables attempt to create a f5-declarative-onboarding declaration from discovered resources. If enabled, an asynchronous attempt to declare resouces via f5-declarative-onboarding will be made. If the initial request fails, non-declarative onboarding will resumse |
 | do_declaration | none |  YAML formatted f5-declarative-onboarding declaration. This declaration will augment or overwrite the declaration created by resource discovery |
 | do_declaration_url | none | Download URL for f5-declarative-onboarding declaration in YAML or JSON format. This declaration will augment or overwrite the declaration created by resource discovery |
+| do_template_variables | none | A dictionary of variable names and values which will be used as jinja2 template variable replacements in the downloaded document found in the do_declaration_url. |
 | ts_enabled | true | Enables attempt to declare telemetry streaming configuration with f5-telemetry-streaming|
 | ts_declaration | true | The f5-telemetry-streaming declaration to declare if enabled |
 | ts_declaration_url | none | Download URL for f5-telemetry-streaming declaration in YAML or JSON format to declared if enabled |
+| ts_template_variables | none | A dictionary of variable names and values which will be used as jinja2 template variable replacements in the downloaded document found in the ts_declaration_url. |
 | as3_enabled | true | Enables attempt to declare an application services configuration with f5-appsvcs-extension|
 | as3_declaration | none | The f5-appsvcs-extension declaration to declare if enabled |
 | as3_declaration_url | none | Download URL for f5-appsvcs-extension declaration in YAML or JSON format to declared if enabled |
+| as3_template_variables | none | A dictionary of variable names and values which will be used as jinja2 template variable replacements in the downloaded document found in the as3_declaration_url. |
 | post_onboard_enabled | false | Enable the attempt to run a list of commands after onboarding completes |
 | post_onboard_commands | list | List of CLI commands to run in order. Execution will halt at the point a CLI command fails. |
 | phone_home_url | url | Reachable URL to report completion of this modules onboarding. |
 | phone_home_url_verify_tls | true | If the phone_home_url uses TLS, verify the host certificate. |
 | phone_home_cli | cli command | CLI command to run when this modules completes successfully. |
+
+When both `do_declaration` and `do_declaration_url` are defined, the JSON document at `do_declaration_url` will be downloaded then the entries in the `do_declaration` will overwrite entries in downloaded document. This enables generalized onboarding entries to used from the downloaded document and instance specific entries to be use from the instance declaration.
+
+The `do_template_variables`, `as3_template_variables`, and `ts_template_variables` dictionaries will on work on TMOS version 15.1 and higher.
 
 ### Warning: f5-declarative-onboarding and f5-appsvcs-extension do not support the use of route domains at this time. You should disable route domain support when attempting to use f5-declarative-onboarding and f5-appsvcs-extension declarations when using tmos_dhcpv4_tmm
 
