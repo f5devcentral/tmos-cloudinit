@@ -494,7 +494,7 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 
 When both `do_declaration` and `do_declaration_url` are defined, the JSON document at `do_declaration_url` will be downloaded then the entries in the `do_declaration` will overwrite entries in downloaded document. This enables generalized onboarding entries to used from the downloaded document and instance specific entries to be use from the instance declaration.
 
-The `do_template_variables`, `as3_template_variables`, and `ts_template_variables` dictionaries will on work on TMOS version 15.1 and higher.
+The `do_template_variables`, `as3_template_variables`, and `ts_template_variables` dictionaries will only work on TMOS version 15.1 and higher.
 
 ### Note: It is often simplier to use the `set-password` cloudinit module (referenced below) to change the default `admin` and `root` passwords rather than the f5-declarative-onboarding declaration to change user passwords. Both ways work as designed
 
@@ -705,7 +705,7 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 
 When both `do_declaration` and `do_declaration_url` are defined, the JSON document at `do_declaration_url` will be downloaded then the entries in the `do_declaration` will overwrite entries in downloaded document. This enables generalized onboarding entries to used from the downloaded document and instance specific entries to be use from the instance declaration.
 
-The `do_template_variables`, `as3_template_variables`, and `ts_template_variables` dictionaries will on work on TMOS version 15.1 and higher.
+The `do_template_variables`, `as3_template_variables`, and `ts_template_variables` dictionaries will only work on TMOS version 15.1 and higher.
 
 ### Warning: f5-declarative-onboarding and f5-appsvcs-extension do not support the use of route domains at this time. You should disable route domain support when attempting to use f5-declarative-onboarding and f5-appsvcs-extension declarations when using tmos_configdrive_openstack
 
@@ -800,7 +800,7 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 
 When both `do_declaration` and `do_declaration_url` are defined, the JSON document at `do_declaration_url` will be downloaded then the entries in the `do_declaration` will overwrite entries in downloaded document. This enables generalized onboarding entries to used from the downloaded document and instance specific entries to be use from the instance declaration.
 
-The `do_template_variables`, `as3_template_variables`, and `ts_template_variables` dictionaries will on work on TMOS version 15.1 and higher.
+The `do_template_variables`, `as3_template_variables`, and `ts_template_variables` dictionaries will only work on TMOS version 15.1 and higher.
 
 ### Warning: f5-declarative-onboarding and f5-appsvcs-extension do not support the use of route domains at this time. You should disable route domain support when attempting to use f5-declarative-onboarding and f5-appsvcs-extension declarations when using tmos_dhcpv4_tmm
 
