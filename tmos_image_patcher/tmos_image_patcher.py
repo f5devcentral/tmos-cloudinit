@@ -138,7 +138,7 @@ def scan_for_images(tmos_image_dir, image_overwrite, image_build_id):
                                      os.path.splitext(image_file)[0])
             if image_build_id:
                 build_split = os.path.splitext(os.path.splitext(image_file)[0])
-                if not build_split[0].endswidth(image_build_id):
+                if not build_split[0].endswith(image_build_id):
                     extract_dir = "%s/%s-%s%s" % (tmos_image_dir,
                                                   build_split[0],
                                                   image_build_id,
