@@ -460,6 +460,8 @@ tmos_static_mgmt:
     - tmsh modify sys provision asm level minimum
     - /usr/local/bin/SOAPLicenseClient --basekey KALCE-AHJBL-RFJSD-GGNFG-MFJCDYX
   phone_home_url: https://webhook.site/5f8cd8a7-b051-4648-9296-8f6afad34c93
+  phone_home_url_headers:
+    X-API-TOKEN: b53a154a-a8b1-4b1c-b3bd-482300214443
   phone_home_cli: "curl -i -X POST -H 'X-Auth-Token: gAAAAABc5UscwS1py5XfC3yPcyN8KcgD7hYtEZ2-xHw95o4YIh0j5IDjAu9qId3JgMOp9hnHwP42mYA7oPPP0yl-OQXvCaCS3OezKlO7MsS-ZCTJzuS3sSysIMHTA78fGsXbMgCQZCi5G-evLG9xUNrYp5d3blhMnpHR0dlHPz6VMacNkPhyrQI' -H 'Content-Type: application/json' -H 'Accept: application/json' http://192.168.0.121:8004/v1/d3779c949b57403bb7f703016e91a425/stacks/demo_waf/3dd6ce45-bb8c-400d-a48c-87ac9e46e60e/resources/wait_handle/signal"
 ```
 
@@ -835,8 +837,28 @@ tmos_dhcpv4_tmm:
     - https://github.com/F5Networks/f5-declarative-onboarding/raw/master/dist/f5-declarative-onboarding-1.3.0-4.noarch.rpm
     - https://github.com/F5Networks/f5-appsvcs-extension/raw/master/dist/latest/f5-appsvcs-3.10.0-5.noarch.rpm
     - https://github.com/F5Networks/f5-telemetry-streaming/raw/master/dist/f5-telemetry-1.2.0-1.noarch.rpm
-  do_enabled: false
-  as3_enabled: false
+  do_enabled: true
+  do_declaration_url: https://gitlab.com/api/v4/projects/8675309/repository/files/do_declaration.json/raw?ref=master
+  do_declaration_url_headers:
+    PRIVATE-TOKEN: jjQ0800T_teheHeTe0
+  do_template_variables:
+    primary_dns: 8.8.8.8
+    secondary_dns: 1.1.1.1
+    timezone: Europe/Paris
+    primary_ntp: 132.163.96.5
+    secondary_ntp: 132.163.97.5
+  as3_enabled: true
+  as3_declaration_url: https://gitlab.com/api/v4/projects/8675309/repository/files/as3_declaration.json/raw?ref=master
+  as3_declaration_url_headers:
+    PRIVATE-TOKEN: jjQ0800T_teheHeTe0
+  as3_template_variables:
+    selfip_snat_address: 10.20.40.40
+  ts_enabled: true
+  ts_declaration_url: https://gitlab.com/api/v4/projects/8675309/repository/files/ts_declaration.json/raw?ref=master
+  ts_declaration_url_headers:
+    PRIVATE-TOKEN: jjQ0800T_teheHeTe0
+  ts_template_variables:
+    f5_beacon_token: a-0f29e5dcbee848989054ff690e544
   post_onboard_enabled: true
   post_onboard_commands:
     - tmsh modify sys global-settings gui-setup disabled
