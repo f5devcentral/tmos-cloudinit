@@ -180,9 +180,9 @@ def scan_for_images(tmos_image_dir, image_overwrite, image_build_id):
 def extract_tar_archive(archive_file, extract_dir):
     """Extract a tar archive"""
     LOG.debug('extracting %s to %s', archive_file, extract_dir)
-    files = glob.glob(extract_dir)
-    for f in files:
-        os.remove(f)
+    for f in glob.glob("%s/*" % extract_dir):
+        if os.path.isfile(f):
+            os.remove(f)
     archive = tarfile.TarFile(archive_file, 'r')
     archive.extractall(extract_dir)
     archive.close()
@@ -191,9 +191,9 @@ def extract_tar_archive(archive_file, extract_dir):
 def extract_zip_archive(archive_file, extract_dir):
     """Extract a zip archive"""
     LOG.debug('extracting %s to %s', archive_file, extract_dir)
-    files = glob.glob(extract_dir)
-    for f in files:
-        os.remove(f)
+    for f in glob.glob("%s/*" % extract_dir):
+        if os.path.isfile(f):
+            os.remove(f)
     archive = zipfile.ZipFile(archive_file, 'r')
     archive.extractall(extract_dir)
     archive.close()
