@@ -745,10 +745,15 @@ tmos_configdrive_openstack:
   do_declaration:
     Common:
       class: Tenant
-      licenseKey:
+      poolLicense:
         class: License
-        licenseType: regKey
-        regKey: GJKDM-UJTJH-OJZVX-ZJPEG-XTJIAHI
+        licenseType: licensePool
+        bigIqHost: 10.22.90.5
+        bigIqUsername: admin
+        bigIqPassword: admin
+        licensePool: REGKEYLICENSEPOOL
+        reachable: false
+        hypervisor: kvm
       provisioningLevels:
         class: Provision
         ltm: nominal
@@ -838,6 +843,17 @@ tmos_dhcpv4_tmm:
     - https://github.com/F5Networks/f5-appsvcs-extension/raw/master/dist/latest/f5-appsvcs-3.10.0-5.noarch.rpm
     - https://github.com/F5Networks/f5-telemetry-streaming/raw/master/dist/f5-telemetry-1.2.0-1.noarch.rpm
   do_enabled: true
+  do_declaration:
+    schemaVersion: 1.0.0
+    class: Device
+    async: true
+    label: Cloudinit Onboarding
+    Common:
+      class: Tenant
+      byoLicense:
+        class: License
+        licenseType: regKey
+        regKey: VGOCL-OEBYX-UZREW-VTOIV-ICSAHBK
   do_declaration_url: https://gitlab.com/api/v4/projects/8675309/repository/files/do_declaration.json/raw?ref=master
   do_declaration_url_headers:
     PRIVATE-TOKEN: jjQ0800T_teheHeTe0
