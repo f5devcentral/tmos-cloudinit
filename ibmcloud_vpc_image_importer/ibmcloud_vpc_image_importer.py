@@ -56,6 +56,7 @@ SESSION_SECONDS = 1800
 
 RESOURCE_GORUP = None
 
+
 def get_iam_token():
     global SESSION_TOKEN, SESSION_TIMESTAMP
     now = int(time.time())
@@ -167,12 +168,14 @@ def delete_image(image_name, region=None):
     if existing_images:
         for image in existing_images['images']:
             if image_name == image['name']:
-                del_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2020-04-07&generation=2" % (region, image['id'])    
+                del_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2020-04-07&generation=2" % (
+                    region, image['id'])
                 response = requests.delete(del_url, headers=headers)
                 if response.status_code < 400:
                     return True
                 else:
-                    LOG.error('error deleting image %d:%s', response.status_code, response.content)
+                    LOG.error('error deleting image %d:%s',
+                              response.status_code, response.content)
     return False
 
 
@@ -182,11 +185,15 @@ def dry_run(catalog_db):
             for image in catalog_db[region]:
                 if re.search(IMAGE_MATCH, image['image_name']):
                     if DELETE_ALL:
-                        LOG.info('dry run - would delete %s in %s if exists', image['image_name'], region)
+                        LOG.info('dry run - would delete %s in %s if exists',
+                                 image['image_name'], region)
                     elif UPDATE_IMAGES:
-                        LOG.info('dry run - would update %s in %s if exists', image['image_name'], region)
+                        LOG.info('dry run - would update %s in %s if exists',
+                                 image['image_name'], region)
                     else:
-                        LOG.info('dry run - would import custom image %s in %s if it does not exists', image['image_name'], region)
+                        LOG.info(
+                            'dry run - would import custom image %s in %s if it does not exists',
+                            image['image_name'], region)
 
 
 def delete_all_images():
@@ -197,13 +204,17 @@ def delete_all_images():
             if re.search(IMAGE_MATCH, image['name']):
                 LOG.info('deleting image %s', image['name'])
                 if not delete_image(image['name'], region):
-                    LOG.error('image deletion failed for image %s', image['name'])
+                    LOG.error('image deletion failed for image %s',
+                              image['name'])
+            else:
+                LOG.debug('leaving object: %s because it did not match %s',
+                          image['name'], IMAGE_MATCH)
 
 
 def poll_until_image_gone(image_name, region):
     while image_exists(image_name, region):
         LOG.info("waiting on %s in %s to delete", image_name, region)
-        time.sleep(2);
+        time.sleep(2)
 
 
 def import_images(catalog_db):
@@ -214,18 +225,20 @@ def import_images(catalog_db):
                 if re.search(IMAGE_MATCH, image['image_name']):
                     exists = image_exists(image['image_name'], region)
                     if exists and UPDATE_IMAGES:
-                        LOG.info('deleting image %s to force update', image['image_name'])
+                        LOG.info('deleting image %s to force update',
+                                 image['image_name'])
                         if delete_image(image['image_name'], region):
                             poll_until_image_gone(image['image_name'], region)
                             exists = False
                     if exists:
-                        LOG.info('image %s already exists', image['image_name'])
+                        LOG.info('image %s already exists',
+                                 image['image_name'])
                     else:
-                        response = import_image(
-                            token, region, image['image_name'],
-                            image['image_sql_url'])
+                        response = import_image(token, region,
+                                                image['image_name'],
+                                                image['image_sql_url'])
                         if response.status_code > 300:
-                            LOG.error('could not import %s: %d - %s', 
+                            LOG.error('could not import %s: %d - %s',
                                       image['image_name'],
                                       response.status_code, response.content)
                         else:
@@ -240,7 +253,8 @@ def get_tmos_image_catalog():
     }
     response = requests.get(TMOS_IMAGE_CATALOG_URL, headers=headers)
     if response.status_code > 400:
-        LOG.error('could not retrieve F5 TMOS image catalog %d:%s' % (response.status_code, response.content))
+        LOG.error('could not retrieve F5 TMOS image catalog %d:%s' %
+                  (response.status_code, response.content))
         return None
     else:
         return response.json()
@@ -261,9 +275,12 @@ def create_inventory(f5_image_catalog):
                             'image_name': image['name'],
                             'id': image['id']
                         })
-    catalog_json = json.dumps(catalog, sort_keys=True, indent=4, separators=(',', ': '))
+    catalog_json = json.dumps(catalog,
+                              sort_keys=True,
+                              indent=4,
+                              separators=(',', ': '))
     catalog_file = os.getenv('CATALOG_FILE', None)
-    
+
     if catalog_file:
         with open(catalog_file, 'w') as cf:
             cf.write(catalog_json)
@@ -283,7 +300,7 @@ def initialize():
     API_KEY = os.getenv('API_KEY', None)
     IMAGE_MATCH = os.getenv('IMAGE_MATCH', '^big.*i[pq]')
     REGION = os.getenv('REGION', 'us-south')
-    REGION = [ x.strip() for x in REGION.split(',') ]
+    REGION = [x.strip() for x in REGION.split(',')]
     RESOURCE_GROUP = os.getenv('RESOURCE_GROUP', 'default')
     DRY_RUN = os.getenv('DRY_RUN', 'false')
     if DRY_RUN.lower() == 'true':
@@ -301,14 +318,16 @@ def initialize():
     else:
         DELETE_ALL = False
     LOG.debug('processing images in %s', REGION)
-    AUTH_ENDPOINT = os.getenv(
-        'AUTH_ENDPOINT', 'https://iam.cloud.ibm.com/identity/token')
-    
+    AUTH_ENDPOINT = os.getenv('AUTH_ENDPOINT',
+                              'https://iam.cloud.ibm.com/identity/token')
+
 
 if __name__ == "__main__":
     START_TIME = time.time()
-    LOG.debug('process start time: %s', datetime.datetime.fromtimestamp(
-        START_TIME).strftime("%A, %B %d, %Y %I:%M:%S"))
+    LOG.debug(
+        'process start time: %s',
+        datetime.datetime.fromtimestamp(START_TIME).strftime(
+            "%A, %B %d, %Y %I:%M:%S"))
     initialize()
     ERROR_MESSAGE = ''
     ERROR = False
@@ -334,10 +353,5 @@ if __name__ == "__main__":
     DURATION = STOP_TIME - START_TIME
     LOG.debug(
         'process end time: %s - ran %s (seconds)',
-        datetime.datetime.fromtimestamp(
-            STOP_TIME).strftime("%A, %B %d, %Y %I:%M:%S"),
-        DURATION
-    )
-
-
-
+        datetime.datetime.fromtimestamp(STOP_TIME).strftime(
+            "%A, %B %d, %Y %I:%M:%S"), DURATION)

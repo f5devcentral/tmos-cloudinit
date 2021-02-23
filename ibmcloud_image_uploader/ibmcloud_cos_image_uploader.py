@@ -229,6 +229,10 @@ def delete_all():
                                 LOG.debug('deleting object: %s', obj.key)
                                 obj.delete()
                                 delete_bucket = True
+                            else:
+                                LOG.debug(
+                                    'leaving object: %s because it did not match %s',
+                                    obj.key, IMAGE_MATCH)
                         if delete_bucket:
                             LOG.debug('deleting bucket: %s', bucket.name)
                             bucket.delete()
