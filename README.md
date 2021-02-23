@@ -693,6 +693,7 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 | icontrollx_trusted_sources | true | Only install iControl LX RPMs which are signed by TMOS trusted keys |
 | icontrollx_package_urls | none | List of URLs to download and install iControl LX extension packages before onboarding |
 | do_enable | true | Enables an attempt to create a f5-declarative-onboarding declaration from discovered resources. If enabled, an asynchronous attempt to declare resouces via f5-declarative-onboarding will be made. If the initial request fails, non-declarative onboarding will resumse |
+| do_schema_version | 1.0.0 | Overwrite the f5-declarative-onboarding schema version for the declaration created from resource discovery |
 | do_declaration | none |  YAML formatted f5-declarative-onboarding declaration. This declaration will augment or overwrite the declaration created by resource discovery |
 | do_declaration_url | none | Download URL for f5-declarative-onboarding declaration in YAML or JSON format. This declaration will augment or overwrite the declaration created by resource discovery |
 | do_declaration_url_headers | none | A dictionary of HTTP headers to include in the GET request for the declaration |
@@ -797,6 +798,7 @@ This cloudinit module optionally composes f5-appsvcs-extension declarations in t
 | icontrollx_trusted_sources | true | Only install iControl LX RPMs which are signed by TMOS trusted keys |
 | icontrollx_package_urls | none | List of URLs to download and install iControl LX extension packages before onboarding |
 | do_enable | true | Enables attempt to create a f5-declarative-onboarding declaration from discovered resources. If enabled, an asynchronous attempt to declare resouces via f5-declarative-onboarding will be made. If the initial request fails, non-declarative onboarding will resumse |
+| do_schema_version | 1.0.0 | Overwrite the f5-declarative-onboarding schema version for the declaration created from resource discovery |
 | do_declaration | none |  YAML formatted f5-declarative-onboarding declaration. This declaration will augment or overwrite the declaration created by resource discovery |
 | do_declaration_url | none | Download URL for f5-declarative-onboarding declaration in YAML or JSON format. This declaration will augment or overwrite the declaration created by resource discovery |
 | do_declaration_url_headers | none | A dictionary of HTTP headers to include in the GET request for the declaration |
