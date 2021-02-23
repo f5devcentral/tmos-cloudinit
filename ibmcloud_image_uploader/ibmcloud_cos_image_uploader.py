@@ -54,6 +54,7 @@ IMAGE_MATCH = '^[a-zA-Z]'
 
 UPDATE_IMAGES = None
 DELETE_ALL = None
+INVENTORY = None
 
 LOG = logging.getLogger('ibmcloud_cos_image_uploader')
 LOG.setLevel(logging.DEBUG)
@@ -313,7 +314,7 @@ def initialize():
     global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_UPLOAD_THREADS, \
            COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, \
            COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL, \
-           COS_BUCKET_PREFIX, IMAGE_MATCH
+           COS_BUCKET_PREFIX, IMAGE_MATCH, INVENTORY
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_UPLOAD_THREADS = os.getenv('COS_UPLOAD_THREADS', 1)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
@@ -334,6 +335,11 @@ def initialize():
         DELETE_ALL = True
     else:
         DELETE_ALL = False
+    INVENTORY = os.getenv('INVENTORY', 'true')
+    if INVENTORY.lower() == 'true':
+        INVENTORY = True
+    else:
+        INVENTORY = False
 
 
 if __name__ == "__main__":
@@ -364,7 +370,8 @@ if __name__ == "__main__":
         delete_all()
     else:
         upload_patched_images()
-    inventory()
+    if INVENTORY:
+        inventory()
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
     LOG.debug(
