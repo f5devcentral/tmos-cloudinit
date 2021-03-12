@@ -31,7 +31,7 @@ import yaml
 
 import pycdlib
 
-LOG = logging.getLogger('tmos_image_patcher')
+LOG = logging.getLogger('tmos_configdrive_builder')
 LOG.setLevel(logging.DEBUG)
 FORMATTER = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
