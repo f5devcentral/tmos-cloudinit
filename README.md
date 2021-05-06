@@ -826,7 +826,7 @@ The `do_template_variables`, `as3_template_variables`, and `ts_template_variable
 
 ### Supplying dhcpv4_options via user-data
 
-When the infrastructure does not supply the required DHCPv4 options in the lease offerings, or when what is supplied needs to be modified, `tmos_dhcpv4_tmm` can read option values from declared as `dhcpv4_options` dictionary. The following DHCPv4 options are supported with `dhcpv4_options`.
+When the infrastructure does not supply the required DHCPv4 options in the lease offerings, or when what is supplied needs to be modified, `tmos_dhcpv4_tmm` can read option values from the `dhcpv4_options` dictionary attribute. The following DHCPv4 options are supported with `dhcpv4_options`.
 
 | DHCPv4 Option | Relivant Interfaces | Description|
 | --------------------- | ------------- | ---------------|
