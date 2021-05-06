@@ -824,9 +824,45 @@ When both `do_declaration` and `do_declaration_url` are defined, the JSON docume
 
 The `do_template_variables`, `as3_template_variables`, and `ts_template_variables` dictionaries will only work on TMOS version 15.1 and higher.
 
+### Supplying dhcpv4_options via user-data
+
+When the infrastructure does not supply the required DHCPv4 options in the lease offerings, or when what is supplied needs to be modified, `tmos_dhcpv4_tmm` can read option values from declared as `dhcpv4_options` dictionary. The following DHCPv4 options are supported with `dhcpv4_options`.
+
+| DHCPv4 Option | Relivant Interfaces | Description|
+| --------------------- | ------------- | ---------------|
+| fixed-address         | mgmt, 1.1-1.n | IPv4 interface address in dot notation |
+| subnet-mask           | mgmt, 1.1-1.n | Subnet mask in dot notation |
+| interface-mtu         | mgmt, 1.1-1.n | MTU for the link device|
+| routers               | mgmt, 1.1-1.n |Default gateway IP |
+| host-name             | mgmt | DNS host name |
+| domain-name           | mgmt | DNS domain name |
+| domain-name-servers   | mgmt | Comma seperated list of DNS servers|
+| ntp-servers           | mgmt | Comma seperated list of NTP servers|
+
+Here is an example of declaring `dhcpv4_options`:
+
+```yaml
+tmos_dhcpv4_tmm:
+  enabled: true
+  rd_enabled: false
+  icontrollx_trusted_sources: false
+  inject_routes: true
+  configsync_interface: 1.1
+  default_route_interface: 1.2
+  dhcp_timeout: 120
+  dhcpv4_options:
+    mgmt:
+      host-name: myuniquehostname
+      domain-name: domain.infra
+    '1.1':
+      subnet-mask: 255.255.255.252
+    '1.2':
+      routers: 173.14.20.1
+```
+
 ### Warning: f5-declarative-onboarding and f5-appsvcs-extension do not support the use of route domains at this time. You should disable route domain support when attempting to use f5-declarative-onboarding and f5-appsvcs-extension declarations when using tmos_dhcpv4_tmm
 
-If f5-declarative-onboarding is disabled by setting `do_enabled` to false, the device onboarding configuration will continue as described in the OpenStack meta_data.json and network_data.json files. f5-appsvcs-extension declarations can be applied with or without f5-declarative-onboarding being enabled.
+If f5-declarative-onboarding is disabled by setting `do_enabled` to false, the device onboarding configuration will continue as described in the DHCPv4 lease offers or `dhcpv4_options` declarations. f5-appsvcs-extension declarations can be applied with or without f5-declarative-onboarding being enabled.
 
 #### tmos_dhcpv4_tmm userdata usage
 
@@ -889,42 +925,6 @@ tmos_dhcpv4_tmm:
     - /usr/local/bin/SOAPLicenseClient --basekey KALCE-AHJBL-RFJSD-GGNFG-MFJCDYX
   phone_home_url: https://webhook.site/5f8cd8a7-b051-4648-9296-8f6afad34c93
   phone_home_cli: "curl -i -X POST -H 'X-Auth-Token: gAAAAABc5UscwS1py5XfC3yPcyN8KcgD7hYtEZ2-xHw95o4YIh0j5IDjAu9qId3JgMOp9hnHwP42mYA7oPPP0yl-OQXvCaCS3OezKlO7MsS-ZCTJzuS3sSysIMHTA78fGsXbMgCQZCi5G-evLG9xUNrYp5d3blhMnpHR0dlHPz6VMacNkPhyrQI' -H 'Content-Type: application/json' -H 'Accept: application/json' http://192.168.0.121:8004/v1/d3779c949b57403bb7f703016e91a425/stacks/demo_waf/3dd6ce45-bb8c-400d-a48c-87ac9e46e60e/resources/wait_handle/signal"
-```
-
-### Supplying dhcpv4_options via user-data ###
-
-When the infrastructure does not supply the required DHCPv4 options in the lease offerings, or when what is supplied needs to be changes, the `tmos_dhcpv4_tmm`, can read option values from declared as `dhcpv4_options`. The following options are available to be supplied or overwritten.
-
-| DHCPv4 Option | Relivant Interfaces | Description|
-| --------------------- | ------------- | ---------------|
-| fixed-address         | mgmt, 1.1-1.n | IPv4 interface address in dot notation |
-| subnet-mask           | mgmt, 1.1-1.n | Subnet mask in dot notation |
-| interface-mtu         | mgmt, 1.1-1.n | MTU for the link device|
-| routers               | mgmt, 1.1-1.n |Default gateway IP |
-| host-name             | mgmt | DNS host name |
-| domain-name           | mgmt | DNS domain name |
-| domain-name-servers   | mgmt | Comma seperated list of DNS servers|
-| ntp-servers           | mgmt | Comma seperated list of NTP servers|
-
-Here is an example of declaring `dhcpv4_options`:
-
-```yaml
-tmos_dhcpv4_tmm:
-  enabled: true
-  rd_enabled: false
-  icontrollx_trusted_sources: false
-  inject_routes: true
-  configsync_interface: 1.1
-  default_route_interface: 1.2
-  dhcp_timeout: 120
-  dhcpv4_options:
-    mgmt:
-      host-name: myuniquehostname
-      domain-name: domain.infra
-    '1.1':
-      subnet-mask: 255.255.255.252
-    '1.2':
-      routers: 173.14.20.1
 ```
 
 ## TMOS Cloudinit Modules Support for SSH Keys, Passwords, and Phone Home
