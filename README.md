@@ -919,10 +919,6 @@ tmos_dhcpv4_tmm:
     - tmsh modify sys db ui.advisory.color { value orange }
     - tmsh modify sys db ui.advisory.text { value  'Onboarded with OpenStack Metadata' }
     - tmsh modify sys db ui.advisory.enabled { value true }
-    - tmsh modify sys db provision.extramb { value 500 }
-    - tmsh modify sys provision ltm level minimum
-    - tmsh modify sys provision asm level minimum
-    - /usr/local/bin/SOAPLicenseClient --basekey KALCE-AHJBL-RFJSD-GGNFG-MFJCDYX
   phone_home_url: https://webhook.site/5f8cd8a7-b051-4648-9296-8f6afad34c93
   phone_home_cli: "curl -i -X POST -H 'X-Auth-Token: gAAAAABc5UscwS1py5XfC3yPcyN8KcgD7hYtEZ2-xHw95o4YIh0j5IDjAu9qId3JgMOp9hnHwP42mYA7oPPP0yl-OQXvCaCS3OezKlO7MsS-ZCTJzuS3sSysIMHTA78fGsXbMgCQZCi5G-evLG9xUNrYp5d3blhMnpHR0dlHPz6VMacNkPhyrQI' -H 'Content-Type: application/json' -H 'Accept: application/json' http://192.168.0.121:8004/v1/d3779c949b57403bb7f703016e91a425/stacks/demo_waf/3dd6ce45-bb8c-400d-a48c-87ac9e46e60e/resources/wait_handle/signal"
 ```
