@@ -466,18 +466,19 @@ def create_public_image(token, region, image_name, cos_url):
                 image_name, cos_url, response.status_code, response.content)
         return None
     else:
+        LOG.debug('found existing image with id %s' % image_id)
         if not make_image_public(token, region, image_id):
             LOG.error('image %s could not be made public, permissions?', image_id)
             return None
         return image_id
 
 
-def create_public_images():
-    """got through published COS images and create public VPC images"""
+def assure_public_images():
+    """got through published COS images and assure public VPC images"""
     if not IC_API_KEY:
-        LOG.info('no env variable found IC_API_KEY, so no public images will be created')
+        LOG.info('no env variable found IC_API_KEY, so no public images will be assured')
         return
-    LOG.debug('create public images to %s', IBM_COS_REGIONS)
+    LOG.debug('assuring public images to %s', IBM_COS_REGIONS)
     token = get_iam_token()
     for location in IBM_COS_REGIONS:
         cos_res = get_cos_resource(location)
@@ -488,13 +489,13 @@ def create_public_images():
                         if os.path.splitext(obj.key)[1] in IMAGE_TYPES:
                             image_name = bucket.name.replace("%s-" % COS_BUCKET_PREFIX,'').replace('.', '-')
                             cos_url = "cos://%s/%s/%s" % (location, bucket.name, obj.key)
-                            LOG.debug('Creating public image %s in %s from url %s' % (image_name, location, cos_url))
+                            LOG.debug('assuring public image %s in %s from url %s' % (image_name, location, cos_url))
                             create_public_image(token, location, image_name, cos_url)
         except ClientError as client_error:
             LOG.error('client error creating COS resources client: %s',
                       client_error)
         except Exception as ex:
-            LOG.error('exception creating public images: %s', str(ex))                  
+            LOG.error('exception assuring public images: %s', str(ex))                  
 
 
 def inventory():
@@ -618,7 +619,7 @@ if __name__ == "__main__":
     else:
         upload_patched_images()
     if PUBLIC_IMAGES:
-        create_public_images()
+        assure_public_images()
     if INVENTORY:
         inventory()
     STOP_TIME = time.time()
