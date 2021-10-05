@@ -455,6 +455,7 @@ def create_public_image(token, region, image_name, cos_url):
                 if state_of_image == 'available':
                     is_available = True
                 else:
+                    LOG.debug('image %s it still creating from %s....' % (image_name, cos_url))
                     time.sleep(IMAGE_STATUS_PAUSE_SECONDS)
             if not make_image_public(token, region, image['id']):
                 LOG.error('image %s could not be made public, permissions?', image['id'])
@@ -490,10 +491,10 @@ def create_public_images():
                             LOG.debug('Creating public image %s in %s from url %s' % (image_name, location, cos_url))
                             create_public_image(token, location, image_name, cos_url)
         except ClientError as client_error:
-            LOG.error('client error creating inventory of resources: %s',
+            LOG.error('client error creating COS resources client: %s',
                       client_error)
         except Exception as ex:
-            LOG.error('exception creating inventory of resources: %s', ex)                  
+            LOG.error('exception creating public images: %s', str(ex))                  
 
 
 def inventory():
