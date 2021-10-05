@@ -446,9 +446,8 @@ def create_public_images():
     if not IC_API_KEY:
         LOG.info('no env variable found IC_API_KEY, so no public images will be created')
         return
-    LOG.debug('create public VPC images to %s', IBM_COS_REGIONS)
+    LOG.debug('create public images to %s', IBM_COS_REGIONS)
     for location in IBM_COS_REGIONS:
-        inventory[location] = []
         cos_res = get_cos_resource(location)
         try:
             for bucket in cos_res.buckets.all():
