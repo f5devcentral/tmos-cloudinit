@@ -342,6 +342,25 @@ def get_image_id(token, region, image_name):
         return None
 
 
+def get_image_visibility(token, region, image_id):
+    if not token:
+        token = get_iam_token()
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer %s" % token
+    }
+    response = requests.get(image_url, headers=headers)
+    if response.status_code < 300:
+        image = response.json()
+        if image['id'] == image_id:
+            return image['visibility']
+        return None
+    else:
+        return None
+
+
 def get_image_status(token, region, image_id):
     if not token:
         token = get_iam_token()
@@ -362,20 +381,22 @@ def get_image_status(token, region, image_id):
 def make_image_public(token, region, image_id):
     if not token:
         token = get_iam_token()
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
-    headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "Authorization": "Bearer %s" % token
-    }
-    data = {
-        "visibility": "public"
-    }
-    response = requests.patch(image_url, headers=headers, data=json.dumps(data))
-    if response.status_code < 300:
-        return True
-    else:
-        return False
+    image_visibility = get_image_visibility(token, region, image_id)
+    if not image_visibility == 'public':
+        image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": "Bearer %s" % token
+        }
+        data = {
+            "visibility": "public"
+        }
+        response = requests.patch(image_url, headers=headers, data=json.dumps(data))
+        if response.status_code < 300:
+            return True
+        else:
+            return False
 
 
 def delete_image(token, region, image_id):
