@@ -246,6 +246,11 @@ def assure_cos_object(image_path, location):
 def delete_all():
     """delete all files and buckets from the COS resource"""
     LOG.debug('deleting images in: %s', IBM_COS_REGIONS)
+    token = None
+    if not IC_API_KEY:
+        LOG.debug('will not remove VPC image because now API KEY was defined')
+    else:
+        token = get_iam_token()
     for location in IBM_COS_REGIONS:
         LOG.debug("deleting images in %s region" % location)
         cos_res = get_cos_resource(location)
@@ -257,6 +262,10 @@ def delete_all():
                         for obj in cos_res.Bucket(bucket.name).objects.all():
                             if re.search(IMAGE_MATCH, obj.key):
                                 LOG.debug('deleting object: %s', obj.key)
+                                image_name = bucket.name.replace("%s-" % COS_BUCKET_PREFIX,'').replace('.', '-')
+                                cos_url = "cos://%s/%s/%s" % (location, bucket.name, obj.key)
+                                LOG.debug('removing public image %s in %s from url %s' % (image_name, location, cos_url))
+                                delete_public_image(token, location, image_name)
                                 obj.delete()
                                 delete_bucket = True
                             else:
@@ -420,6 +429,16 @@ def delete_image(token, region, image_id):
         LOG.error('error deleting image %d:%s',
             response.status_code, response.content)
     return False
+
+
+def delete_public_image(token, region, image_name):
+    if not token:
+        token = get_iam_token()
+    image_id = get_image_id(token, region, image_name)
+    if image_id:
+        delete_image(token, region, image_id)
+    else:
+        LOG.debug('not VPC image found to remove for name %s' % image_name)
 
 
 def create_public_image(token, region, image_name, cos_url):
