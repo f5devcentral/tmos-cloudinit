@@ -397,7 +397,9 @@ def make_image_public(token, region, image_id):
             return True
         else:
             return False
-
+    else:
+        return True
+        
 
 def delete_image(token, region, image_id):
     if not token:
