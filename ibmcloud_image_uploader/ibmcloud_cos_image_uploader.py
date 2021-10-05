@@ -336,6 +336,7 @@ def get_image_id(token, region, image_name):
         images = response.json()
         for image in images['images']:
             if image['name'] == image_name:
+                LOG.debug('found VPC image id for name %s: %s' % (image_name, image['id']))
                 return image['id']
         return None
     else:
