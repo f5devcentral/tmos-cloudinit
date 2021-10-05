@@ -50,6 +50,15 @@ COS_ENDPOINT = None
 
 COS_BUCKET_PREFIX = 'f5'
 
+IC_API_KEY = None
+IC_RESOURCE_GROUP = None
+AUTH_ENDPOINT = 'https://iam.cloud.ibm.com/identity/token'
+SESSION_TOKEN = None
+SESSION_TIMESTAMP = 0
+SESSION_SECONDS = 1800
+IMAGE_STATUS_PAUSE_SECONDS = 5
+
+
 IMAGE_MATCH = '^[a-zA-Z]'
 
 UPDATE_IMAGES = None
@@ -63,6 +72,25 @@ FORMATTER = logging.Formatter(
 LOGSTREAM = logging.StreamHandler(sys.stdout)
 LOGSTREAM.setFormatter(FORMATTER)
 LOG.addHandler(LOGSTREAM)
+
+
+def get_iam_token():
+    global SESSION_TOKEN, SESSION_TIMESTAMP
+    now = int(time.time())
+    if SESSION_TIMESTAMP > 0 and ((now - SESSION_TIMESTAMP) < SESSION_SECONDS):
+        return SESSION_TOKEN
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    data = "apikey=%s&grant_type=urn:ibm:params:oauth:grant-type:apikey" % IC_API_KEY
+    response = requests.post(AUTH_ENDPOINT, headers=headers, data=data)
+    if response.status_code < 300:
+        SESSION_TIMESTAMP = int(time.time())
+        SESSION_TOKEN = response.json()['access_token']
+        return SESSION_TOKEN
+    else:
+        return None
 
 
 def get_patched_images(tmos_image_dir):
@@ -244,7 +272,7 @@ def delete_all():
 
 
 def upload_patched_images():
-    """check for iamges and assure upload to IBM COS"""
+    """check for images and assure upload to IBM COS"""
     LOG.debug('uploading images to %s', IBM_COS_REGIONS)
     # Just do an interation to serially create buckets
     image_paths = get_patched_images(TMOS_IMAGE_DIR)
@@ -257,6 +285,185 @@ def upload_patched_images():
             if assure_cos_bucket(image_path, location):
                 assure_cos_object(image_path, location)
             current_image += 1
+    create_public_images()
+
+
+def get_resource_group_id(token=None):
+    if not token:
+        token = get_iam_token()
+    rg_url = "https://resource-controller.cloud.ibm.com/v2/resource_groups"
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer %s" % token
+    }
+    response = requests.get(rg_url, headers=headers)
+    if response.status_code < 300:
+        rgs = response.json()['resources']
+        for rg in rgs:
+            if rg['name'] == IC_RESOURCE_GROUP:
+                return rg['id']
+        return None
+    else:
+        return None
+
+
+def get_images(token, region):
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2020-04-07&generation=2" % region
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer %s" % token
+    }
+    response = requests.get(image_url, headers=headers)
+    if response.status_code < 300:
+        return response.json()
+    else:
+        return None
+
+
+def get_image_id(token, region, image_name):
+    if not token:
+        token = get_iam_token()
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2021-09-28&generation=2&name=%s" % (region, image_name)
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer %s" % token
+    }
+    response = requests.get(image_url, headers=headers)
+    if response.status_code < 300:
+        image = response.json()
+        if image['name'] == image_name:
+            return image['id']
+        return None
+    else:
+        return None
+
+
+def get_image_status(token, region, image_id):
+    if not token:
+        token = get_iam_token()
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer %s" % token
+    }
+    response = requests.get(image_url, headers=headers)
+    if response.status_code < 300:
+        image = response.json()
+        return image['status']
+    else:
+        return None
+
+
+def make_image_public(token, region, image_id):
+    if not token:
+        token = get_iam_token()
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer %s" % token
+    }
+    data = {
+        "visibility": "public"
+    }
+    response = requests.patch(image_url, headers=headers, data=json.dumps(data))
+    if response.status_code < 300:
+        return True
+    else:
+        return False
+
+
+def delete_image(token, region, image_id):
+    if not token:
+        token = get_iam_token()
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer %s" % token
+    }
+    response = requests.delete(image_url, headers=headers)
+    if response.status_code < 400:
+        return True
+    else:
+        LOG.error('error deleting image %d:%s',
+            response.status_code, response.content)
+    return False
+
+
+def create_public_image(token, region, image_name, cos_url):
+    if not token:
+        token = get_iam_token()
+    image_id = get_image_id(token, region, image_name)
+    if UPDATE_IMAGES:
+        if image_id:
+            delete_image(token, region, )
+    if not image_id:
+        image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % region
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": "Bearer %s" % token
+        }
+        data = {
+            "name": image_name,
+            "file": {
+                "href": cos_url
+            },
+            "operating_system": {
+                "name": "centos-7-amd64"
+            },
+            "resource_group": {
+                "id": get_resource_group_id(token)
+            }
+        }
+        response = requests.post(image_url, headers=headers, data=json.dumps(data))
+        if response.status_code < 400:
+            image = response.json()
+            is_available = False
+            while not is_available:
+                state_of_image = get_image_status(token, region, image['id'])
+                if state_of_image == 'available':
+                    is_available = True
+                else:
+                    time.sleep(IMAGE_STATUS_PAUSE_SECONDS)
+            if not make_image_public(token, region, image['id']):
+                LOG.error('image %s could not be made public, permissions?', image['id'])
+                return None
+            return image['id']
+        else:
+            LOG.error('error creating image %s from cos_url: %s - %d:%s',
+                image_name, cos_url, response.status_code, response.content)
+        return None
+
+
+def create_public_images():
+    """got through published COS images and create public VPC images"""
+    if not IC_API_KEY:
+        LOG.info('no env variable found IC_API_KEY, so no public images will be created')
+        return
+    LOG.debug('create public VPC images to %s', IBM_COS_REGIONS)
+    for location in IBM_COS_REGIONS:
+        inventory[location] = []
+        cos_res = get_cos_resource(location)
+        try:
+            for bucket in cos_res.buckets.all():
+                if location in bucket.name:
+                    for obj in cos_res.Bucket(bucket.name).objects.all():
+                        if os.path.splitext(obj.key)[1] in IMAGE_TYPES:
+                            image_name = bucket.name.replace(
+                                "%s-" % COS_BUCKET_PREFIX,'').replace('.', '-')
+                            cos_url = "cos://%s/%s/%s" % (location, bucket.name, obj.key)
+                            create_public_image(location, image_name, cos_url)
+        except ClientError as client_error:
+            LOG.error('client error creating inventory of resources: %s',
+                      client_error)
+        except Exception as ex:
+            LOG.error('exception creating inventory of resources: %s', ex)                  
 
 
 def inventory():
@@ -270,21 +477,21 @@ def inventory():
         inventory[location] = []
         cos_res = get_cos_resource(location)
         try:
+            token = get_iam_token()
             for bucket in cos_res.buckets.all():
                 if location in bucket.name:
                     for obj in cos_res.Bucket(bucket.name).objects.all():
                         LOG.debug('inventory add %s/%s', bucket.name, obj.key)
                         if os.path.splitext(obj.key)[1] in IMAGE_TYPES:
+                            image_name = bucket.name.replace("%s-" % COS_BUCKET_PREFIX,'').replace('.', '-')
+                            cos_url = "cos://%s/%s/%s" % (location, bucket.name, obj.key)
+                            cos_md5_url = "cos://%s/%s/%s.md5" % (location, bucket.name, obj.key)
+                            image_id = get_image_id(token, location, image_name)
                             inv_obj = {
-                                'image_name':
-                                bucket.name.replace("%s-" % COS_BUCKET_PREFIX,
-                                                    '').replace('.', '-'),
-                                'image_sql_url':
-                                "cos://%s/%s/%s" %
-                                (location, bucket.name, obj.key),
-                                'md5_sql_url':
-                                "cos://%s/%s/%s.md5" %
-                                (location, bucket.name, obj.key)
+                                'image_name': image_name,
+                                'image_sql_url': cos_url,
+                                'md5_sql_url': cos_md5_url,
+                                'image_id': image_id
                             }
                             inventory[location].append(inv_obj)
         except ClientError as client_error:
@@ -314,7 +521,8 @@ def initialize():
     global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_UPLOAD_THREADS, \
            COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, \
            COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL, \
-           COS_BUCKET_PREFIX, IMAGE_MATCH, INVENTORY
+           COS_BUCKET_PREFIX, IC_API_KEY, IC_RESOURCE_GROUP, \
+           IMAGE_MATCH, INVENTORY
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_UPLOAD_THREADS = os.getenv('COS_UPLOAD_THREADS', 1)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
@@ -325,6 +533,9 @@ def initialize():
     IBM_COS_REGIONS = [x.strip() for x in COS_IMAGE_LOCATION.split(',')]
     COS_AUTH_ENDPOINT = os.getenv('COS_AUTH_ENDPOINT',
                                   'https://iam.cloud.ibm.com/identity/token')
+    # KEY TO MAKE PUBIC IMAGES
+    IC_API_KEY = os.getenv('IC_API_KEY', None)
+    IC_RESOURCE_GROUP = os.getenv('IC_RESOURCE_GROUP', 'default')
     UPDATE_IMAGES = os.getenv('UPDATE_IMAGES', 'false')
     if UPDATE_IMAGES.lower() == 'true':
         UPDATE_IMAGES = True
