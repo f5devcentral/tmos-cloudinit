@@ -384,6 +384,7 @@ def make_image_public(token, region, image_id):
         token = get_iam_token()
     image_visibility = get_image_visibility(token, region, image_id)
     if not image_visibility == 'public':
+        LOG.debug('setting image %s visibility to public' % image_id)
         image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
         headers = {
             "Accept": "application/json",
@@ -411,6 +412,7 @@ def delete_image(token, region, image_id):
         "Content-Type": "application/json",
         "Authorization": "Bearer %s" % token
     }
+    LOG.debug('deleting VPC image %s' % image_id)
     response = requests.delete(image_url, headers=headers)
     if response.status_code < 400:
         return True
@@ -428,7 +430,7 @@ def create_public_image(token, region, image_name, cos_url):
         if image_id:
             delete_image(token, region, )
     if not image_id:
-        LOG.debug('Creating %s in %s' % (image_name, region))
+        LOG.debug('creating %s in %s' % (image_name, region))
         image_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2021-09-28&generation=2" % region
         headers = {
             "Accept": "application/json",
@@ -467,7 +469,6 @@ def create_public_image(token, region, image_name, cos_url):
                 image_name, cos_url, response.status_code, response.content)
         return None
     else:
-        LOG.debug('found existing image with id %s' % image_id)
         if not make_image_public(token, region, image_id):
             LOG.error('image %s could not be made public, permissions?', image_id)
             return None
