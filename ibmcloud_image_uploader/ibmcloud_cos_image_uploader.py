@@ -403,6 +403,7 @@ def create_public_image(token, region, image_name, cos_url):
         if image_id:
             delete_image(token, region, )
     if not image_id:
+        LOG.debug('Creating %s in %s' % (image_name, region))
         image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % region
         headers = {
             "Accept": "application/json",
