@@ -51,7 +51,7 @@ COS_ENDPOINT = None
 COS_BUCKET_PREFIX = 'f5'
 
 IC_API_KEY = None
-IC_RESOURCE_GROUP = None
+IC_RESOURCE_GROUP = 'default'
 AUTH_ENDPOINT = 'https://iam.cloud.ibm.com/identity/token'
 SESSION_TOKEN = None
 SESSION_TIMESTAMP = 0
@@ -288,7 +288,7 @@ def upload_patched_images():
             current_image += 1
 
 
-def get_resource_group_id(token=None):
+def get_resource_group_id(token=None, resource_group_name=IC_RESOURCE_GROUP):
     if not token:
         token = get_iam_token()
     rg_url = "https://resource-controller.cloud.ibm.com/v2/resource_groups"
@@ -301,7 +301,7 @@ def get_resource_group_id(token=None):
     if response.status_code < 300:
         rgs = response.json()['resources']
         for rg in rgs:
-            if rg['name'] == IC_RESOURCE_GROUP:
+            if rg['name'] == resource_group_name:
                 return rg['id']
         return None
     else:
@@ -399,7 +399,7 @@ def make_image_public(token, region, image_id):
             return False
     else:
         return True
-        
+
 
 def delete_image(token, region, image_id):
     if not token:
@@ -428,7 +428,7 @@ def create_public_image(token, region, image_name, cos_url):
             delete_image(token, region, )
     if not image_id:
         LOG.debug('Creating %s in %s' % (image_name, region))
-        image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % region
+        image_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2021-09-28&generation=2" % region
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
