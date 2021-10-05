@@ -63,6 +63,7 @@ IMAGE_MATCH = '^[a-zA-Z]'
 
 UPDATE_IMAGES = None
 DELETE_ALL = None
+PUBLIC_IMAGES = None
 INVENTORY = None
 
 LOG = logging.getLogger('ibmcloud_cos_image_uploader')
@@ -285,7 +286,6 @@ def upload_patched_images():
             if assure_cos_bucket(image_path, location):
                 assure_cos_object(image_path, location)
             current_image += 1
-    create_public_images()
 
 
 def get_resource_group_id(token=None):
@@ -456,9 +456,9 @@ def create_public_images():
                 if location in bucket.name:
                     for obj in cos_res.Bucket(bucket.name).objects.all():
                         if os.path.splitext(obj.key)[1] in IMAGE_TYPES:
-                            image_name = bucket.name.replace(
-                                "%s-" % COS_BUCKET_PREFIX,'').replace('.', '-')
+                            image_name = bucket.name.replace("%s-" % COS_BUCKET_PREFIX,'').replace('.', '-')
                             cos_url = "cos://%s/%s/%s" % (location, bucket.name, obj.key)
+                            LOG.debug('Creating public image %s in %s from url %s' % (image_name, location, cos_url))
                             create_public_image(token, location, image_name, cos_url)
         except ClientError as client_error:
             LOG.error('client error creating inventory of resources: %s',
@@ -523,7 +523,7 @@ def initialize():
            COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, \
            COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL, \
            COS_BUCKET_PREFIX, IC_API_KEY, IC_RESOURCE_GROUP, \
-           IMAGE_MATCH, INVENTORY
+           IMAGE_MATCH, PUBLIC_IMAGES, INVENTORY
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_UPLOAD_THREADS = os.getenv('COS_UPLOAD_THREADS', 1)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
@@ -547,6 +547,11 @@ def initialize():
         DELETE_ALL = True
     else:
         DELETE_ALL = False
+    PUBLIC_IMAGES = os.getenv('PUBLIC_IMAGES', 'true')
+    if PUBLIC_IMAGES.lower() == 'true':
+        PUBLIC_IMAGES = True
+    else:
+        PUBLIC_IMAGES = False    
     INVENTORY = os.getenv('INVENTORY', 'true')
     if INVENTORY.lower() == 'true':
         INVENTORY = True
@@ -582,6 +587,8 @@ if __name__ == "__main__":
         delete_all()
     else:
         upload_patched_images()
+    if PUBLIC_IMAGES:
+        create_public_images()
     if INVENTORY:
         inventory()
     STOP_TIME = time.time()
