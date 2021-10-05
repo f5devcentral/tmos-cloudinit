@@ -447,6 +447,7 @@ def create_public_images():
         LOG.info('no env variable found IC_API_KEY, so no public images will be created')
         return
     LOG.debug('create public images to %s', IBM_COS_REGIONS)
+    token = get_iam_token()
     for location in IBM_COS_REGIONS:
         cos_res = get_cos_resource(location)
         try:
@@ -457,7 +458,7 @@ def create_public_images():
                             image_name = bucket.name.replace(
                                 "%s-" % COS_BUCKET_PREFIX,'').replace('.', '-')
                             cos_url = "cos://%s/%s/%s" % (location, bucket.name, obj.key)
-                            create_public_image(location, image_name, cos_url)
+                            create_public_image(token, location, image_name, cos_url)
         except ClientError as client_error:
             LOG.error('client error creating inventory of resources: %s',
                       client_error)
