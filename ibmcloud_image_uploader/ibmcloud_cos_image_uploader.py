@@ -333,9 +333,10 @@ def get_image_id(token, region, image_name):
     }
     response = requests.get(image_url, headers=headers)
     if response.status_code < 300:
-        image = response.json()
-        if image['name'] == image_name:
-            return image['id']
+        images = response.json()
+        for image in images['images']:
+            if image['name'] == image_name:
+                return image['id']
         return None
     else:
         return None
