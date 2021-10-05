@@ -441,6 +441,11 @@ def create_public_image(token, region, image_name, cos_url):
             LOG.error('error creating image %s from cos_url: %s - %d:%s',
                 image_name, cos_url, response.status_code, response.content)
         return None
+    else:
+        if not make_image_public(token, region, image_id):
+            LOG.error('image %s could not be made public, permissions?', image_id)
+            return None
+        return image_id
 
 
 def create_public_images():
