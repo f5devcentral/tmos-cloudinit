@@ -28,7 +28,6 @@ import datetime
 import logging
 import json
 import ibm_boto3
-import urlparse
 import requests
 import re
 
