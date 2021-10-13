@@ -63,6 +63,7 @@ IMAGE_MATCH = '^[a-zA-Z]'
 UPDATE_IMAGES = None
 DELETE_ALL = None
 PUBLIC_IMAGES = None
+WAIT_FOR_AVAILABLE = None
 INVENTORY = None
 
 LOG = logging.getLogger('ibmcloud_cos_image_uploader')
@@ -470,13 +471,16 @@ def create_public_image(token, region, image_name, cos_url):
         response = requests.post(image_url, headers=headers, data=json.dumps(data))
         if response.status_code < 400:
             image = response.json()
-            is_available = False
-            while not is_available:
+            available_states = ['available', 'pending']
+            if WAIT_FOR_AVAILABLE:
+                available_states = ['available']
+            mark_public = False
+            while not mark_public:
                 state_of_image = get_image_status(token, region, image['id'])
-                if state_of_image == 'available':
-                    is_available = True
+                if state_of_image in available_states:
+                    mark_public = True
                 else:
-                    LOG.debug('image %s it still creating from %s....' % (image_name, cos_url))
+                    LOG.debug('image %s is %s from %s....' % (image_name, state_of_image, cos_url))
                     time.sleep(IMAGE_STATUS_PAUSE_SECONDS)
             if not make_image_public(token, region, image['id']):
                 LOG.error('image %s could not be made public, permissions?', image['id'])
@@ -574,7 +578,7 @@ def initialize():
            COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, \
            COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL, \
            COS_BUCKET_PREFIX, IC_API_KEY, IC_RESOURCE_GROUP, \
-           IMAGE_MATCH, PUBLIC_IMAGES, INVENTORY
+           IMAGE_MATCH, PUBLIC_IMAGES, WAIT_FOR_AVAILABLE, INVENTORY
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_UPLOAD_THREADS = os.getenv('COS_UPLOAD_THREADS', 1)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
@@ -602,7 +606,11 @@ def initialize():
     if PUBLIC_IMAGES.lower() == 'true':
         PUBLIC_IMAGES = True
     else:
-        PUBLIC_IMAGES = False    
+        PUBLIC_IMAGES = False
+    if WAIT_FOR_AVAILABLE.lower == 'true':
+        WAIT_FOR_AVAILABLE = True
+    else:
+        WAIT_FOR_AVAILABLE = False
     INVENTORY = os.getenv('INVENTORY', 'true')
     if INVENTORY.lower() == 'true':
         INVENTORY = True
