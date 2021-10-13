@@ -510,7 +510,7 @@ def assure_public_images():
             for bucket in cos_res.buckets.all():
                 if location in bucket.name:
                     for obj in cos_res.Bucket(bucket.name).objects.all():
-                        if os.path.splitext(obj.key)[1] in IMAGE_TYPES:
+                        if os.path.splitext(obj.key)[-1] in IMAGE_TYPES:
                             image_name = bucket.name.replace("%s-" % COS_BUCKET_PREFIX,'').replace('.', '-')
                             cos_url = "cos://%s/%s/%s" % (location, bucket.name, obj.key)
                             LOG.debug('assuring public image %s in %s from url %s' % (image_name, location, cos_url))
@@ -538,7 +538,7 @@ def inventory():
                 if location in bucket.name:
                     for obj in cos_res.Bucket(bucket.name).objects.all():
                         LOG.debug('inventory add %s/%s', bucket.name, obj.key)
-                        if os.path.splitext(obj.key)[1] in IMAGE_TYPES:
+                        if os.path.splitext(obj.key)[-1] in IMAGE_TYPES:
                             image_name = bucket.name.replace("%s-" % COS_BUCKET_PREFIX,'').replace('.', '-')
                             cos_url = "cos://%s/%s/%s" % (location, bucket.name, obj.key)
                             cos_md5_url = "cos://%s/%s/%s.md5" % (location, bucket.name, obj.key)
