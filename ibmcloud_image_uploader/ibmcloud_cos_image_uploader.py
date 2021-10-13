@@ -607,6 +607,7 @@ def initialize():
         PUBLIC_IMAGES = True
     else:
         PUBLIC_IMAGES = False
+    WAIT_FOR_AVAILABLE = os.getenv('PUBLIC_IMAGES', 'false')
     if WAIT_FOR_AVAILABLE.lower == 'true':
         WAIT_FOR_AVAILABLE = True
     else:
