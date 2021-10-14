@@ -536,7 +536,9 @@ def create_public_image(token, region, image_name, cos_url):
                 else:
                     make_public_tries = make_public_tries + 1
                     LOG.error(
-                        'image %s could not be made public, try: %d/10', image['id'])
+                        'image %s could not be made public, try: %d/10',
+                        image['id'],
+                        make_public_tries)
                     time.sleep(IMAGE_STATUS_PAUSE_SECONDS)
             return image['id']
         else:
