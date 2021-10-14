@@ -528,13 +528,13 @@ def create_public_image(token, region, image_name, cos_url):
                     LOG.debug('image %s is %s from %s....' %
                               (image_name, state_of_image, cos_url))
                     time.sleep(IMAGE_STATUS_PAUSE_SECONDS)
-            is_public = False
-            is_public_tries = 0
-            while not is_public or is_public_tries > 10:
+            not_public = True
+            make_public_tries = 0
+            while not_public or make_public_tries > 10:
                 if make_image_public(token, region, image['id']):
-                    is_public = True
+                    not_public = False
                 else:
-                    is_public_tries = is_public_tries + 1
+                    make_public_tries = make_public_tries + 1
                     LOG.error(
                         'image %s could not be made public, try: %d/10', image['id'])
                     time.sleep(IMAGE_STATUS_PAUSE_SECONDS)
