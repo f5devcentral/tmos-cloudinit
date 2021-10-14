@@ -265,7 +265,6 @@ def delete_all():
                                 image_name = bucket.name.replace("%s-" % COS_BUCKET_PREFIX,'').replace('.', '-')
                                 cos_url = "cos://%s/%s/%s" % (location, bucket.name, obj.key)
                                 LOG.debug('removing public image %s in %s from url %s' % (image_name, location, cos_url))
-                                delete_public_image(token, location, image_name)
                                 obj.delete()
                                 delete_bucket = True
                             else:
@@ -276,8 +275,11 @@ def delete_all():
                             LOG.debug('deleting bucket: %s', bucket.name)
                             bucket.delete()
             for image in get_images(token, location):
-                if re.search(IMAGE_MATCH, image['name']):
+                if re.search(IMAGE_MATCH.lower(), image['name']):
                     delete_public_image(token, location, image['name'])
+                else:
+                    LOG.debug('leaving vpc image: %s because it did not match %s',
+                               image['name'], IMAGE_MATCH.lower())
         except ClientError as client_error:
             LOG.error('client error deleting all resources: %s', client_error)
         except Exception as ex:
