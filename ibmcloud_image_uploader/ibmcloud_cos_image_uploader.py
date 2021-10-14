@@ -262,9 +262,12 @@ def delete_all():
                         for obj in cos_res.Bucket(bucket.name).objects.all():
                             if re.search(IMAGE_MATCH, obj.key):
                                 LOG.debug('deleting object: %s', obj.key)
-                                image_name = bucket.name.replace("%s-" % COS_BUCKET_PREFIX,'').replace('.', '-')
-                                cos_url = "cos://%s/%s/%s" % (location, bucket.name, obj.key)
-                                LOG.debug('removing public image %s in %s from url %s' % (image_name, location, cos_url))
+                                image_name = bucket.name.replace(
+                                    "%s-" % COS_BUCKET_PREFIX, '').replace('.', '-')
+                                cos_url = "cos://%s/%s/%s" % (
+                                    location, bucket.name, obj.key)
+                                LOG.debug('removing public image %s in %s from url %s' % (
+                                    image_name, location, cos_url))
                                 obj.delete()
                                 delete_bucket = True
                             else:
@@ -276,13 +279,11 @@ def delete_all():
                             bucket.delete()
             for image in get_images(token, location):
                 image_name_match = IMAGE_MATCH.lower()
-                LOG.debug('checking %s against %s' % (image['name'], image_name_match))
+                LOG.debug('checking %s against %s' %
+                          (image['name'], image_name_match))
                 if re.search(image_name_match, image['name']):
                     LOG.debug('deleting vpc image: %s', image['name'])
                     delete_public_image(token, location, image['name'])
-                else:
-                    LOG.debug('leaving vpc image: %s because it did not match %s',
-                               image['name'], image_name_match)
         except ClientError as client_error:
             LOG.error('client error deleting all resources: %s', client_error)
         except Exception as ex:
@@ -342,7 +343,8 @@ def get_images(token, region):
 def get_image_id(token, region, image_name):
     if not token:
         token = get_iam_token()
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2021-09-28&generation=2&name=%s" % (region, image_name)
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2021-09-28&generation=2&name=%s" % (
+        region, image_name)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -353,7 +355,8 @@ def get_image_id(token, region, image_name):
         images = response.json()
         for image in images['images']:
             if image['name'] == image_name:
-                LOG.debug('found VPC image id for name %s: %s' % (image_name, image['id']))
+                LOG.debug('found VPC image id for name %s: %s' %
+                          (image_name, image['id']))
                 return image['id']
         return None
     else:
@@ -363,7 +366,8 @@ def get_image_id(token, region, image_name):
 def get_image_visibility(token, region, image_id):
     if not token:
         token = get_iam_token()
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (
+        region, image_id)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -382,7 +386,8 @@ def get_image_visibility(token, region, image_id):
 def get_image_status(token, region, image_id):
     if not token:
         token = get_iam_token()
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (
+        region, image_id)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -402,7 +407,8 @@ def make_image_public(token, region, image_id):
     image_visibility = get_image_visibility(token, region, image_id)
     if not image_visibility == 'public':
         LOG.debug('setting image %s visibility to public' % image_id)
-        image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
+        image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (
+            region, image_id)
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
@@ -411,7 +417,8 @@ def make_image_public(token, region, image_id):
         data = {
             "visibility": "public"
         }
-        response = requests.patch(image_url, headers=headers, data=json.dumps(data))
+        response = requests.patch(
+            image_url, headers=headers, data=json.dumps(data))
         if response.status_code < 300:
             return True
         else:
@@ -426,7 +433,8 @@ def make_image_private(token, region, image_id):
     image_visibility = get_image_visibility(token, region, image_id)
     if not image_visibility == 'private':
         LOG.debug('setting image %s visibility to private' % image_id)
-        image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
+        image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (
+            region, image_id)
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
@@ -435,7 +443,8 @@ def make_image_private(token, region, image_id):
         data = {
             "visibility": "private"
         }
-        response = requests.patch(image_url, headers=headers, data=json.dumps(data))
+        response = requests.patch(
+            image_url, headers=headers, data=json.dumps(data))
         if response.status_code < 300:
             return True
         else:
@@ -447,8 +456,8 @@ def make_image_private(token, region, image_id):
 def delete_image(token, region, image_id):
     if not token:
         token = get_iam_token()
-    make_image_private(token, region, image_id)
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (
+        region, image_id)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -460,7 +469,7 @@ def delete_image(token, region, image_id):
         return True
     else:
         LOG.error('error deleting image %d:%s',
-            response.status_code, response.content)
+                  response.status_code, response.content)
     return False
 
 
@@ -469,7 +478,11 @@ def delete_public_image(token, region, image_name):
         token = get_iam_token()
     image_id = get_image_id(token, region, image_name)
     if image_id:
-        delete_image(token, region, image_id)
+        if make_image_private(token, region, image_id):
+            time.sleep(IMAGE_STATUS_PAUSE_SECONDS)
+            delete_image(token, region, image_id)
+        else:
+            LOG.error('could not make image private before deleting')
     else:
         LOG.debug('not VPC image found to remove for name %s' % image_name)
 
@@ -501,7 +514,8 @@ def create_public_image(token, region, image_name, cos_url):
                 "id": get_resource_group_id(token)
             }
         }
-        response = requests.post(image_url, headers=headers, data=json.dumps(data))
+        response = requests.post(
+            image_url, headers=headers, data=json.dumps(data))
         if response.status_code < 400:
             image = response.json()
             available_states = ['available', 'pending']
@@ -513,15 +527,17 @@ def create_public_image(token, region, image_name, cos_url):
                 if state_of_image in available_states:
                     mark_public = True
                 else:
-                    LOG.debug('image %s is %s from %s....' % (image_name, state_of_image, cos_url))
+                    LOG.debug('image %s is %s from %s....' %
+                              (image_name, state_of_image, cos_url))
                     time.sleep(IMAGE_STATUS_PAUSE_SECONDS)
             if not make_image_public(token, region, image['id']):
-                LOG.error('image %s could not be made public, permissions?', image['id'])
+                LOG.error(
+                    'image %s could not be made public, permissions?', image['id'])
                 return None
             return image['id']
         else:
             LOG.error('error creating image %s from cos_url: %s - %d:%s',
-                image_name, cos_url, response.status_code, response.content)
+                      image_name, cos_url, response.status_code, response.content)
         return None
     else:
         if not make_image_public(token, region, image_id):
@@ -533,7 +549,8 @@ def create_public_image(token, region, image_name, cos_url):
 def assure_public_images():
     """got through published COS images and assure public VPC images"""
     if not IC_API_KEY:
-        LOG.info('no env variable found IC_API_KEY, so no public images will be assured')
+        LOG.info(
+            'no env variable found IC_API_KEY, so no public images will be assured')
         return
     LOG.debug('assuring public images to %s', IBM_COS_REGIONS)
     token = get_iam_token()
@@ -544,15 +561,19 @@ def assure_public_images():
                 if location in bucket.name:
                     for obj in cos_res.Bucket(bucket.name).objects.all():
                         if os.path.splitext(obj.key)[-1] in IMAGE_TYPES:
-                            image_name = bucket.name.replace("%s-" % COS_BUCKET_PREFIX,'').replace('.', '-')
-                            cos_url = "cos://%s/%s/%s" % (location, bucket.name, obj.key)
-                            LOG.debug('assuring public image %s in %s from url %s' % (image_name, location, cos_url))
-                            create_public_image(token, location, image_name, cos_url)
+                            image_name = bucket.name.replace(
+                                "%s-" % COS_BUCKET_PREFIX, '').replace('.', '-')
+                            cos_url = "cos://%s/%s/%s" % (location,
+                                                          bucket.name, obj.key)
+                            LOG.debug('assuring public image %s in %s from url %s' % (
+                                image_name, location, cos_url))
+                            create_public_image(
+                                token, location, image_name, cos_url)
         except ClientError as client_error:
             LOG.error('client error creating COS resources client: %s',
                       client_error)
         except Exception as ex:
-            LOG.error('exception assuring public images: %s', str(ex))                  
+            LOG.error('exception assuring public images: %s', str(ex))
 
 
 def inventory():
@@ -572,10 +593,14 @@ def inventory():
                     for obj in cos_res.Bucket(bucket.name).objects.all():
                         LOG.debug('inventory add %s/%s', bucket.name, obj.key)
                         if os.path.splitext(obj.key)[-1] in IMAGE_TYPES:
-                            image_name = bucket.name.replace("%s-" % COS_BUCKET_PREFIX,'').replace('.', '-')
-                            cos_url = "cos://%s/%s/%s" % (location, bucket.name, obj.key)
-                            cos_md5_url = "cos://%s/%s/%s.md5" % (location, bucket.name, obj.key)
-                            image_id = get_image_id(token, location, image_name)
+                            image_name = bucket.name.replace(
+                                "%s-" % COS_BUCKET_PREFIX, '').replace('.', '-')
+                            cos_url = "cos://%s/%s/%s" % (location,
+                                                          bucket.name, obj.key)
+                            cos_md5_url = "cos://%s/%s/%s.md5" % (
+                                location, bucket.name, obj.key)
+                            image_id = get_image_id(
+                                token, location, image_name)
                             inv_obj = {
                                 'image_name': image_name,
                                 'image_sql_url': cos_url,
@@ -608,10 +633,10 @@ def inventory():
 def initialize():
     """initialize configuration from environment variables"""
     global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_UPLOAD_THREADS, \
-           COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, \
-           COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL, \
-           COS_BUCKET_PREFIX, IC_API_KEY, IC_RESOURCE_GROUP, \
-           IMAGE_MATCH, PUBLIC_IMAGES, WAIT_FOR_AVAILABLE, INVENTORY
+        COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, \
+        COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL, \
+        COS_BUCKET_PREFIX, IC_API_KEY, IC_RESOURCE_GROUP, \
+        IMAGE_MATCH, PUBLIC_IMAGES, WAIT_FOR_AVAILABLE, INVENTORY
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_UPLOAD_THREADS = os.getenv('COS_UPLOAD_THREADS', 1)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
