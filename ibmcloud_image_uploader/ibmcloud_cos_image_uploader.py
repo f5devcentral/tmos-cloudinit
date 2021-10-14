@@ -275,6 +275,9 @@ def delete_all():
                         if delete_bucket:
                             LOG.debug('deleting bucket: %s', bucket.name)
                             bucket.delete()
+            for image in get_images(token, location):
+                if re.search(IMAGE_MATCH, image['name']):
+                    delete_public_image(token, location, image['name'])
         except ClientError as client_error:
             LOG.error('client error deleting all resources: %s', client_error)
         except Exception as ex:
