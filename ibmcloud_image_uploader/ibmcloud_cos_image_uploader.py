@@ -412,9 +412,34 @@ def make_image_public(token, region, image_id):
         return True
 
 
+def make_image_private(token, region, image_id):
+    if not token:
+        token = get_iam_token()
+    image_visibility = get_image_visibility(token, region, image_id)
+    if not image_visibility == 'public':
+        LOG.debug('setting image %s visibility to public' % image_id)
+        image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": "Bearer %s" % token
+        }
+        data = {
+            "visibility": "private"
+        }
+        response = requests.patch(image_url, headers=headers, data=json.dumps(data))
+        if response.status_code < 300:
+            return True
+        else:
+            return False
+    else:
+        return True
+
+
 def delete_image(token, region, image_id):
     if not token:
         token = get_iam_token()
+    make_image_private(token, region, image_id)
     image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
     headers = {
         "Accept": "application/json",
