@@ -530,7 +530,7 @@ def create_public_image(token, region, image_name, cos_url):
                     time.sleep(IMAGE_STATUS_PAUSE_SECONDS)
             not_public = True
             make_public_tries = 0
-            while not_public or make_public_tries < 10:
+            while not_public and make_public_tries < 10:
                 if make_image_public(token, region, image['id']):
                     not_public = False
                 else:
