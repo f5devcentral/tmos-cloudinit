@@ -424,8 +424,8 @@ def make_image_private(token, region, image_id):
     if not token:
         token = get_iam_token()
     image_visibility = get_image_visibility(token, region, image_id)
-    if not image_visibility == 'public':
-        LOG.debug('setting image %s visibility to public' % image_id)
+    if not image_visibility == 'private':
+        LOG.debug('setting image %s visibility to private' % image_id)
         image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (region, image_id)
         headers = {
             "Accept": "application/json",
