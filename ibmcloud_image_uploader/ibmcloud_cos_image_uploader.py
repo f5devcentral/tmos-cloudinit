@@ -519,19 +519,25 @@ def create_public_image(token, region, image_name, cos_url):
             available_states = ['available', 'pending']
             if WAIT_FOR_AVAILABLE:
                 available_states = ['available']
-            mark_public = False
-            while not mark_public:
+            is_available = False
+            while not is_available:
                 state_of_image = get_image_status(token, region, image['id'])
                 if state_of_image in available_states:
-                    mark_public = True
+                    is_available = True
                 else:
                     LOG.debug('image %s is %s from %s....' %
                               (image_name, state_of_image, cos_url))
                     time.sleep(IMAGE_STATUS_PAUSE_SECONDS)
-            if not make_image_public(token, region, image['id']):
-                LOG.error(
-                    'image %s could not be made public, permissions?', image['id'])
-                return None
+            is_public = False
+            is_public_tries = 0
+            while not is_public or is_public_tries > 10:
+                if make_image_public(token, region, image['id']):
+                    is_public = True
+                else:
+                    is_public_tries = is_public_tries + 1
+                    LOG.error(
+                        'image %s could not be made public, try: %d/10', image['id'])
+                    time.sleep(IMAGE_STATUS_PAUSE_SECONDS)
             return image['id']
         else:
             LOG.error('error creating image %s from cos_url: %s - %d:%s',
