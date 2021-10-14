@@ -334,7 +334,7 @@ def get_images(token, region):
     }
     response = requests.get(image_url, headers=headers)
     if response.status_code < 300:
-        return response.json()
+        return response.json()['images']
     else:
         return None
 
