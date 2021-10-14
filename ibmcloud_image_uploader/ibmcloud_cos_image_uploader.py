@@ -275,11 +275,14 @@ def delete_all():
                             LOG.debug('deleting bucket: %s', bucket.name)
                             bucket.delete()
             for image in get_images(token, location):
-                if re.search(IMAGE_MATCH.lower(), image['name']):
+                image_name_match = IMAGE_MATCH.lower()
+                LOG.debug('checking %s against %s' % (image['name'], image_name_match))
+                if re.search(image_name_match, image['name']):
+                    LOG.debug('deleting vpc image: %s', image['name'])
                     delete_public_image(token, location, image['name'])
                 else:
                     LOG.debug('leaving vpc image: %s because it did not match %s',
-                               image['name'], IMAGE_MATCH.lower())
+                               image['name'], image_name_match)
         except ClientError as client_error:
             LOG.error('client error deleting all resources: %s', client_error)
         except Exception as ex:
