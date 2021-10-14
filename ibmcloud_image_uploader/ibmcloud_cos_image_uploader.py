@@ -279,8 +279,6 @@ def delete_all():
                             bucket.delete()
             for image in get_images(token, location):
                 image_name_match = IMAGE_MATCH.lower()
-                LOG.debug('checking %s against %s' %
-                          (image['name'], image_name_match))
                 if re.search(image_name_match, image['name']):
                     LOG.debug('deleting vpc image: %s', image['name'])
                     delete_public_image(token, location, image['name'])
