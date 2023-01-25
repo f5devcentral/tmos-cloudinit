@@ -1,0 +1,13 @@
+backports.functools-lru-cache==1.6.1
+certifi==2020.4.5.1
+chardet==3.0.4
+docutils==0.15.2
+futures==3.3.0
+ibm-cos-sdk==2.6.0
+ibm-cos-sdk-core==2.6.0
+ibm-cos-sdk-s3transfer==2.6.0
+idna==2.8
+jmespath==0.9.5
+python-dateutil==2.8.1
+requests==2.22.0
+six==1.14.0
