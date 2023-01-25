@@ -460,7 +460,7 @@ def sync_cloud_from_dir():
             images_to_delete = []
             cloud_names = get_cloud_image_names_from_patched_dir(TMOS_IMAGE_DIR, region)
             for image in get_images(token, region):
-                if image['name'] not in cloud_names:
+                if image['name'] not in cloud_names and image['visibility'] == 'public':
                     images_to_delete.append(image)
             buckets_to_delete = []
             bucket_names = get_cloud_bucket_names_from_patched_dir(TMOS_IMAGE_DIR, region)
