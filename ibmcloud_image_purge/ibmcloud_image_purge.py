@@ -461,12 +461,14 @@ def sync_cloud_from_dir():
             cloud_names = get_cloud_image_names_from_patched_dir(TMOS_IMAGE_DIR, region)
             LOG.debug('cloud should have these images: %s' % cloud_names)
             for image in get_images(token, region):
-                if image['visibility'] == 'public' and image['name'] not in cloud_names:
+                LOG.debug(json.dumps(image))
+                if image['visibility'] == 'public' and image['owner_type'] == 'user' and image['name'] not in cloud_names:
                     images_to_delete.append(image)
             buckets_to_delete = []
             bucket_names = get_cloud_bucket_names_from_patched_dir(TMOS_IMAGE_DIR, region)
             LOG.debug('cloud should have these bucket names: %s' % bucket_names)
             for bucket in get_cos_buckets(region):
+                LOG.debug(json.dumps(bucket))
                 if bucket.name not in bucket_names:
                     buckets_to_delete.append(bucket)
             for image in images_to_delete:
