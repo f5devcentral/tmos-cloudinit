@@ -156,7 +156,7 @@ def get_cos_buckets(location):
     cos_buckets = []
     try:
         for bucket in cos_res.buckets.all():
-            if bucket.name.startwith(COS_BUCKET_PREFIX):
+            if bucket.name.startswith(COS_BUCKET_PREFIX):
                 cos_buckets.append(bucket)
         return cos_buckets
     except ClientError as client_error:
