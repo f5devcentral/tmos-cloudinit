@@ -466,8 +466,9 @@ def sync_cloud_from_dir():
             buckets_to_delete = []
             bucket_names = get_cloud_bucket_names_from_patched_dir(TMOS_IMAGE_DIR, region)
             # LOG.debug('cloud should have these bucket names: %s' % bucket_names)
+            region_bucket_name = "%s-%s" % (COS_BUCKET_PREFIX, region)
             for bucket in get_cos_buckets(region):
-                if bucket.name not in bucket_names:
+                if bucket.name not in bucket_names and not bucket.name == region_bucket_name:
                     buckets_to_delete.append(bucket)
             for image in images_to_delete:
                 LOG.info("deleting VPC image %s with id %s" % (image['name'], image['id']))
