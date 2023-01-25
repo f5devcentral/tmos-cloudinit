@@ -57,7 +57,7 @@ SESSION_TIMESTAMP = 0
 SESSION_SECONDS = 1800
 IMAGE_STATUS_PAUSE_SECONDS = 5
 
-PUBLIC_IMAGES = None
+TEST_RUN = None
 INVENTORY = None
 
 LOG = logging.getLogger('ibmcloud_image_purge')
@@ -469,11 +469,13 @@ def sync_cloud_from_dir():
                     buckets_to_delete.append(bucket)
             for image in images_to_delete:
                 LOG.info("deleting VPC image %s with id %s" % (image['name'], image['id']))
-                delete_public_image(token, region, image['name'])
+                if not TEST_RUN:
+                    delete_public_image(token, region, image['name'])
             for bucket in buckets_to_delete:
                 LOG.info("deleting COS bucket %s" % bucket.name)
-                delete_objects_in_bucket(bucket.name, region)
-                bucket.delete()
+                if not TEST_RUN:
+                    delete_objects_in_bucket(bucket.name, region)
+                    bucket.delete()
     except ClientError as client_error:
         LOG.error('client error syncing cloud resources from local dir: %s',
                       client_error)
@@ -485,9 +487,8 @@ def initialize():
     """initialize configuration from environment variables"""
     global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_UPLOAD_THREADS, \
         COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, \
-        COS_AUTH_ENDPOINT, UPDATE_IMAGES, DELETE_ALL, \
-        COS_BUCKET_PREFIX, IC_API_KEY, IC_RESOURCE_GROUP, \
-        IMAGE_MATCH, PUBLIC_IMAGES, WAIT_FOR_AVAILABLE, INVENTORY
+        COS_AUTH_ENDPOINT, COS_BUCKET_PREFIX, IC_API_KEY, \
+        IC_RESOURCE_GROUP, TEST_RUN, INVENTORY
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_UPLOAD_THREADS = os.getenv('COS_UPLOAD_THREADS', 1)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
@@ -499,6 +500,11 @@ def initialize():
                                   'https://iam.cloud.ibm.com/identity/token')
     IC_API_KEY = os.getenv('IC_API_KEY', None)
     IC_RESOURCE_GROUP = os.getenv('IC_RESOURCE_GROUP', 'default')
+    TEST_RUN = os.getenv('TEST_RUN', 'false')
+    if TEST_RUN.lower() == 'true':
+        TEST_RUN = True
+    else:
+        TEST_RUN = False
     INVENTORY = os.getenv('INVENTORY', 'true')
     if INVENTORY.lower() == 'true':
         INVENTORY = True
@@ -531,7 +537,7 @@ if __name__ == "__main__":
     LOG.info('purging cloud images not found in %s',
              TMOS_IMAGE_DIR)
     sync_cloud_from_dir()
-    if INVENTORY:
+    if INVENTORY and not TEST_RUN:
         inventory()
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
