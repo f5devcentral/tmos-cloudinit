@@ -59,6 +59,7 @@ IMAGE_STATUS_PAUSE_SECONDS = 5
 
 TEST_RUN = None
 INVENTORY = None
+UPDATE_IMAGES = False
 
 LOG = logging.getLogger('ibmcloud_image_purge')
 LOG.setLevel(logging.DEBUG)
@@ -468,7 +469,7 @@ def sync_cloud_from_dir():
             # LOG.debug('cloud should have these bucket names: %s' % bucket_names)
             region_bucket_name = "%s-%s" % (COS_BUCKET_PREFIX, region)
             for bucket in get_cos_buckets(region):
-                if bucket.name not in bucket_names and not bucket.name == region_bucket_name:
+                if bucket.name not in bucket_names and notbucket.name == region_bucket_name:
                     buckets_to_delete.append(bucket)
             for image in images_to_delete:
                 LOG.info("deleting VPC image %s with id %s" % (image['name'], image['id']))
