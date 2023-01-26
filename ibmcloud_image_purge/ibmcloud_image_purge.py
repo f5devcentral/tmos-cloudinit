@@ -36,6 +36,14 @@ import threading
 
 from ibm_botocore.client import Config, ClientError
 
+LOG_LEVELS = {
+    'debug': logging.DEBUG,
+    'info': logging.INFO,
+    'warning': logging.WARNING,
+    'error': logging.ERROR,
+    'critical': logging.CRITICAL
+}
+
 IMAGE_TYPES = ['.qcow2', '.vhd', '.vmdk']
 IBM_COS_REGIONS = []
 
@@ -460,8 +468,9 @@ def sync_cloud_from_dir():
         for region in IBM_COS_REGIONS:
             images_to_delete = []
             cloud_names = get_cloud_image_names_from_patched_dir(TMOS_IMAGE_DIR, region)
-            # LOG.debug('cloud should have these images: %s' % cloud_names)
             for image in get_images(token, region):
+                if not image['name'] in cloud_names:
+                    LOG.info("Image %s with visibility %s and Owner Type: %s is not in my image names on disk", (image['name'], image['visibility'], image['owner_type']))
                 if image['visibility'] == 'public' and image['owner_type'] == 'user' and image['name'] not in cloud_names:
                     images_to_delete.append(image)
             buckets_to_delete = []
@@ -514,15 +523,18 @@ def initialize():
         INVENTORY = True
     else:
         INVENTORY = False
+    log_level = os.getenv('LOG_LEVEL', 'info')
+    if log_level.lower() in LOG_LEVELS:
+        LOG.setLevel(LOG_LEVELS[log_level.lower()])
 
 
 if __name__ == "__main__":
     START_TIME = time.time()
+    initialize()
     LOG.debug(
         'process start time: %s',
         datetime.datetime.fromtimestamp(START_TIME).strftime(
             "%A, %B %d, %Y %I:%M:%S"))
-    initialize()
     ERROR_MESSAGE = ''
     ERROR = False
     if not COS_API_KEY:
@@ -545,7 +557,8 @@ if __name__ == "__main__":
         inventory()
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
+    DURATION = str(datetime.timedelta(seconds=DURATION))
     LOG.debug(
-        'process end time: %s - ran %s (seconds)',
+        'process end time: %s - ran %s',
         datetime.datetime.fromtimestamp(STOP_TIME).strftime(
             "%A, %B %d, %Y %I:%M:%S"), DURATION)
