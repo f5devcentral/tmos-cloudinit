@@ -469,9 +469,9 @@ def sync_cloud_from_dir():
             images_to_delete = []
             cloud_names = get_cloud_image_names_from_patched_dir(TMOS_IMAGE_DIR, region)
             for image in get_images(token, region):
-                if image['visibility'] == 'public' and image['owner_type'] == 'user' and image['name'] not in cloud_names:
-                    LOG.info("Image %s with visibility %s and Owner Type: %s is not in my image names on disk" % (image['name'], image['visibility'], image['owner_type']))
-                if image['visibility'] == 'public' and image['owner_type'] == 'user' and image['name'] not in cloud_names:
+                if cloud_names:
+                    LOG.info("image %s visibility: %s owner_type: %s is not in on disk" % (image['name'], image['visibility'], image['owner_type']))
+                if (image['visibility'] == 'public' and image['owner_type'] == 'user') and image['name'] not in cloud_names:
                     images_to_delete.append(image)
             buckets_to_delete = []
             bucket_names = get_cloud_bucket_names_from_patched_dir(TMOS_IMAGE_DIR, region)
