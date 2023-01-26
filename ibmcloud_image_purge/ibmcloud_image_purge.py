@@ -471,6 +471,12 @@ def sync_cloud_from_dir():
             for image in get_images(token, region):
                 if image['name'] not in cloud_names:
                     LOG.info("image #%s# v:#%s# ot:#%s#" % (image['name'], image['visibility'], image['owner_type']))
+                else:
+                    LOG.info("retaining %s" % image['name'])
+                if image['visibility'] == 'public':
+                    LOG.info('visibility is suitable for delete')
+                if image['owner_type'] == 'user':
+                    LOG.info('owner_type is suitable for delete')
                 if image['visibility'] == 'public' and image['owner_type'] == 'user' and image['name'] not in cloud_names:
                     images_to_delete.append(image)
             buckets_to_delete = []
