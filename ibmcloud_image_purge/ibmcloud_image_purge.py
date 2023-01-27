@@ -106,9 +106,11 @@ def get_patched_images(tmos_image_dir):
         if os.path.isdir(patched_dir_path):
             for patched_image in os.listdir(patched_dir_path):
                 if os.path.splitext(patched_image)[-1] in IMAGE_TYPES:
+                    LOG.debug('found %s locally' % image_filepath)
                     image_filepath = "%s/%s" % (patched_dir_path,
                                                 patched_image)
                     return_image_files.append(image_filepath)
+    LOG.debug('%d local images found' % len(return_image_files))    
     return return_image_files
 
 
@@ -284,12 +286,15 @@ def get_images(token, region):
     response = requests.get(image_url, headers=headers)
     while response.status_code < 300:
         response_json = response.json()
+        LOG.debug('retrieved a page of %d images from IBM cloud' % int(response_json['limit']))
         for image in response_json['images']:
             images.append(image)
         if 'next' in response_json:
+            LOG.debug('retrieving next page of images from: %s' % response_json['next']['href'])
             response = requests.get(response_json['next']['href'], headers=headers)
         else:
             return images
+        LOG.debug('%d images retrieved from IBM cloud in %s' % (len(images), region))
     return images
 
 
