@@ -472,11 +472,12 @@ def sync_cloud_from_dir():
                 if image['name'] in cloud_names:
                     LOG.info("image retaining %s" % image['name'])
                 else:
-                    LOG.info('image: %s is eligible to delete' % image['name'])
-                    if image['visibility'] == 'public':
-                        LOG.info('----- visibility is suitable for delete')
-                    if image['owner_type'] == 'user':
-                        LOG.info('----- owner_type is suitable for delete')
+                    if image['name'].startswith('bigip'):
+                        LOG.info('image: %s is eligible to delete' % image['name'])
+                        if image['visibility'] == 'public':
+                            LOG.info('----- visibility is suitable for delete')
+                        if image['owner_type'] == 'user':
+                            LOG.info('----- owner_type is suitable for delete')
                 if image['visibility'] == 'public' and image['owner_type'] == 'user' and image['name'] not in cloud_names:
                     images_to_delete.append(image)
             buckets_to_delete = []
