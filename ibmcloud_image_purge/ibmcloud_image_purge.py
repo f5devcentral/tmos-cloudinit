@@ -288,6 +288,8 @@ def get_images(token, region):
             images.append(image)
         if 'next' in response_json:
             response = requests.get(response_json['next']['href'], headers=headers)
+        else:
+            return images
     return images
 
 
