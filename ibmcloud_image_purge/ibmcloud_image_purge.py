@@ -65,6 +65,8 @@ SESSION_TIMESTAMP = 0
 SESSION_SECONDS = 1800
 IMAGE_STATUS_PAUSE_SECONDS = 5
 
+IMAGE_MATCH = '^[a-zA-Z]'
+
 VPC_QP = "version=2022-09-13&generation=2"
 
 TEST_RUN = None
@@ -492,14 +494,17 @@ def sync_cloud_from_dir():
             cloud_names = get_cloud_image_names_from_patched_dir(TMOS_IMAGE_DIR, region)
             for image in get_images(token, region):
                 if image['visibility'] == 'public' and image['owner_type'] == 'user' and image['name'] not in cloud_names:
-                    images_to_delete.append(image)
+                    if re.search(IMAGE_MATCH, image['name']):
+                        images_to_delete.append(image)
             buckets_to_delete = []
             bucket_names = get_cloud_bucket_names_from_patched_dir(TMOS_IMAGE_DIR, region)
             # LOG.debug('cloud should have these bucket names: %s' % bucket_names)
             region_bucket_name = "%s-%s" % (COS_BUCKET_PREFIX, region)
+            bucket_regex_remove_prefix = "%s-" % (COS_BUCKET_PREFIX)
             for bucket in get_cos_buckets(region):
-                if bucket.name not in bucket_names and not bucket.name == region_bucket_name:
-                    buckets_to_delete.append(bucket)
+                if bucket.name.startswith(COS_BUCKET_PREFIX):
+                    if bucket.name not in bucket_names and not bucket.name == region_bucket_name:
+                        buckets_to_delete.append(bucket)
             for image in images_to_delete:
                 LOG.info("deleting VPC image %s with id %s" % (image['name'], image['id']))
                 if not TEST_RUN:
@@ -521,13 +526,14 @@ def initialize():
     global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_UPLOAD_THREADS, \
         COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, \
         COS_AUTH_ENDPOINT, COS_BUCKET_PREFIX, IC_API_KEY, \
-        IC_RESOURCE_GROUP, TEST_RUN, INVENTORY
+        IC_RESOURCE_GROUP, IMAGE_MATCH, TEST_RUN, INVENTORY
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
     COS_UPLOAD_THREADS = os.getenv('COS_UPLOAD_THREADS', 1)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
     COS_RESOURCE_CRN = os.getenv('COS_RESOURCE_CRN', None)
     COS_IMAGE_LOCATION = os.getenv('COS_IMAGE_LOCATION', 'us-south')
     COS_BUCKET_PREFIX = os.getenv('COS_BUCKET_PREFIX', 'f5-image-catalog')
+    IMAGE_MATCH = os.getenv('IMAGE_MATCH', '^[a-zA-Z]')
     IBM_COS_REGIONS = [x.strip() for x in COS_IMAGE_LOCATION.split(',')]
     COS_AUTH_ENDPOINT = os.getenv('COS_AUTH_ENDPOINT',
                                   'https://iam.cloud.ibm.com/identity/token')
