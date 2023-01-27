@@ -106,9 +106,9 @@ def get_patched_images(tmos_image_dir):
         if os.path.isdir(patched_dir_path):
             for patched_image in os.listdir(patched_dir_path):
                 if os.path.splitext(patched_image)[-1] in IMAGE_TYPES:
-                    LOG.debug('found %s locally' % image_filepath)
                     image_filepath = "%s/%s" % (patched_dir_path,
                                                 patched_image)
+                    LOG.debug('found locally patched image: %s' % image_filepath)
                     return_image_files.append(image_filepath)
     LOG.debug('%d local images found' % len(return_image_files))    
     return return_image_files
