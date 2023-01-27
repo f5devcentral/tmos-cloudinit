@@ -282,6 +282,10 @@ def get_images(token, region):
     }
     response = requests.get(image_url, headers=headers)
     if response.status_code < 300:
+        if region == 'us-south':
+            for image in response.json()['images']:
+                if image['name'].startswith('bigip'):
+                    LOG.debug(image['name'])
         return response.json()['images']
     else:
         return None
