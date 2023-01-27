@@ -36,6 +36,14 @@ import threading
 
 from ibm_botocore.client import Config, ClientError
 
+LOG_LEVELS = {
+    'debug': logging.DEBUG,
+    'info': logging.INFO,
+    'warning': logging.WARNING,
+    'error': logging.ERROR,
+    'critical': logging.CRITICAL
+}
+
 IMAGE_TYPES = ['.qcow2', '.vhd', '.vmdk']
 IBM_COS_REGIONS = []
 
@@ -56,7 +64,7 @@ SESSION_TOKEN = None
 SESSION_TIMESTAMP = 0
 SESSION_SECONDS = 1800
 IMAGE_STATUS_PAUSE_SECONDS = 5
-
+VPC_QP = "version=2022-09-13&generation=2"
 
 IMAGE_MATCH = '^[a-zA-Z]'
 
@@ -325,24 +333,42 @@ def get_resource_group_id(token=None, resource_group_name=IC_RESOURCE_GROUP):
 
 
 def get_images(token, region):
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2020-04-07&generation=2" % region
+    page_url = "https://%s.iaas.cloud.ibm.com/v1/images?limit=100&%s" % (region,VPC_QP)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "Authorization": "Bearer %s" % token
     }
-    response = requests.get(image_url, headers=headers)
+    images = []
+    page = 1
+    LOG.debug('getting cloud images page %d: %s' % (page, page_url))
+    response = requests.get(page_url, headers=headers)
     if response.status_code < 300:
-        return response.json()['images']
+        data = response.json()
+        images = images + data['images']
+        while 'next' in data and not data['next']['href'] == page_url:
+            page += 1
+            page_url = "%s&%s" % (data['next']['href'], VPC_QP)
+            LOG.debug('getting cloud images page %d: %s' % (page, page_url))
+            response = requests.get(page_url, headers=headers)
+            if response.status_code < 300:
+                data  = response.json()
+                images = images + data['images']
+            else:
+                LOG.error('error retrieving images status code: %d - Cloudflare.. hmm..' % response.status_code)
+                return images
     else:
-        return None
+        LOG.error('error retrieving images status code: %d - Cloudflare.. hmm..' % response.status_code)
+        return images
+    LOG.debug('%d images retrieved from IBM cloud in %s' % (len(images), region))
+    return images
 
 
 def get_image_id(token, region, image_name):
     if not token:
         token = get_iam_token()
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2021-09-28&generation=2&name=%s" % (
-        region, image_name)
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images?name=%s&%s" % (
+        region, image_name, VPC_QP)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -364,8 +390,8 @@ def get_image_id(token, region, image_name):
 def get_image_visibility(token, region, image_id):
     if not token:
         token = get_iam_token()
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (
-        region, image_id)
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?%s" % (
+        region, image_id, VPC_QP)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -384,8 +410,8 @@ def get_image_visibility(token, region, image_id):
 def get_image_status(token, region, image_id):
     if not token:
         token = get_iam_token()
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (
-        region, image_id)
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?%s" % (
+        region, image_id, VPC_QP)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -405,8 +431,8 @@ def make_image_public(token, region, image_id):
     image_visibility = get_image_visibility(token, region, image_id)
     if not image_visibility == 'public':
         LOG.debug('setting image %s visibility to public' % image_id)
-        image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (
-            region, image_id)
+        image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?%s" % (
+            region, image_id, VPC_QP)
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
@@ -431,8 +457,8 @@ def make_image_private(token, region, image_id):
     image_visibility = get_image_visibility(token, region, image_id)
     if not image_visibility == 'private':
         LOG.debug('setting image %s visibility to private' % image_id)
-        image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (
-            region, image_id)
+        image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?%s" % (
+            region, image_id, VPC_QP)
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
@@ -454,8 +480,8 @@ def make_image_private(token, region, image_id):
 def delete_image(token, region, image_id):
     if not token:
         token = get_iam_token()
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (
-        region, image_id)
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?%s" % (
+        region, image_id, VPC_QP)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -494,7 +520,7 @@ def create_public_image(token, region, image_name, cos_url):
             delete_image(token, region, )
     if not image_id:
         LOG.debug('creating %s in %s' % (image_name, region))
-        image_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2021-09-28&generation=2" % region
+        image_url = "https://%s.iaas.cloud.ibm.com/v1/images?%s" % (region, VPC_QP)
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
@@ -681,15 +707,18 @@ def initialize():
         INVENTORY = True
     else:
         INVENTORY = False
+    log_level = os.getenv('LOG_LEVEL', 'info')
+    if log_level.lower() in LOG_LEVELS:
+        LOG.setLevel(LOG_LEVELS[log_level.lower()])
 
 
 if __name__ == "__main__":
     START_TIME = time.time()
+    initialize()
     LOG.debug(
         'process start time: %s',
         datetime.datetime.fromtimestamp(START_TIME).strftime(
             "%A, %B %d, %Y %I:%M:%S"))
-    initialize()
     ERROR_MESSAGE = ''
     ERROR = False
     if not COS_API_KEY:
@@ -717,7 +746,8 @@ if __name__ == "__main__":
         inventory()
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
+    DURATION = str(datetime.timedelta(seconds=DURATION))
     LOG.debug(
-        'process end time: %s - ran %s (seconds)',
+        'process end time: %s - ran %s',
         datetime.datetime.fromtimestamp(STOP_TIME).strftime(
             "%A, %B %d, %Y %I:%M:%S"), DURATION)

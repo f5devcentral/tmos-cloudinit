@@ -38,6 +38,14 @@ from Crypto.Hash import SHA384
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.PublicKey import RSA
 
+LOG_LEVELS = {
+    'debug': logging.DEBUG,
+    'info': logging.INFO,
+    'warning': logging.WARNING,
+    'error': logging.ERROR,
+    'critical': logging.CRITICAL
+}
+
 ARCHIVE_EXTS = {'.zip': 'zipfile', '.ova': 'tarfile'}
 IMAGE_TYPES = ['.qcow2', '.vhd', '.vmdk']
 
@@ -552,10 +560,13 @@ def inject_config_files(disk_image, config_dir, dev):
 
 
 if __name__ == "__main__":
+    START_TIME = time.time()
     if not os.environ['USER'] == 'root':
         print("Please run this script as sudo")
         sys.exit(1)
-    START_TIME = time.time()
+    log_level = os.getenv('LOG_LEVEL', 'info')
+    if log_level.lower() in LOG_LEVELS:
+        LOG.setLevel(LOG_LEVELS[log_level.lower()])    
     LOG.debug(
         'process start time: %s',
         datetime.datetime.fromtimestamp(START_TIME).strftime(
@@ -618,7 +629,8 @@ if __name__ == "__main__":
                  IMAGE_BUILD_ID)
     STOP_TIME = time.time()
     DURATION = STOP_TIME - START_TIME
+    DURATION = str(datetime.timedelta(seconds=DURATION))
     LOG.debug(
-        'process end time: %s - ran %s (seconds)',
+        'process end time: %s - ran %s',
         datetime.datetime.fromtimestamp(STOP_TIME).strftime(
             "%A, %B %d, %Y %I:%M:%S"), DURATION)

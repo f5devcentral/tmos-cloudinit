@@ -65,6 +65,8 @@ SESSION_TIMESTAMP = 0
 SESSION_SECONDS = 1800
 IMAGE_STATUS_PAUSE_SECONDS = 5
 
+VPC_QP = "version=2022-09-13&generation=2"
+
 TEST_RUN = None
 INVENTORY = None
 UPDATE_IMAGES = False
@@ -276,8 +278,7 @@ def get_resource_group_id(token=None, resource_group_name=IC_RESOURCE_GROUP):
 
 
 def get_images(token, region):
-    qp = "&version=2022-09-13&generation=2"
-    page_url = "https://%s.iaas.cloud.ibm.com/v1/images?limit=100%s" % (region,qp)
+    page_url = "https://%s.iaas.cloud.ibm.com/v1/images?limit=100&%s" % (region,VPC_QP)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -292,7 +293,7 @@ def get_images(token, region):
         images = images + data['images']
         while 'next' in data and not data['next']['href'] == page_url:
             page += 1
-            page_url = "%s%s" % (data['next']['href'], qp)
+            page_url = "%s&%s" % (data['next']['href'], VPC_QP)
             LOG.debug('getting cloud images page %d: %s' % (page, page_url))
             response = requests.get(page_url, headers=headers)
             if response.status_code < 300:
@@ -311,8 +312,8 @@ def get_images(token, region):
 def get_image_id(token, region, image_name):
     if not token:
         token = get_iam_token()
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2021-09-28&generation=2&name=%s" % (
-        region, image_name)
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images?name=%s&%s" % (
+        region, image_name, VPC_QP)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -334,8 +335,8 @@ def get_image_id(token, region, image_name):
 def get_image_visibility(token, region, image_id):
     if not token:
         token = get_iam_token()
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (
-        region, image_id)
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?%s" % (
+        region, image_id, VPC_QP)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -354,8 +355,8 @@ def get_image_visibility(token, region, image_id):
 def get_image_status(token, region, image_id):
     if not token:
         token = get_iam_token()
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (
-        region, image_id)
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?%s" % (
+        region, image_id, VPC_QP)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -375,8 +376,8 @@ def make_image_private(token, region, image_id):
     image_visibility = get_image_visibility(token, region, image_id)
     if not image_visibility == 'private':
         LOG.debug('setting image %s visibility to private' % image_id)
-        image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (
-            region, image_id)
+        image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?%s" % (
+            region, image_id, VPC_QP)
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
@@ -398,8 +399,8 @@ def make_image_private(token, region, image_id):
 def delete_image(token, region, image_id):
     if not token:
         token = get_iam_token()
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?version=2021-09-28&generation=2" % (
-        region, image_id)
+    image_url = "https://%s.iaas.cloud.ibm.com/v1/images/%s?%s" % (
+        region, image_id, VPC_QP)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
