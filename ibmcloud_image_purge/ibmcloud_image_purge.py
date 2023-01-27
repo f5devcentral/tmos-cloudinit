@@ -289,7 +289,7 @@ def get_images(token, region):
         data = response.json()
         images = images + data['images']
         while 'next' in data and data['next']:
-            response = requests.get(data['next'], headers=headers)
+            response = requests.get(data['next']['href'], headers=headers)
             if response.status_code < 300:
                 data  = response.json()
                 images = images + data['images']
