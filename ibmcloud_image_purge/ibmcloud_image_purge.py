@@ -470,13 +470,13 @@ def sync_cloud_from_dir():
             cloud_names = get_cloud_image_names_from_patched_dir(TMOS_IMAGE_DIR, region)
             for image in get_images(token, region):
                 if image['name'] not in cloud_names:
-                    LOG.info("image #%s# v:#%s# ot:#%s#" % (image['name'], image['visibility'], image['owner_type']))
+                    LOG.info('image: %s is eligible to delete' % image['name'])
+                    if image['visibility'] == 'public':
+                        LOG.info('----- visibility is suitable for delete')
+                    if image['----- owner_type'] == 'user':
+                        LOG.info('owner_type is suitable for delete')
                 else:
-                    LOG.info("retaining %s" % image['name'])
-                if image['visibility'] == 'public':
-                    LOG.info('visibility is suitable for delete')
-                if image['owner_type'] == 'user':
-                    LOG.info('owner_type is suitable for delete')
+                    LOG.info("image retaining %s" % image['name'])
                 if image['visibility'] == 'public' and image['owner_type'] == 'user' and image['name'] not in cloud_names:
                     images_to_delete.append(image)
             buckets_to_delete = []
