@@ -275,9 +275,9 @@ def get_resource_group_id(token=None, resource_group_name=IC_RESOURCE_GROUP):
         return None
 
 
-
 def get_images(token, region):
-    page_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2020-04-07&generation=2&limit=100" % region
+    qp = "&version=2022-09-13&generation=2"
+    page_url = "https://%s.iaas.cloud.ibm.com/v1/images?limit=100%s" % (region,qp)
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -292,12 +292,18 @@ def get_images(token, region):
         images = images + data['images']
         while 'next' in data and not data['next']['href'] == page_url:
             page += 1
-            page_url = data['next']['href']
+            page_url = "%s%s" % (data['next']['href'], qp)
             LOG.debug('getting cloud images page %d: %s' % (page, page_url))
             response = requests.get(page_url, headers=headers)
             if response.status_code < 300:
                 data  = response.json()
                 images = images + data['images']
+            else:
+                LOG.error('error retrieving images status code: %d - Cloudflare.. hmm..' % response.status_code)
+                return images
+    else:
+        LOG.error('error retrieving images status code: %d - Cloudflare.. hmm..' % response.status_code)
+        return images
     LOG.debug('%d images retrieved from IBM cloud in %s' % (len(images), region))
     return images
 
