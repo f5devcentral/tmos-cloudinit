@@ -277,7 +277,7 @@ def get_resource_group_id(token=None, resource_group_name=IC_RESOURCE_GROUP):
 
 
 def get_images(token, region):
-    image_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2020-04-07&generation=2" % region
+    page_url = "https://%s.iaas.cloud.ibm.com/v1/images?version=2020-04-07&generation=2&limit=100" % region
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -285,15 +285,16 @@ def get_images(token, region):
     }
     images = []
     page = 1
-    LOG.debug('getting cloud images page %d: %s' % (page, image_url))
-    response = requests.get(image_url, headers=headers)
+    LOG.debug('getting cloud images page %d: %s' % (page, page_url))
+    response = requests.get(page_url, headers=headers)
     if response.status_code < 300:
         data = response.json()
         images = images + data['images']
-        while 'next' in data and data['next']:
+        while 'next' in data and not data['next']['href'] == page_url:
             page += 1
-            LOG.debug('getting cloud images page %d: %s' % (page, data['next']['href']))
-            response = requests.get(data['next']['href'], headers=headers)
+            page_url = data['next']['href']
+            LOG.debug('getting cloud images page %d: %s' % (page, page_url))
+            response = requests.get(page_url, headers=headers)
             if response.status_code < 300:
                 data  = response.json()
                 images = images + data['images']
@@ -483,15 +484,6 @@ def sync_cloud_from_dir():
             images_to_delete = []
             cloud_names = get_cloud_image_names_from_patched_dir(TMOS_IMAGE_DIR, region)
             for image in get_images(token, region):
-                if image['name'] in cloud_names:
-                    LOG.info("image retaining %s" % image['name'])
-                else:
-                    if image['name'].startswith('bigip'):
-                        LOG.info('image: %s is eligible to delete' % image['name'])
-                        if image['visibility'] == 'public':
-                            LOG.info('----- visibility is suitable for delete')
-                        if image['owner_type'] == 'user':
-                            LOG.info('----- owner_type is suitable for delete')
                 if image['visibility'] == 'public' and image['owner_type'] == 'user' and image['name'] not in cloud_names:
                     images_to_delete.append(image)
             buckets_to_delete = []
