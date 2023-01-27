@@ -284,11 +284,15 @@ def get_images(token, region):
         "Authorization": "Bearer %s" % token
     }
     images = []
+    page = 1
+    LOG.debug('getting cloud images page %d: %s' % (page, image_url))
     response = requests.get(image_url, headers=headers)
     if response.status_code < 300:
         data = response.json()
         images = images + data['images']
         while 'next' in data and data['next']:
+            page += 1
+            LOG.debug('getting cloud images page %d: %s' % (page, data['next']['href']))
             response = requests.get(data['next']['href'], headers=headers)
             if response.status_code < 300:
                 data  = response.json()
