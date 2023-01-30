@@ -138,7 +138,7 @@ def get_object_name(image_path, location):
 
 def get_cos_client(location):
     """return IBM COS client object"""
-    cos_endpoint = "https://s3.%s.cloud-object-storage.appdomain.cloud" % location
+    cos_endpoint = "https://s3.direct.%s.cloud-object-storage.appdomain.cloud" % location
     return ibm_boto3.client("s3",
                             ibm_api_key_id=COS_API_KEY,
                             ibm_service_instance_id=COS_RESOURCE_CRN,
@@ -149,7 +149,7 @@ def get_cos_client(location):
 
 def get_cos_resource(location):
     """return IBM COS resource object"""
-    cos_endpoint = "https://s3.%s.cloud-object-storage.appdomain.cloud" % location
+    cos_endpoint = "https://s3.direct.%s.cloud-object-storage.appdomain.cloud" % location
     return ibm_boto3.resource("s3",
                               ibm_api_key_id=COS_API_KEY,
                               ibm_service_instance_id=COS_RESOURCE_CRN,
@@ -653,7 +653,7 @@ def inventory():
     UPDATE_IMAGES = True
     for location in IBM_COS_REGIONS:
         bucket_name = "%s-%s" % (COS_BUCKET_PREFIX, location)
-        public_url = "https://%s.s3.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (
+        public_url = "https://%s.s3.direct.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (
             bucket_name, location)
         LOG.debug('writing image catalog to: %s', public_url)
         assure_bucket(bucket_name, location)
