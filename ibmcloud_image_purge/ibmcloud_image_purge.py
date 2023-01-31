@@ -48,6 +48,7 @@ IMAGE_TYPES = ['.qcow2', '.vhd', '.vmdk']
 IBM_COS_REGIONS = []
 
 TMOS_IMAGE_DIR = None
+COS_DIRECT_LINKS = None
 COS_UPLOAD_THREADS = 1
 COS_API_KEY = None
 COS_RESOURCE_CRN = None
@@ -146,6 +147,8 @@ def get_cloud_bucket_names_from_patched_dir(tmos_image_dir, region):
 def get_cos_client(location):
     """return IBM COS client object"""
     cos_endpoint = "https://s3.%s.cloud-object-storage.appdomain.cloud" % location
+    if COS_DIRECT_LINKS:
+        cos_endpoint = "https://s3.direct.%s.cloud-object-storage.appdomain.cloud" % location
     return ibm_boto3.client("s3",
                             ibm_api_key_id=COS_API_KEY,
                             ibm_service_instance_id=COS_RESOURCE_CRN,
@@ -157,6 +160,8 @@ def get_cos_client(location):
 def get_cos_resource(location):
     """return IBM COS resource object"""
     cos_endpoint = "https://s3.%s.cloud-object-storage.appdomain.cloud" % location
+    if COS_DIRECT_LINKS:
+        cos_endpoint = "https://s3.direct.%s.cloud-object-storage.appdomain.cloud" % location
     return ibm_boto3.resource("s3",
                               ibm_api_key_id=COS_API_KEY,
                               ibm_service_instance_id=COS_RESOURCE_CRN,
@@ -479,6 +484,9 @@ def inventory():
         bucket_name = "%s-%s" % (COS_BUCKET_PREFIX, location)
         public_url = "https://%s.s3.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (
             bucket_name, location)
+        if COS_DIRECT_LINKS:
+            public_url = "https://%s.s3.direct.%s.cloud-object-storage.appdomain.cloud/f5-image-catalog.json" % (
+                bucket_name, location)
         LOG.debug('writing image catalog to: %s', public_url)
         assure_bucket(bucket_name, location)
         assure_object(inventory_file, bucket_name, "f5-image-catalog.json",
@@ -524,10 +532,15 @@ def sync_cloud_from_dir():
 def initialize():
     """initialize configuration from environment variables"""
     global TMOS_IMAGE_DIR, IBM_COS_REGIONS, COS_UPLOAD_THREADS, \
-        COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, \
+        COS_DIRECT_LINKS, COS_API_KEY, COS_RESOURCE_CRN, COS_IMAGE_LOCATION, \
         COS_AUTH_ENDPOINT, COS_BUCKET_PREFIX, IC_API_KEY, \
         IC_RESOURCE_GROUP, IMAGE_MATCH, TEST_RUN, INVENTORY
     TMOS_IMAGE_DIR = os.getenv('TMOS_IMAGE_DIR', None)
+    COS_DIRECT_LINKS = os.getenv('COS_DIRECT_LINKS', 'false')
+    if COS_DIRECT_LINKS.lower() == 'true':
+        COS_DIRECT_LINKS = True
+    else:
+        COS_DIRECT_LINKS = False
     COS_UPLOAD_THREADS = os.getenv('COS_UPLOAD_THREADS', 1)
     COS_API_KEY = os.getenv('COS_API_KEY', None)
     COS_RESOURCE_CRN = os.getenv('COS_RESOURCE_CRN', None)
