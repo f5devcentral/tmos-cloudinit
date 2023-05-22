@@ -9,5 +9,5 @@ ibm-cos-sdk-s3transfer==2.6.0
 idna==2.8
 jmespath==0.9.5
 python-dateutil==2.8.1
-requests==2.22.0
+requests==2.31.0
 six==1.14.0
